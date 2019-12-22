@@ -1,0 +1,7 @@
+install-config.yaml
+
+config
+ignition
+
+openshift-client-linux-*.tar.gz
+openshift-install-linux-*.tar.gz

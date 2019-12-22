@@ -1,0 +1,51 @@
+{
+  "variables": {
+    "location": "nbg1",
+    "server_type": "cx31",
+    "coreos_stream": "testing",
+    "coreos_release": "31.20191211.1",
+    "ignition_config": "config.ign"
+  },
+  "builders": [
+    {
+      "type": "hcloud",
+      "image": "ubuntu-18.04",
+      "location": "{{user `location`}}",
+      "server_type": "{{user `server_type`}}",
+      "ssh_username": "root",
+      "rescue": "linux64",
+      "snapshot_name": "{{user `snapshot_name`}}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir /source",
+        "mount -t tmpfs -o size=5G none /source",
+        "cd /source",
+        "wget -O fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2.xz https://builds.coreos.fedoraproject.org/prod/streams/{{user `coreos_stream`}}/builds/{{user `coreos_release`}}/x86_64/fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2.xz",
+        "unxz fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2.xz",
+        "qemu-img convert fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2 -O raw fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.raw",
+        "dd if=fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.raw of=/dev/sda bs=128M",
+        "partprobe /dev/sda",
+        "mkdir /target",
+        "mount /dev/sda1 /target",
+        "mkdir /target/ignition"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `ignition_config`}}",
+      "destination": "/target/ignition/config.ign"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "cd /",
+        "umount /source",
+        "umount /target"
+      ]
+    }
+  ]
+}
