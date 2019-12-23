@@ -10,5 +10,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Fetch build dependencies
+      run: make fetch
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag okd-toolbox:$(date +%s)
+      run: make toolbox
