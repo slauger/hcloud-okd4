@@ -1,6 +1,8 @@
 # okd4-hetzner
 
-Deploy OKD4 on Hetzner Cloud.
+Deploy OKD4 (OpenShift) Hetzner Cloud with Hashicorp Packer and Terraform.
+
+Example code for Terraform follows as soon as possible.
 
 ## Current version
 
@@ -13,7 +15,8 @@ Deploy OKD4 on Hetzner Cloud.
 ### Build toolbox
 
 ```
-make
+make fetch
+make toolbox
 ```
 
 ### Run toolbox
@@ -66,10 +69,14 @@ make ignition
 
 ### Create Fedora CoreOS image
 
+Build a Fedora CoreOS hcloud image and add embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
+
+Because the Fedora CoreOS will be downloaded to RAM, the build requires at least a cx31 instance.
+
 Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
 
 ```
-make packer
+make hcloud_image
 ```
 
 ### Build infrastructure with Terraform
@@ -79,7 +86,7 @@ Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
 Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_TOKEN`.
 
 ```
-make terraform_bootstrap
+make terraform BOOSTRAP=true
 ```
 
 ### Wait for the bootstrap to complete
@@ -109,3 +116,7 @@ Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_TO
 ```
 make terraform
 ```
+
+## Author
+
+- [slauger](https://github.com/slauger)
