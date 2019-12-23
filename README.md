@@ -86,7 +86,7 @@ Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
 Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_TOKEN`.
 
 ```
-make terraform BOOSTRAP=true
+make infrastructure BOOSTRAP=true
 ```
 
 ### Wait for the bootstrap to complete
@@ -114,7 +114,7 @@ Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
 Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_TOKEN`.
 
 ```
-make terraform
+make infrastructure
 ```
 
 ## Author

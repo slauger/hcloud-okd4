@@ -4,6 +4,7 @@ OPENSHIFT_RELEASE=4.3.0-0.okd-2019-11-15-182656
 FCOS_STREAM=testing
 FCOS_RELEASE=31.20191211.1
 CONTAINER_NAME=openshift-toolbox:$(OPENSHIFT_RELEASE)
+BOOSTRAP=false
 
 print_version:
 	@echo $(OPENSHIFT_RELEASE)
@@ -37,11 +38,6 @@ ignition:
 hcloud_image:
 	cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) -var snapshot_name=hetzner-fcos-$(FCOS_STREAM)-$(FCOS_RELEASE) hetzner-fcos.json
 
-infrastructure_bootstrap:
-	cd terraform && \
-	terraform init && \
-	terraform apply -var bootstrap=true
-
 sign_csr:
 	KUBECONFIG=ignition/auth/kubeconfig
 	bash -c "oc get csr --no-headers | awk '{print $1}' | xargs oc adm certificate approve"
@@ -55,4 +51,4 @@ wait_completion:
 infrastructure:
 	cd terraform && \
 	terraform init &&
-	terraform apply
+	terraform apply -var bootstrap=$(BOOTSTRAP)
