@@ -69,9 +69,9 @@ make ignition
 
 ### Create Fedora CoreOS image
 
-Build a Fedora CoreOS hcloud image and add embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
+Build a Fedora CoreOS hcloud image and embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
 
-Because the Fedora CoreOS will be downloaded to RAM, the build requires at least a cx31 instance.
+Because the Fedora CoreOS image will be stored in RAM during the build, at least a cx31 instance is required.
 
 Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
 
