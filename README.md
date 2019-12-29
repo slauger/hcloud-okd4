@@ -1,8 +1,6 @@
-# okd4-hetzner
+# hcloud-okd4
 
-Deploy OKD4 (OpenShift) Hetzner Cloud with Hashicorp Packer and Terraform.
-
-Example code for Terraform follows as soon as possible.
+Deploy OKD4 (OpenShift) on Hetzner Cloud and Cloudflare with Hashicorp Packer and Terraform.
 
 ## Current version
 
