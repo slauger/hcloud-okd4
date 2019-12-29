@@ -83,7 +83,7 @@ make hcloud_image
 
 Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
 
-Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_TOKEN`.
+Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_API_TOKEN`.
 
 ```
 make infrastructure BOOSTRAP=true
@@ -111,7 +111,7 @@ make wait_completion
 
 Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
 
-Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_TOKEN`.
+Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_API_TOKEN`.
 
 ```
 make infrastructure
