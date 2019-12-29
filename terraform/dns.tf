@@ -4,6 +4,7 @@ resource "cloudflare_record" "dns_a_api" {
   value   = var.ip_loadbalancer_api
   type    = "A"
   ttl     = 1
+  count   = var.cloudflare_loadbalancing == false ? 1 : 0
 }
 
 resource "cloudflare_record" "dns_a_api_int" {
@@ -12,6 +13,7 @@ resource "cloudflare_record" "dns_a_api_int" {
   value   = var.ip_loadbalancer_api_int
   type    = "A"
   ttl     = 1
+  count   = var.cloudflare_loadbalancing == false ? 1 : 0
 }
 
 resource "cloudflare_record" "dns_a_apps" {
@@ -20,6 +22,7 @@ resource "cloudflare_record" "dns_a_apps" {
   value   = var.ip_loadbalancer_apps
   type    = "A"
   ttl     = 1
+  count   = var.cloudflare_loadbalancing == false ? 1 : 0
 }
 
 resource "cloudflare_record" "dns_a_apps_wc" {
@@ -28,6 +31,7 @@ resource "cloudflare_record" "dns_a_apps_wc" {
   value   = var.ip_loadbalancer_apps
   type    = "A"
   ttl     = 1
+  count   = var.cloudflare_loadbalancing == false ? 1 : 0
 }
 
 resource "cloudflare_record" "dns_a_etcd" {

@@ -9,6 +9,7 @@ resource "cloudflare_load_balancer_pool" "bootstrap_pool" {
     }
   }
   description = "OpenShift bootstrap node"
+  count       = var.cloudflare_loadbalancing == true ? 1 : 0
 }
 
 resource "cloudflare_load_balancer_pool" "master_pool" {
@@ -22,6 +23,7 @@ resource "cloudflare_load_balancer_pool" "master_pool" {
     }
   }
   description = "OpenShift master nodes"
+  count       = var.cloudflare_loadbalancing == true ? 1 : 0
 }
 
 resource "cloudflare_load_balancer_pool" "worker_pool" {
@@ -35,5 +37,6 @@ resource "cloudflare_load_balancer_pool" "worker_pool" {
     }
   }
   description = "OpenShift worker nodes"
+  count       = var.cloudflare_loadbalancing == true ? 1 : 0
 }
 

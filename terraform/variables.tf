@@ -1,7 +1,3 @@
-variable "hcloud_image" {
-  description = "Name of the hcloud image"
-}
-
 variable "replicas_master" {
   default     = 3
   description = "Count of master replicas"
@@ -38,4 +34,9 @@ variable "ip_loadbalancer_api_int" {
 variable "ip_loadbalancer_apps" {
   description = "IP of an external loadbalancer for apps (optional)"
   default     = ""
+}
+
+variable "cloudflare_loadbalancing" {
+  description = "Whether to use a Cloudflare loadbalancer"
+  default     = true
 }
