@@ -1,3 +1,6 @@
+env.sh
+variables.tfvars
+
 install-config.yaml
 
 config
