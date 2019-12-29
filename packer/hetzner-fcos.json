@@ -2,8 +2,8 @@
   "variables": {
     "location": "nbg1",
     "server_type": "cx31",
-    "coreos_stream": "testing",
-    "coreos_release": "31.20191211.1",
+    "fcos_stream": "testing",
+    "fcos_release": "31.20191211.1",
     "ignition_config": "config.ign"
   },
   "builders": [
@@ -14,7 +14,12 @@
       "server_type": "{{user `server_type`}}",
       "ssh_username": "root",
       "rescue": "linux64",
-      "snapshot_name": "{{user `snapshot_name`}}"
+      "snapshot_name": "fcos-{{timestamp}}",
+      "snapshot_labels": {
+        "os": "fcos",
+        "fcos_stream": "{{user `fcos_stream`}}",
+        "fcos_release": "{{user `fcos_release`}}"
+      }
     }
   ],
   "provisioners": [
@@ -24,10 +29,10 @@
         "mkdir /source",
         "mount -t tmpfs -o size=5G none /source",
         "cd /source",
-        "wget -O fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2.xz https://builds.coreos.fedoraproject.org/prod/streams/{{user `coreos_stream`}}/builds/{{user `coreos_release`}}/x86_64/fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2.xz",
-        "unxz fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2.xz",
-        "qemu-img convert fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.qcow2 -O raw fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.raw",
-        "dd if=fedora-coreos-{{user `coreos_release`}}-qemu.x86_64.raw of=/dev/sda bs=128M",
+        "wget -O fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.qcow2.xz https://builds.coreos.fedoraproject.org/prod/streams/{{user `fcos_stream`}}/builds/{{user `fcos_release`}}/x86_64/fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.qcow2.xz",
+        "unxz fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.qcow2.xz",
+        "qemu-img convert fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.qcow2 -O raw fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.raw",
+        "dd if=fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.raw of=/dev/sda bs=128M",
         "partprobe /dev/sda",
         "mkdir /target",
         "mount /dev/sda1 /target",
