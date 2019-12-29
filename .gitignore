@@ -5,3 +5,7 @@ ignition
 
 openshift-client-linux-*.tar.gz
 openshift-install-linux-*.tar.gz
+
+terraform/.terraform
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
