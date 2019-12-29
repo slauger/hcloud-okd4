@@ -27,15 +27,15 @@ variable "dns_zone_id" {
 
 variable "ip_loadbalancer_api" {
   description = "IP of an external loadbalancer for api (optional)"
-  default = ""
+  default     = ""
 }
 
 variable "ip_loadbalancer_api_int" {
   description = "IP of an external loadbalancer for api-int (optional)"
-  default = ""
+  default     = ""
 }
 
 variable "ip_loadbalancer_apps" {
   description = "IP of an external loadbalancer for apps (optional)"
-  default = ""
+  default     = ""
 }
