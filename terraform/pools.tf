@@ -9,7 +9,7 @@ resource "cloudflare_load_balancer_pool" "bootstrap_pool" {
     }
   }
   description = "OpenShift bootstrap node"
-  count       = var.cloudflare_loadbalancing == true ? 1 : 0
+  count       = (var.cloudflare_loadbalancing == true && var.bootstrap == true) ? 1 : 0
 }
 
 resource "cloudflare_load_balancer_pool" "master_pool" {

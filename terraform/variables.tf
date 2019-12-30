@@ -8,7 +8,7 @@ variable "replicas_worker" {
   description = "Count of worker replicas"
 }
 
-variable "bootstrap_enable" {
+variable "bootstrap" {
   default     = false
   description = "Whether to deploy a bootstrap instance"
 }
