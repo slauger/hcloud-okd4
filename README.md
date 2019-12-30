@@ -65,23 +65,27 @@ make manifests
 make ignition
 ```
 
+### Set required environment variables
+
+```
+export TF_VAR_dns_domain=example.com
+export TF_VAR_dns_zone_id=14758f1afd44c09b7992073ccf00b43d
+export HCLOUD_TOKEN=14758f1afd44c09b7992073ccf00b43d14758f1afd44c09b7992073ccf00b43d
+export CLOUDFLARE_EMAIL=user@example.com
+export CLOUDFLARE_API_KEY=14758f1afd44c09b7992073ccf00b43d
+```
+
 ### Create Fedora CoreOS image
 
 Build a Fedora CoreOS hcloud image and embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
 
 Because the Fedora CoreOS image will be stored in RAM during the build, at least a cx31 instance is required.
 
-Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
-
 ```
 make hcloud_image
 ```
 
 ### Build infrastructure with Terraform
-
-Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
-
-Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_API_TOKEN`.
 
 ```
 make infrastructure BOOSTRAP=true
@@ -106,10 +110,6 @@ make wait_completion
 ```
 
 ### Cleanup bootstrap node
-
-Be sure that your hcloud token is set via env `HCLOUD_TOKEN`.
-
-Cloudflare credentials must be set via env `CLOUDFLARE_EMAIL` and `CLOUDFLARE_API_TOKEN`.
 
 ```
 make infrastructure
