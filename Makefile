@@ -49,6 +49,4 @@ wait_completion:
 	openshift-install --dir=config/ wait-for install-complete --log-level=debug
 
 infrastructure:
-	cd terraform && \
-	terraform init &&
-	terraform apply -var bootstrap=$(BOOTSTRAP)
+	cd terraform && terraform init && terraform apply -var bootstrap=$(BOOTSTRAP)
