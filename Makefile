@@ -36,7 +36,7 @@ ignition:
 	openshift-install create ignition-configs --dir=ignition
 
 hcloud_image:
-	cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) -var snapshot_name=hetzner-fcos-$(FCOS_STREAM)-$(FCOS_RELEASE) hetzner-fcos.json
+	cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) hcloud-fcos.json
 
 sign_csr:
 	KUBECONFIG=ignition/auth/kubeconfig
@@ -49,6 +49,4 @@ wait_completion:
 	openshift-install --dir=config/ wait-for install-complete --log-level=debug
 
 infrastructure:
-	cd terraform && \
-	terraform init &&
-	terraform apply -var bootstrap=$(BOOTSTRAP)
+	cd terraform && terraform init && terraform apply -var bootstrap=$(BOOTSTRAP)
