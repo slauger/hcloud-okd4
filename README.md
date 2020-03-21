@@ -2,12 +2,6 @@
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud and Cloudflare with Hashicorp Packer and Terraform.
 
-## Current version
-
-- OpenShift Release: 4.3.0-0.okd-2019-11-15-182656
-- Fedora CoreOS Stream: testing
-- Fedora CoreOS Release: 31.20191211.1
-
 ## Usage
 
 ### Build toolbox
