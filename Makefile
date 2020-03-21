@@ -1,29 +1,24 @@
 .DEFAULT_GOAL := toolbox
 
-OPENSHIFT_RELEASE=4.3.0-0.okd-2019-11-15-182656
-FCOS_STREAM=testing
-FCOS_RELEASE=31.20191211.1
-CONTAINER_NAME=openshift-toolbox:$(OPENSHIFT_RELEASE)
+OPENSHIFT_RELEASE=4.4.0-0.okd-2020-03-21-112849
+FCOS_STREAM=stable
+FCOS_RELEASE=31.20200223.3.0
+
+CONTAINER_NAME=openshift-toolbox
+CONTAINER_TAG=$(OPENSHIFT_RELEASE)
+
 BOOTSTRAP=false
 
 print_version:
 	@echo $(OPENSHIFT_RELEASE)
 
-fetch:
-	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
-	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
-
-clean:
-	rm openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz || true
-	rm openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz || true
+build: toolbox
 
 toolbox:
-	test -f openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
-	test -f openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
-	docker build --build-arg OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) -t $(CONTAINER_NAME) .
+	docker build --build-arg OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) -t $(CONTAINER_NAME):$(CONTAINER_TAG) .
 
 run:
-	docker run -it -v $(PWD):/workspace $(CONTAINER_NAME) /bin/bash
+	docker run -it -v $(PWD):/workspace $(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
 
 manifests:
 	mkdir config

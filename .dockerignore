@@ -1,0 +1,17 @@
+*.swp
+
+env.sh
+variables.tfvars
+
+install-config.yaml
+
+config
+ignition
+
+openshift-client-linux-*.tar.gz
+openshift-install-linux-*.tar.gz
+
+terraform/.terraform
+terraform/.terraform*
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
