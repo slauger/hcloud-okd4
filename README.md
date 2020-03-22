@@ -1,6 +1,6 @@
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalanced using Hashicorp Packer and Terraform.
+Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalancing using Hashicorp Packer and Terraform.
 
 ## Current status
 
