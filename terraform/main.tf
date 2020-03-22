@@ -4,9 +4,8 @@ module "bootstrap" {
   name           = "bootstrap"
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
-  image          = data.hcloud_image.image.id
+  image          = data.hcloud_image.bootstrap_image.id
   server_type    = "cx41"
-  user_data      = file("../ignition/bootstrap.ign")
 }
 
 module "master" {
