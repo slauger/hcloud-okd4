@@ -2,6 +2,8 @@
   "variables": {
     "location": "nbg1",
     "server_type": "cx31",
+    "snapshot_prefix": "fcos",
+    "image_type": "generic",
     "ignition_config": "config.ign"
   },
   "builders": [
@@ -12,9 +14,10 @@
       "server_type": "{{user `server_type`}}",
       "ssh_username": "root",
       "rescue": "linux64",
-      "snapshot_name": "fcos-{{timestamp}}",
+      "snapshot_name": "{{user `snapshot_prefix`}}-{{timestamp}}",
       "snapshot_labels": {
         "os": "fcos",
+        "image_type": "{{user `image_type`}}",
         "fcos_stream": "{{user `fcos_stream`}}",
         "fcos_release": "{{user `fcos_release`}}"
       }
