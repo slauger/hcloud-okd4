@@ -1,16 +1,9 @@
 *.swp
-
 env.sh
-variables.tfvars
-
 install-config.yaml
-
 config
 ignition
-
-openshift-client-linux-*.tar.gz
-openshift-install-linux-*.tar.gz
-
+packer/*.ign
 terraform/.terraform
 terraform/.terraform*
 terraform/terraform.tfstate
