@@ -33,9 +33,12 @@ ignition:
 hcloud_image:
 	cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) hcloud-fcos.json
 
+hcloud_boostrap_image:
+	cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) -var snapshot_prefix=fcos-boostrap -var ignition_config=../ignition/bootstrap.ign -var image_type=bootstrap hcloud-fcos.json
+
 sign_csr:
-	KUBECONFIG=ignition/auth/kubeconfig
-	bash -c "oc get csr --no-headers | awk '{print $1}' | xargs oc adm certificate approve"
+	test -f ignition/auth/kubeconfig
+	bash -c "export KUBECONFIG=$(shell pwd)/ignition/auth/kubeconfig; oc get csr --no-headers | awk '{print $1}' | xargs oc adm certificate approve"
 
 wait_bootstrap:
 	openshift-install --dir=config/ wait-for bootstrap-complete --log-level=debug
