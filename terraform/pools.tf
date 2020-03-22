@@ -8,6 +8,8 @@ resource "cloudflare_load_balancer_pool" "bootstrap_pool" {
       address = origins.value
     }
   }
+
+  monitor     = cloudflare_load_balancer_monitor.tcp_monitor_api.id
   description = "OpenShift bootstrap node"
   count       = (var.cloudflare_loadbalancing == true && var.bootstrap == true) ? 1 : 0
 }
@@ -22,6 +24,8 @@ resource "cloudflare_load_balancer_pool" "master_pool" {
       address = origins.value
     }
   }
+
+  monitor     = cloudflare_load_balancer_monitor.tcp_monitor_api.id
   description = "OpenShift master nodes"
   count       = var.cloudflare_loadbalancing == true ? 1 : 0
 }
@@ -36,6 +40,8 @@ resource "cloudflare_load_balancer_pool" "worker_pool" {
       address = origins.value
     }
   }
+
+  monitor     = cloudflare_load_balancer_monitor.tcp_monitor_apps.id
   description = "OpenShift worker nodes"
   count       = var.cloudflare_loadbalancing == true ? 1 : 0
 }
