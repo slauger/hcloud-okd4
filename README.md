@@ -1,6 +1,19 @@
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud and Cloudflare with Hashicorp Packer and Terraform.
+Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalanced using Hashicorp Packer and Terraform.
+
+## Current status
+
+Current CI builds of OKD 4.4 seem to get stuck in the bootstrap process.
+
+```
+openshift-install --dir=config/ wait-for bootstrap-complete --log-level=debug
+DEBUG OpenShift Installer 4.4.0-0.okd-2020-03-21-112849
+DEBUG Built from commit fc790034704d5e279eabacd833d3e90c76815978
+INFO Waiting up to 20m0s for the Kubernetes API at https://api.ocp4.example.com:6443...
+INFO API v1.17.1 up
+INFO Waiting up to 40m0s for bootstrapping to complete...
+```
 
 ## Usage
 
@@ -62,7 +75,7 @@ make ignition
 ### Set required environment variables
 
 ```
-export TF_VAR_dns_domain=example.com
+export TF_VAR_dns_domain=okd4.example.com
 export TF_VAR_dns_zone_id=14758f1afd44c09b7992073ccf00b43d
 export HCLOUD_TOKEN=14758f1afd44c09b7992073ccf00b43d14758f1afd44c09b7992073ccf00b43d
 export CLOUDFLARE_EMAIL=user@example.com
@@ -79,10 +92,18 @@ Because the Fedora CoreOS image will be stored in RAM during the build, at least
 make hcloud_image
 ```
 
+### Create Boostrap image
+
+Build a second hcloud image, especially the inital cluster boostrap. Special handling is required here, as the user_data field is limited to 32 Kib (#18).
+
+```
+hcloud_boostrap_image
+```
+
 ### Build infrastructure with Terraform
 
 ```
-make infrastructure BOOSTRAP=true
+make infrastructure BOOTSTRAP=true
 ```
 
 ### Wait for the bootstrap to complete
