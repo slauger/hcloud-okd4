@@ -16,10 +16,7 @@ jobs:
       run: make build
     - name: Test Docker image
       run: make test
-    - uses: azure/docker-login@v1
-      with:
-        login-server: index.docker.io
-        username: ${{ secrets.REGISTRY_USERNAME }}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
+    - name: Login to Docker Registry
+      run: docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
     - name: Push Docker image
       run: make push
