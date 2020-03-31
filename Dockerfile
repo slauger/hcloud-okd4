@@ -9,27 +9,25 @@ ARG OPENSHIFT_RELEASE
 RUN apk update && \
     apk add \
       bash \
-      git \
-      vim \
       ca-certificates \
       openssh-client \
-      sudo \
-      bind-tools \
       openssl \
-      vim \
-      rsync \
-      curl \
       make \
       libc6-compat \
       apache2-utils
 
-RUN curl -sfLO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz && \
-    tar vxzf oc.tar.gz && \
-    mv oc /usr/local/bin/oc && \
-    oc adm release extract --command=openshift-install registry.svc.ci.openshift.org/origin/release:${OPENSHIFT_RELEASE} && \
-    oc adm release extract --command=oc registry.svc.ci.openshift.org/origin/release:${OPENSHIFT_RELEASE} && \
+# OpenShift Installer
+COPY openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz .
+COPY openshift-client-linux-${OPENSHIFT_RELEASE}.tar.gz .
+
+RUN tar vxzf openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz openshift-install && \
+    tar vxzf openshift-client-linux-${OPENSHIFT_RELEASE}.tar.gz oc && \
+    tar vxzf openshift-client-linux-${OPENSHIFT_RELEASE}.tar.gz kubectl && \
     mv openshift-install /usr/local/bin/openshift-install && \
-    mv oc /usr/local/bin/oc
+    mv oc /usr/local/bin/oc && \
+    mv kubectl /usr/local/bin/kubectl && \
+    rm openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz && \
+    rm openshift-client-linux-${OPENSHIFT_RELEASE}.tar.gz
 
 # External tools
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform

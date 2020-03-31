@@ -71,3 +71,8 @@ variable "volume_size" {
   description = "Size of the additional data volume"
   default     = 20
 }
+
+variable "ignition_url" {
+  type        = string
+  description = "URL to the external ignition webserver"
+}

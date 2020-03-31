@@ -1,34 +1,33 @@
+![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg)
+
 # hcloud-okd4
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalancing using Hashicorp Packer and Terraform.
 
-## Current status
 
-Current CI builds of OKD 4.4 seem to get stuck in the bootstrap process.
-
-```
-openshift-install --dir=config/ wait-for bootstrap-complete --log-level=debug
-DEBUG OpenShift Installer 4.4.0-0.okd-2020-03-21-112849
-DEBUG Built from commit fc790034704d5e279eabacd833d3e90c76815978
-INFO Waiting up to 20m0s for the Kubernetes API at https://api.ocp4.example.com:6443...
-INFO API v1.17.1 up
-INFO Waiting up to 40m0s for bootstrapping to complete...
-```
 
 ## Usage
 
 ### Build toolbox
+
+To ensure that the we have a proper build environment, we create a toolbox container first.
 
 ```
 make fetch
 make toolbox
 ```
 
+If you do not want to build the containerby your own, it is also available on [Docker Hub](https://hub.docker.com/repository/docker/cmon2k/openshift-toolbox).
+
 ### Run toolbox
+
+Use the following command to start the container.
 
 ```
 make run
 ```
+
+All the following commands will be executed inside the container. 
 
 ### Create your install-config.yaml
 
@@ -60,44 +59,44 @@ pullSecret: '{"auths":{"none":{"auth": "none"}}}'
 sshKey: ssh-rsa AABBCC... Some_Service_User
 ```
 
-### Create cluster manifests
-
-```
-make manifests
-```
-
 ### Create ignition config
 
 ```
 make ignition
 ```
 
+The files `bootstrap.ign`, `master.ign` and `worker.ign` need to be uploaded to an external webserver. Set `TF_VAR_ignition_baseurl` to the webroot of the webserver in the next step.
+
+### Create cluster manifests
+
+```
+make manifests
+```
+
 ### Set required environment variables
 
 ```
+# terraform variables
 export TF_VAR_dns_domain=okd4.example.com
 export TF_VAR_dns_zone_id=14758f1afd44c09b7992073ccf00b43d
+export TF_VAR_ignition_baseurl=http://ignition.example.tld/ignition
+
+# credentials for hcloud
 export HCLOUD_TOKEN=14758f1afd44c09b7992073ccf00b43d14758f1afd44c09b7992073ccf00b43d
+
+# credentials for cloudflare
 export CLOUDFLARE_EMAIL=user@example.com
 export CLOUDFLARE_API_KEY=14758f1afd44c09b7992073ccf00b43d
 ```
 
 ### Create Fedora CoreOS image
 
-Build a Fedora CoreOS hcloud image and embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
+Build a Fedora CoreOS hcloud image with Packer and embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
 
 Because the Fedora CoreOS image will be stored in RAM during the build, at least a cx31 instance is required.
 
 ```
 make hcloud_image
-```
-
-### Create Boostrap image
-
-Build a second hcloud image, especially the inital cluster boostrap. Special handling is required here, as the user_data field is limited to 32 Kib (#18).
-
-```
-hcloud_boostrap_image
 ```
 
 ### Build infrastructure with Terraform

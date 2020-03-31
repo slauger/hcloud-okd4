@@ -49,3 +49,8 @@ variable "cloudflare_loadbalancing" {
   description = "Whether to use a Cloudflare loadbalancer"
   default     = true
 }
+
+variable "ignition_baseurl" {
+  type = string
+  description = "Base URL to the external ignition webserver"
+}

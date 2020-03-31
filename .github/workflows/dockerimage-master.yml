@@ -1,0 +1,25 @@
+name: Docker Build
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Fetch external dependencies
+      run: make fetch
+    - name: Build the Docker image
+      run: make build
+    - name: Test Docker image
+      run: make test
+    - uses: azure/docker-login@v1
+      with:
+        login-server: index.docker.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    - name: Push Docker image
+      run: make push

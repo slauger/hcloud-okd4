@@ -4,8 +4,9 @@ module "bootstrap" {
   name           = "bootstrap"
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
-  image          = data.hcloud_image.bootstrap_image.id
+  image          = data.hcloud_image.image.id
   server_type    = "cx41"
+  ignition_url   = "${var.ignition_baseurl}/bootstrap.ign"
 }
 
 module "master" {
@@ -16,7 +17,8 @@ module "master" {
   dns_zone_id    = var.dns_zone_id
   image          = data.hcloud_image.image.id
   server_type    = "cx41"
-  user_data      = file("../ignition/master.ign")
+  # TODO: serve from api-int.okd4.example.com
+  ignition_url   = "${var.ignition_baseurl}/master.ign"
 }
 
 module "worker" {
@@ -27,5 +29,6 @@ module "worker" {
   dns_zone_id    = var.dns_zone_id
   image          = data.hcloud_image.image.id
   server_type    = "cx41"
-  user_data      = file("../ignition/worker.ign")
+  # TODO: serve from api-int.okd4.example.com
+  ignition_url   = "${var.ignition_baseurl}/worker.ign"
 }
