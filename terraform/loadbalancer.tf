@@ -37,7 +37,7 @@ resource "cloudflare_load_balancer" "loadbalancer_api_int" {
 resource "cloudflare_load_balancer" "loadbalancer_apps" {
   name             = "apps.${var.dns_domain}"
   zone_id          = var.dns_zone_id
-  default_pool_ids = [cloudflare_load_balancer_pool.worker_pool[0].id, cloudflare_load_balancer_pool.master_pool[0].id]
+  default_pool_ids = [cloudflare_load_balancer_pool.worker_pool[0].id]
   fallback_pool_id = cloudflare_load_balancer_pool.master_pool[0].id
   description      = "Loadbalancer for apps.${var.dns_domain}"
   count            = var.cloudflare_loadbalancing == true ? 1 : 0
@@ -46,7 +46,7 @@ resource "cloudflare_load_balancer" "loadbalancer_apps" {
 resource "cloudflare_load_balancer" "loadbalancer_apps_wc" {
   name             = "*.apps.${var.dns_domain}"
   zone_id          = var.dns_zone_id
-  default_pool_ids = [cloudflare_load_balancer_pool.worker_pool[0].id, cloudflare_load_balancer_pool.master_pool[0].id]
+  default_pool_ids = [cloudflare_load_balancer_pool.worker_pool[0].id]
   fallback_pool_id = cloudflare_load_balancer_pool.master_pool[0].id
   description      = "Loadbalancer for apps.${var.dns_domain}"
   count            = var.cloudflare_loadbalancing == true ? 1 : 0
