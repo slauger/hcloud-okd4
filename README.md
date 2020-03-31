@@ -1,4 +1,4 @@
-![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Image%20CI/badge.svg)
+![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg)
 
 # hcloud-okd4
 
