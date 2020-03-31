@@ -3,12 +3,19 @@ name: Docker Image CI
 on: [push]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v1
+    - uses: azure/docker-login@v1
+      with:
+        login-server: index.docker.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    - name: Fetch external dependencies
+      run: make fetch
     - name: Build the Docker image
-      run: make toolbox
+      run: make build
+    - name: Test Docker image
+      run: make test
+    - name: make push
