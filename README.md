@@ -1,3 +1,5 @@
+![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Image%20CI/badge.svg)
+
 # hcloud-okd4
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalancing using Hashicorp Packer and Terraform.
