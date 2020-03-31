@@ -12,13 +12,6 @@ BOOTSTRAP=false
 print_version:
 	@echo $(OPENSHIFT_RELEASE)
 
-check_prereq_envs:
-	@if [ -z "$(TF_VAR_dns_domain)" ]; then echo "ERROR: TF_VAR_dns_domain is not set"; exit 1; fi
-	@if [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
-	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	@if [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
-	@if [ -z "$(CLOUDFLARE_API_KEY)" ]; then echo "ERROR: CLOUDFLARE_API_KEY is not set"; exit 1; fi
-
 fetch:
 	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
 	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
@@ -35,27 +28,24 @@ push:
 run:
 	docker run -it -v $(PWD):/workspace $(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
 
-manifests:
-	mkdir config
-	cp install-config.yaml config/install-config.yaml
-	openshift-install create manifests --dir=config
-
 ignition:
 	mkdir ignition
 	cp install-config.yaml ignition/install-config.yaml
 	openshift-install create ignition-configs --dir=ignition
 
+manifests:
+	mkdir config
+	cp install-config.yaml config/install-config.yaml
+	openshift-install create manifests --dir=config
+	cp -r ignition/auth config/auth
+
 hcloud_image:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
 	cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) hcloud-fcos.json
 
-hcloud_boostrap_image:
-	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) -var snapshot_prefix=fcos-boostrap -var ignition_config=../ignition/bootstrap.ign -var image_type=bootstrap hcloud-fcos.json
-
 sign_csr:
 	@if [ ! -f "ignition/auth/kubeconfig" ]; then echo "ERROR: ignition/auth/kubeconfig not found"; exit 1; fi
-	bash -c "export KUBECONFIG=$(KUBECONFIG); oc get csr -o name | xargs oc adm certificate approve || true"
+	bash -c "export KUBECONFIG=$(shell pwd)/ignition/auth/kubeconfig; oc get csr -o name | xargs oc adm certificate approve || true"
 
 wait_bootstrap:
 	openshift-install --dir=config/ wait-for bootstrap-complete --log-level=debug
