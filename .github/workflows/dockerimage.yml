@@ -18,4 +18,5 @@ jobs:
       run: make build
     - name: Test Docker image
       run: make test
-    - name: make push
+    - name: Push Docker image
+      run: make push
