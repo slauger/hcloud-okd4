@@ -4,8 +4,6 @@
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalancing using Hashicorp Packer and Terraform.
 
-
-
 ## Usage
 
 ### Build toolbox
@@ -92,8 +90,6 @@ export CLOUDFLARE_API_KEY=14758f1afd44c09b7992073ccf00b43d
 ### Create Fedora CoreOS image
 
 Build a Fedora CoreOS hcloud image with Packer and embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
-
-Because the Fedora CoreOS image will be stored in RAM during the build, at least a cx31 instance is required.
 
 ```
 make hcloud_image
