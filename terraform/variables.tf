@@ -54,3 +54,15 @@ variable "ignition_baseurl" {
   type = string
   description = "Base URL to the external ignition webserver"
 }
+
+variable "network_cidr" {
+  type = string
+  description = "CIDR for the network"
+  default = "192.168.0.0/16"
+}
+
+variable "subnet_cidr" {
+  type = string
+  description = "CIDR for the subnet"
+  default = "192.168.254.0/24"
+}

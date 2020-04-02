@@ -6,6 +6,7 @@ module "bootstrap" {
   dns_zone_id    = var.dns_zone_id
   image          = data.hcloud_image.image.id
   server_type    = "cx41"
+  subnet         = hcloud_network.network.id
   ignition_url   = "${var.ignition_baseurl}/bootstrap.ign"
 }
 
@@ -18,6 +19,7 @@ module "master" {
   image          = data.hcloud_image.image.id
   server_type    = "cx41"
   # TODO: serve from api-int.okd4.example.com
+  subnet         = hcloud_network.network.id
   ignition_url   = "${var.ignition_baseurl}/master.ign"
 }
 
@@ -30,5 +32,6 @@ module "worker" {
   image          = data.hcloud_image.image.id
   server_type    = "cx41"
   # TODO: serve from api-int.okd4.example.com
+  subnet         = hcloud_network.network.id
   ignition_url   = "${var.ignition_baseurl}/worker.ign"
 }
