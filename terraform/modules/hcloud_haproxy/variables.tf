@@ -13,11 +13,6 @@ variable "dns_zone_id" {
   default     = null
 }
 
-variable "dns_internal_ip" {
-  description = "Point DNS record to internal ip"
-  default     = false
-}
-
 variable "instance_count" {
   type        = number
   description = "Number of instances to deploy"

@@ -47,7 +47,7 @@ variable "ip_loadbalancer_apps" {
 variable "cloudflare_loadbalancing" {
   type        = bool
   description = "Whether to use a Cloudflare loadbalancer"
-  default     = true
+  default     = false
 }
 
 variable "ignition_baseurl" {

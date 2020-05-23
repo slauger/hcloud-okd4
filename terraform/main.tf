@@ -4,6 +4,7 @@ module "bootstrap" {
   name           = "bootstrap"
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
+  dns_internal_ip = true
   image          = data.hcloud_image.image.id
   server_type    = "cx41"
   subnet         = hcloud_network.network.id
@@ -16,6 +17,7 @@ module "master" {
   name           = "master"
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
+  dns_internal_ip = true
   image          = data.hcloud_image.image.id
   server_type    = "cx41"
   # TODO: serve from api-int.okd4.example.com
@@ -29,7 +31,22 @@ module "worker" {
   name           = "worker"
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
+  dns_internal_ip = true
   image          = data.hcloud_image.image.id
+  server_type    = "cx41"
+  # TODO: serve from api-int.okd4.example.com
+  subnet         = hcloud_network.network.id
+  ignition_url   = "${var.ignition_baseurl}/worker.ign"
+}
+
+module "haproxy" {
+  source = "./modules/hcloud_haproxy"
+  instance_count = var.replicas_worker
+  name           = "lb"
+  dns_domain     = var.dns_domain
+  dns_zone_id    = var.dns_zone_id
+  dns_internal_ip = false
+  image          = ""
   server_type    = "cx41"
   # TODO: serve from api-int.okd4.example.com
   subnet         = hcloud_network.network.id
