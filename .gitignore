@@ -1,6 +1,7 @@
 *.swp
 env.sh
 install-config.yaml
+inventory.ini
 config
 ignition
 packer/*.ign
