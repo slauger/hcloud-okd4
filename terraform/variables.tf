@@ -10,6 +10,12 @@ variable "replicas_worker" {
   description = "Count of worker replicas"
 }
 
+variable "replicas_haproxy" {
+  type        = number
+  default     = 1
+  description = "Count of haproxy replicas"
+}
+
 variable "bootstrap" {
   type        = bool
   default     = false
@@ -27,42 +33,28 @@ variable "dns_zone_id" {
 }
 
 variable "ip_loadbalancer_api" {
-  type        = string
   description = "IP of an external loadbalancer for api (optional)"
-  default     = ""
+  default     = null
 }
 
 variable "ip_loadbalancer_api_int" {
-  type        = string
   description = "IP of an external loadbalancer for api-int (optional)"
-  default     = ""
+  default     = null
 }
 
 variable "ip_loadbalancer_apps" {
-  type        = string
   description = "IP of an external loadbalancer for apps (optional)"
-  default     = ""
-}
-
-variable "cloudflare_loadbalancing" {
-  type        = bool
-  description = "Whether to use a Cloudflare loadbalancer"
-  default     = false
-}
-
-variable "ignition_baseurl" {
-  type = string
-  description = "Base URL to the external ignition webserver"
+  default     = null
 }
 
 variable "network_cidr" {
-  type = string
+  type        = string
   description = "CIDR for the network"
-  default = "192.168.0.0/16"
+  default     = "192.168.0.0/16"
 }
 
 variable "subnet_cidr" {
-  type = string
+  type        = string
   description = "CIDR for the subnet"
-  default = "192.168.254.0/24"
+  default     = "192.168.254.0/24"
 }
