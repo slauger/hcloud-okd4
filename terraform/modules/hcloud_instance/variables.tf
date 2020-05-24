@@ -77,11 +77,6 @@ variable "volume_size" {
   default     = 20
 }
 
-variable "ignition_url" {
-  type        = string
-  description = "URL to the external ignition webserver"
-}
-
 variable "subnet" {
   type = string
   description = "Id of the additional internal network"
