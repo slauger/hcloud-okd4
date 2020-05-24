@@ -2,7 +2,7 @@
 
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalancing using Hashicorp Packer and Terraform.
+Deploy OKD4 (OpenShift) on Hetzner Cloud using Hashicorp Packer, Terraform and Ansible.
 
 ## Usage
 
@@ -63,8 +63,6 @@ sshKey: ssh-rsa AABBCC... Some_Service_User
 make ignition
 ```
 
-The files `bootstrap.ign`, `master.ign` and `worker.ign` need to be uploaded to an external webserver. Set `TF_VAR_ignition_baseurl` to the webroot of the webserver in the next step.
-
 ### Create cluster manifests
 
 ```
@@ -77,7 +75,6 @@ make manifests
 # terraform variables
 export TF_VAR_dns_domain=okd4.example.com
 export TF_VAR_dns_zone_id=14758f1afd44c09b7992073ccf00b43d
-export TF_VAR_ignition_baseurl=http://ignition.example.tld/ignition
 
 # credentials for hcloud
 export HCLOUD_TOKEN=14758f1afd44c09b7992073ccf00b43d14758f1afd44c09b7992073ccf00b43d
