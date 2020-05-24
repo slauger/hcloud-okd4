@@ -1,0 +1,9 @@
+---
+- name: install and configure haproxy
+  hosts:
+    - haproxy
+  gather_facts: no
+  tasks:
+    - name: install and configure haproxy
+      include_role:
+        name: haproxy
