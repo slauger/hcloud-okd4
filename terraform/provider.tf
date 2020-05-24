@@ -9,3 +9,7 @@ provider "hcloud" {
 provider "template" {
   version = "2.1.2"
 }
+
+provider "local" {
+  version = "1.4.0"
+}
