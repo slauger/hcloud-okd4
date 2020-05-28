@@ -1,4 +1,4 @@
-FROM docker.io/hashicorp/terraform:0.12.25@sha256:682b18382a542d031086133c9f2cddc45f2d3bc287d709c7cff75e6aa847d6f7 AS terraform
+FROM docker.io/hashicorp/terraform:0.12.26@sha256:3a976d808d03f9db3e01e11f6599c58c14f9dd9d227885435d915a4330b49b0e AS terraform
 FROM docker.io/hashicorp/packer:1.5.6@sha256:013754a8f5f8916dbf225192a8c0f2a55bb7b8851e45138c9f00a4bfaaa955b5 AS packer
 FROM docker.io/alpine:3.11@sha256:39eda93d15866957feaee28f8fc5adb545276a64147445c64992ef69804dbf01
 
