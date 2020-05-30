@@ -12,4 +12,3 @@
         src: "../../ignition/bootstrap.ign"
         dest: "/var/www/html/bootstrap.ign"
         mode: 0644
-      
