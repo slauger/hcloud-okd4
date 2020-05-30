@@ -1,4 +1,6 @@
 *.swp
+terraform.tfstate
+terraform.tfstate.backup
 env.sh
 install-config.yaml
 inventory.ini
