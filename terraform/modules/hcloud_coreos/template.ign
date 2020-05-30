@@ -3,11 +3,20 @@
     "config": {
       "merge": [
         {
-          "source": "${ignition_url}",
-          "verification": {}
+          "source": "${ignition_url}"%{ if ignition_cacert == "" },
+          "verification": {}%{ endif }
         }
       ]
-    },
+    },%{ if ignition_cacert != "" }
+    "security": {
+      "tls": {
+        "certificateAuthorities": [
+          {
+            "source": "${ignition_cacert}"
+          }
+        ]
+      }
+    },%{ endif }
     "timeouts": {},
     "version": "3.0.0"
   },

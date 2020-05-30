@@ -34,7 +34,8 @@ module "master" {
   image           = data.hcloud_image.image.id
   server_type     = "cx41"
   subnet          = hcloud_network.network.id
-  ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
+  ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
+  ignition_cacert = local.ignition_master_cacert
 }
 
 module "worker" {
@@ -48,6 +49,7 @@ module "worker" {
   server_type     = "cx41"
   subnet          = hcloud_network.network.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
+  ignition_cacert = local.ignition_worker_cacert
 }
 
 module "haproxy" {

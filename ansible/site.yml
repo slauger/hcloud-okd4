@@ -1,0 +1,4 @@
+---
+- import_playbook: playbooks/setup_ignition.yml
+- import_playbook: playbooks/setup_haproxy.yml
+

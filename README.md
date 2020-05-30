@@ -4,6 +4,14 @@
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud using Hashicorp Packer, Terraform and Ansible.
 
+## Architecture
+
+- 3x Master Node (CX41)
+- 3x Worker Node (CX41)
+- 1x Loadbalancer Node (CX11) - scaling/clustering is on the roadmap
+- 1x Bootstrap Node (CX41) - deleted after cluster bootstrap
+- 1x Ignition Node (CX11) - deleted after cluster bootstrap
+
 ## Usage
 
 ### Build toolbox
@@ -15,7 +23,7 @@ make fetch
 make toolbox
 ```
 
-If you do not want to build the containerby your own, it is also available on [Docker Hub](https://hub.docker.com/repository/docker/cmon2k/openshift-toolbox).
+If you do not want to build the container by your own, it is also available on [Docker Hub](https://hub.docker.com/repository/docker/cmon2k/openshift-toolbox).
 
 ### Run toolbox
 

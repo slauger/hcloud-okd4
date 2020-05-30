@@ -1,7 +1,7 @@
 resource "cloudflare_record" "dns_a_ignition" {
   zone_id = var.dns_zone_id
   name    = "ignition.${var.dns_domain}"
-  value   = module.ignition.internal_ipv4_addresses[0]
+  value   = module.ignition.ipv4_addresses[0]
   type    = "A"
   ttl     = 1
   count   = var.bootstrap == true ? 1 : 0
@@ -61,7 +61,7 @@ resource "cloudflare_record" "dns_srv_etcd" {
     priority = 0
     weight   = 0
     port     = 2380
-    target   = "etcd-${count.index}.${var.dns_domain}.${var.dns_domain}"
+    target   = "etcd-${count.index}.${var.dns_domain}"
   }
 
   count = length(module.master.ipv4_addresses)

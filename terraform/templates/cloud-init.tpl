@@ -5,36 +5,6 @@ package_update: true
 package_upgrade: true
 package_reboot_if_required: true
 
-# install additional packages
-packages:
-  # base packages
-  - curl
-  - vim
-  - screen
-  - lsb-release
-  - wget
-  - gnupg2
-  - locate
-  - figlet
-  - unzip
-  - dmidecode
-  - nload
-  - lsof
-  - nmap
-  - tcpdump
-  - net-tools
-  - htop
-  - whois
-  - strace
-  - ntpdate
-  - dnsutils
-  - mtr-tiny
-  - man-db
-  - command-not-found
-  - apt-transport-https
-  # security
-  - fail2ban
-
 write_files:
   - path: /etc/ssh/sshd_config
     content: |

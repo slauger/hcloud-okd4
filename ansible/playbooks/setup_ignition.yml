@@ -1,0 +1,15 @@
+---
+- name: prepare bootstrap ignition webserver
+  hosts:
+    - ignition
+  gather_facts: no
+  tasks:
+    - name: install apache webserver
+      package:
+        name: apache2
+    - name: upload bootstrap ignition file
+      copy:
+        src: "../../ignition/bootstrap.ign"
+        dest: "/var/www/html/bootstrap.ign"
+        mode: 0644
+      

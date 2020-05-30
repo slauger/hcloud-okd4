@@ -82,7 +82,13 @@ variable "ignition_url" {
   description = "URL to the external ignition webserver"
 }
 
+variable "ignition_cacert" {
+  type        = string
+  description = "CA certificate for the machine config server"
+  default = ""
+}
+
 variable "subnet" {
-  type = string
+  type        = string
   description = "Id of the additional internal network"
 }
