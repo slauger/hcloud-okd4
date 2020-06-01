@@ -2,8 +2,8 @@
 
 # upgrade packages on boot
 package_update: true
-package_upgrade: true
-package_reboot_if_required: true
+package_upgrade: false
+package_reboot_if_required: false
 
 write_files:
   - path: /etc/ssh/sshd_config
