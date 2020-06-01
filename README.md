@@ -130,6 +130,28 @@ make wait_completion
 make infrastructure
 ```
 
+## Hetzner CSI
+
+To install the CSI driver create a secret with your hcloud token first.
+
+```
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hcloud-csi-test
+  namespace: kube-system
+stringData:
+  token: ${HCLOUD_TOKEN}
+EOF
+```
+
+After that just apply the the following manifest.
+
+```
+oc apply -f https://raw.githubusercontent.com/slauger/csi-driver/openshift/deploy/kubernetes/hcloud-csi-openshift.yml
+```
+
 ## Author
 
 - [slauger](https://github.com/slauger)
