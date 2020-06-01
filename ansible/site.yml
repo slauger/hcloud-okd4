@@ -1,4 +1,5 @@
 ---
+- import_playbook: playbooks/wait_for_ssh.yml
 - import_playbook: playbooks/setup_ignition.yml
 - import_playbook: playbooks/setup_haproxy.yml
 
