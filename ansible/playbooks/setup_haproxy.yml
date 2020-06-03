@@ -16,7 +16,7 @@
             ethernets:
               eth0:
                 addresses:
-                  - 116.202.182.214/32
+                  - "{{ floating_ip }}/32"
                 set-name: eth0
     - name: activate floating ip for instance
       shell: netplan apply
