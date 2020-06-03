@@ -6,6 +6,7 @@ data "template_file" "ansible_inventory" {
         haproxy_nodes      = join("\n", module.haproxy.server_names)
         master_nodes       = join("\n", module.master.server_names)
         worker_nodes       = join("\n", module.worker.server_names)
+        floating_ip        = hcloud_floating_ip.floating_ip.ip_address
     }
 }
 

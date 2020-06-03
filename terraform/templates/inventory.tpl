@@ -9,6 +9,9 @@ ${bootstrap_node}
 [haproxy]
 ${haproxy_nodes}
 
+[haproxy:vars]
+floating_ip=${floating_ip}
+
 [master]
 ${master_nodes}
 
