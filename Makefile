@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := build
 
-OPENSHIFT_RELEASE=4.4.0-0.okd-2020-04-21-163702-beta4
+OPENSHIFT_RELEASE=4.4.0-0.okd-2020-05-23-055148-beta5
 FCOS_STREAM=stable
-FCOS_RELEASE=31.20200310.3.0
+FCOS_RELEASE=31.20200505.3.0
 
 CONTAINER_NAME=docker.io/cmon2k/openshift-toolbox
 CONTAINER_TAG=$(OPENSHIFT_RELEASE)
@@ -26,7 +26,7 @@ push:
 	docker push $(CONTAINER_NAME):$(CONTAINER_TAG)
 
 run:
-	docker run -it -v $(PWD):/workspace $(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
+	docker run -it --hostname openshift-toolbox --mount type=bind,source="$(shell pwd)",target=/workspace --mount type=bind,source="$(HOME)/.ssh,target=/root/.ssh" $(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
 
 ignition:
 	mkdir ignition
@@ -59,4 +59,8 @@ infrastructure:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
 	@if [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
 	@if [ -z "$(CLOUDFLARE_API_KEY)" ]; then echo "ERROR: CLOUDFLARE_API_KEY is not set"; exit 1; fi
-	cd terraform && terraform init && terraform apply -var bootstrap=$(BOOTSTRAP)
+	(cd terraform && terraform init && terraform apply -var bootstrap=$(BOOTSTRAP))
+	(cd ansible && ansible-playbook site.yml)
+
+destroy:
+	cd terraform && terraform destroy

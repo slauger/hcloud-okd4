@@ -12,6 +12,7 @@ RUN apk update && \
       ca-certificates \
       openssh-client \
       openssl \
+      ansible \
       make \
       libc6-compat \
       apache2-utils

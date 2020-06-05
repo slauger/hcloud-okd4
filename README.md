@@ -2,7 +2,15 @@
 
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud with Cloudflare Loadbalancing using Hashicorp Packer and Terraform.
+Deploy OKD4 (OpenShift) on Hetzner Cloud using Hashicorp Packer, Terraform and Ansible.
+
+## Architecture
+
+- 3x Master Node (CX41)
+- 3x Worker Node (CX41)
+- 1x Loadbalancer Node (CX11) - scaling/clustering is on the roadmap
+- 1x Bootstrap Node (CX41) - deleted after cluster bootstrap
+- 1x Ignition Node (CX11) - deleted after cluster bootstrap
 
 ## Usage
 
@@ -12,10 +20,10 @@ To ensure that the we have a proper build environment, we create a toolbox conta
 
 ```
 make fetch
-make toolbox
+make build
 ```
 
-If you do not want to build the containerby your own, it is also available on [Docker Hub](https://hub.docker.com/repository/docker/cmon2k/openshift-toolbox).
+If you do not want to build the container by your own, it is also available on [Docker Hub](https://hub.docker.com/repository/docker/cmon2k/openshift-toolbox).
 
 ### Run toolbox
 
@@ -63,8 +71,6 @@ sshKey: ssh-rsa AABBCC... Some_Service_User
 make ignition
 ```
 
-The files `bootstrap.ign`, `master.ign` and `worker.ign` need to be uploaded to an external webserver. Set `TF_VAR_ignition_baseurl` to the webroot of the webserver in the next step.
-
 ### Create cluster manifests
 
 ```
@@ -77,7 +83,6 @@ make manifests
 # terraform variables
 export TF_VAR_dns_domain=okd4.example.com
 export TF_VAR_dns_zone_id=14758f1afd44c09b7992073ccf00b43d
-export TF_VAR_ignition_baseurl=http://ignition.example.tld/ignition
 
 # credentials for hcloud
 export HCLOUD_TOKEN=14758f1afd44c09b7992073ccf00b43d14758f1afd44c09b7992073ccf00b43d
@@ -123,6 +128,28 @@ make wait_completion
 
 ```
 make infrastructure
+```
+
+## Hetzner CSI
+
+To install the CSI driver create a secret with your hcloud token first.
+
+```
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hcloud-csi-test
+  namespace: kube-system
+stringData:
+  token: ${HCLOUD_TOKEN}
+EOF
+```
+
+After that just apply the the following manifest.
+
+```
+oc apply -f https://raw.githubusercontent.com/slauger/csi-driver/openshift/deploy/kubernetes/hcloud-csi-openshift.yml
 ```
 
 ## Author

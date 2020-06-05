@@ -5,30 +5,12 @@ resource "hcloud_server" "server" {
   server_type = var.server_type
   keep_disk   = var.keep_disk
   ssh_keys    = var.ssh_keys
-  user_data   = var.user_data
+  user_data   = data.template_file.ignition_config[count.index].rendered
   location    = var.location
   backups     = var.backups
-  lifecycle {
-    ignore_changes = [user_data, image]
-  }
-}
-
-resource "cloudflare_record" "dns-a" {
-  count   = var.instance_count
-  zone_id = var.dns_zone_id
-  name    = element(hcloud_server.server.*.name, count.index)
-  value   = element(hcloud_server.server.*.ipv4_address, count.index)
-  type    = "A"
-  ttl     = 1
-}
-
-resource "cloudflare_record" "dns-aaaa" {
-  count   = var.instance_count
-  zone_id = var.dns_zone_id
-  name    = element(hcloud_server.server.*.name, count.index)
-  value   = "${element(hcloud_server.server.*.ipv6_address, count.index)}1"
-  type    = "AAAA"
-  ttl     = 1
+#  lifecycle {
+#    ignore_changes = [user_data, image]
+#  }
 }
 
 resource "hcloud_rdns" "dns-ptr-ipv4" {

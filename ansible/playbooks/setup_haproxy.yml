@@ -1,0 +1,22 @@
+---
+- name: install and configure haproxy
+  hosts:
+    - haproxy
+  gather_facts: no
+  tasks:
+    - name: install and configure haproxy
+      include_role:
+        name: haproxy
+    - name: configure floating ip via netplan
+      copy:
+        dest: /etc/netplan/99-floating-ip.yaml
+        content: |
+          network:
+            version: 2
+            ethernets:
+              eth0:
+                addresses:
+                  - "{{ floating_ip }}/32"
+                set-name: eth0
+    - name: activate floating ip for instance
+      shell: netplan apply
