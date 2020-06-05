@@ -139,7 +139,7 @@ cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
-  name: hcloud-csi-test
+  name: hcloud-csi
   namespace: kube-system
 stringData:
   token: ${HCLOUD_TOKEN}
