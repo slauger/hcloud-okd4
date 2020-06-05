@@ -20,7 +20,7 @@ To ensure that the we have a proper build environment, we create a toolbox conta
 
 ```
 make fetch
-make toolbox
+make build
 ```
 
 If you do not want to build the container by your own, it is also available on [Docker Hub](https://hub.docker.com/repository/docker/cmon2k/openshift-toolbox).
