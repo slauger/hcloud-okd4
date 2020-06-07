@@ -52,16 +52,18 @@ resource "cloudflare_record" "dns_a_etcd" {
 resource "cloudflare_record" "dns_srv_etcd" {
   zone_id = var.dns_zone_id
   name    = "_etcd-server-ssl._tcp.${var.dns_domain}"
+  value   = "0\t2380\tetcd-${count.index}.${var.dns_domain}"
   type    = "SRV"
 
-  data = {
-    service  = "_etcd-server-ssl"
-    proto    = "_tcp"
-    priority = 0
-    weight   = 0
-    port     = 2380
-    target   = "etcd-${count.index}.${var.dns_domain}"
-  }
+  #data = {
+  #  #name      = "${var.dns_domain}."
+  #  service  = "_etcd-server-ssl"
+  #  proto    = "_tcp"
+  #  priority = 0
+  #  weight   = 0
+  #  port     = 2380
+  #  target   = "etcd-${count.index}.${var.dns_domain}"
+  #}
 
   count = length(module.master.ipv4_addresses)
 }
