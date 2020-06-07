@@ -1,9 +1,9 @@
 data "local_file" "ignition_master_file" {
-    filename = "${path.root}/../ignition/master.ign"
+  filename = "${path.root}/../ignition/master.ign"
 }
 
 data "local_file" "ignition_worker_file" {
-    filename = "${path.root}/../ignition/worker.ign"
+  filename = "${path.root}/../ignition/worker.ign"
 }
 
 locals {

@@ -42,7 +42,7 @@ resource "cloudflare_record" "dns_a_apps_wc" {
 resource "cloudflare_record" "dns_a_etcd" {
   zone_id = var.dns_zone_id
   name    = "etcd-${count.index}.${var.dns_domain}"
-  value   = module.master.ipv4_addresses[count.index]
+  value   = module.master.internal_ipv4_addresses[count.index]
   type    = "A"
   ttl     = 1
 

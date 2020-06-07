@@ -4,11 +4,23 @@
     - ignition
   gather_facts: no
   tasks:
-    - name: install apache webserver
-      package:
-        name: apache2
+    - name: ensure that directories are present
+      file:
+        state: directory
+        path: "{{ item }}"
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - "/var/www"
+        - "/var/www/html"
     - name: upload bootstrap ignition file
       copy:
         src: "../../ignition/bootstrap.ign"
         dest: "/var/www/html/bootstrap.ign"
+        owner: root
+        group: root
         mode: 0644
+    - name: install apache webserver
+      package:
+        name: apache2
