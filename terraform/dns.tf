@@ -55,15 +55,9 @@ resource "cloudflare_record" "dns_srv_etcd" {
   value   = "0\t2380\tetcd-${count.index}.${var.dns_domain}"
   type    = "SRV"
 
-  #data = {
-  #  #name      = "${var.dns_domain}."
-  #  service  = "_etcd-server-ssl"
-  #  proto    = "_tcp"
-  #  priority = 0
-  #  weight   = 0
-  #  port     = 2380
-  #  target   = "etcd-${count.index}.${var.dns_domain}"
-  #}
+  lifecycle {
+    ignore_changes = [data]
+  }
 
   count = length(module.master.ipv4_addresses)
 }
