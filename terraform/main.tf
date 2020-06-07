@@ -1,11 +1,11 @@
 module "ignition" {
   source         = "./modules/hcloud_instance"
-  instance_count  = var.bootstrap == true ? 1 : 0
+  instance_count = var.bootstrap == true ? 1 : 0
   name           = "ignition"
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
   image          = "ubuntu-20.04"
-  user_data       = file("templates/cloud-init.tpl")
+  user_data      = file("templates/cloud-init.tpl")
   ssh_keys       = data.hcloud_ssh_keys.all_keys.ssh_keys.*.name
   server_type    = "cx11"
   subnet         = hcloud_network.network.id
@@ -59,7 +59,7 @@ module "haproxy" {
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
   image          = "ubuntu-20.04"
-  user_data       = file("templates/cloud-init.tpl")
+  user_data      = file("templates/cloud-init.tpl")
   ssh_keys       = data.hcloud_ssh_keys.all_keys.ssh_keys.*.name
   server_type    = "cx11"
   subnet         = hcloud_network.network.id
