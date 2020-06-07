@@ -21,7 +21,7 @@ module "bootstrap" {
   image           = data.hcloud_image.image.id
   server_type     = "cx41"
   subnet          = hcloud_network.network.id
-  ignition_url    = "http://ignition.${var.dns_domain}/bootstrap.ign"
+  ignition_url    = "http://${cloudflare_record.dns_a_ignition.name}/bootstrap.ign"
 }
 
 module "master" {
