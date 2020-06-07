@@ -60,7 +60,7 @@ infrastructure:
 	@if [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
 	@if [ -z "$(CLOUDFLARE_API_KEY)" ]; then echo "ERROR: CLOUDFLARE_API_KEY is not set"; exit 1; fi
 	(cd terraform && terraform init && terraform apply -var bootstrap=$(BOOTSTRAP))
-	(cd ansible && ansible-playbook site.yml)
+	(cd ansible && ansible-playbook site.yml -vv)
 
 destroy:
 	cd terraform && terraform destroy
