@@ -57,7 +57,6 @@ resource "cloudflare_record" "dns_srv_etcd" {
   data = {
     service  = "_etcd-server-ssl"
     proto    = "_tcp"
-    name     = "_etcd-server-ssl._tcp.${var.dns_domain}"
     priority = 0
     weight   = 0
     port     = 2380
