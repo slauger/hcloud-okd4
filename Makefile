@@ -28,16 +28,14 @@ push:
 run:
 	docker run -it --hostname openshift-toolbox --mount type=bind,source="$(shell pwd)",target=/workspace --mount type=bind,source="$(HOME)/.ssh,target=/root/.ssh" $(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
 
-ignition:
-	mkdir ignition
-	cp install-config.yaml ignition/install-config.yaml
-	openshift-install create ignition-configs --dir=ignition
-
-manifests:
+generate_manifests:
 	mkdir config
 	cp install-config.yaml config/install-config.yaml
 	openshift-install create manifests --dir=config
-	cp -r ignition/auth config/auth
+
+generate_ignition:
+	rsync -av config/ ignition
+	openshift-install create ignition-configs --dir=ignition
 
 hcloud_image:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
