@@ -14,6 +14,8 @@ RUN apk update && \
       openssl \
       ansible \
       make \
+      rsync \
+      git \
       libc6-compat \
       apache2-utils
 
