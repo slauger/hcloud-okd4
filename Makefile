@@ -61,4 +61,4 @@ infrastructure:
 	(cd ansible && ansible-playbook site.yml)
 
 destroy:
-	cd terraform && terraform destroy
+	(cd terraform && terraform init && terraform destroy)
