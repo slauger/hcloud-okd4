@@ -17,7 +17,9 @@ RUN apk update && \
       rsync \
       git \
       libc6-compat \
-      apache2-utils
+      apache2-utils \
+      python3 \
+      py3-pip
 
 # OpenShift Installer
 COPY openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz .
