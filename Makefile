@@ -46,10 +46,10 @@ sign_csr:
 	bash -c "export KUBECONFIG=$(shell pwd)/ignition/auth/kubeconfig; oc get csr -o name | xargs oc adm certificate approve || true"
 
 wait_bootstrap:
-	openshift-install --dir=config/ wait-for bootstrap-complete --log-level=debug
+	openshift-install --dir=ignition/ wait-for bootstrap-complete --log-level=debug
 
 wait_completion:
-	openshift-install --dir=config/ wait-for install-complete --log-level=debug
+	openshift-install --dir=ignition/ wait-for install-complete --log-level=debug
 
 infrastructure:
 	@if [ -z "$(TF_VAR_dns_domain)" ]; then echo "ERROR: TF_VAR_dns_domain is not set"; exit 1; fi
