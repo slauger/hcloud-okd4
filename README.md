@@ -65,16 +65,16 @@ pullSecret: '{"auths":{"none":{"auth": "none"}}}'
 sshKey: ssh-rsa AABBCC... Some_Service_User
 ```
 
-### Create ignition config
-
-```
-make ignition
-```
-
 ### Create cluster manifests
 
 ```
-make manifests
+make generate_manifests
+```
+
+### Create ignition config
+
+```
+make generate_ignition
 ```
 
 ### Set required environment variables
@@ -112,17 +112,23 @@ make infrastructure BOOTSTRAP=true
 make wait_bootstrap
 ```
 
-### Sign all CSRs
-
-```
-make sign_csr
-```
-
 ### Finish the installation process
 
 ```
 make wait_completion
 ```
+
+### Sign Worker CSRs
+
+CSRs of the master nodes get signed by the bootstrap node automaticaly during the cluster bootstrap. CSRs from worker nodes must be signed manually.
+
+```
+make sign_csr
+sleep 60
+make sign_csr
+```
+
+This step is not necessary if you set `replicas_worker` to zero.
 
 ### Cleanup bootstrap node
 
