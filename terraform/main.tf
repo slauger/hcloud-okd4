@@ -28,7 +28,7 @@ module "bootstrap" {
 
 module "master" {
   source          = "./modules/hcloud_coreos"
-  instance_count  = 0 # var.replicas_master
+  instance_count  = var.replicas_master
   location        = var.location
   name            = "master"
   dns_domain      = var.dns_domain
@@ -43,7 +43,7 @@ module "master" {
 
 module "worker" {
   source          = "./modules/hcloud_coreos"
-  instance_count  = 0 # var.replicas_worker
+  instance_count  = var.replicas_worker
   location        = var.location
   name            = "worker"
   dns_domain      = var.dns_domain
