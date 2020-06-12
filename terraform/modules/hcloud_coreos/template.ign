@@ -20,7 +20,14 @@
     "timeouts": {},
     "version": "3.0.0"
   },
-  "networkd": {},
+  "networkd": {
+    "units": [
+      {
+        "name": "00-dns.network",
+        "contents": "[Match]\nName=eth*\n\n[Network]DHCP=ipv4\nDNS=1.1.1.1\n\n[DHCP]UseDNS=false"
+      }
+    ]
+  },
   "passwd": {},
   "storage": {
     "files": [
