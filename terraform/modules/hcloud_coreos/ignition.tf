@@ -1,11 +1,12 @@
 data "template_file" "network_cfg_eth0" {
-  template = file("${path.module}/network.conf")
+  template = file("${path.module}/network.cfg")
   interface = "eth0"
   bootproto = "dhcp"
   peerdns = "yes"
 }
 
 data "template_file" "network_cfg_eth1" {
+  template = file("${path.module}/network.cfg")
   interface = "eth1"
   bootproto = "dhcp"
   peerdns = "no"
