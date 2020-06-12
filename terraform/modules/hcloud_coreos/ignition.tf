@@ -19,8 +19,8 @@ data "template_file" "ignition_config" {
     hostname_b64     = base64encode("${format("${var.name}%02d", count.index + 1)}.${var.dns_domain}")
     ignition_url     = var.ignition_url
     ignition_cacert  = var.ignition_cacert
-    network_cfg_eth0 = template_file.network_cfg_eth0.rendered
-    network_cfg_eth1 = template_file.network_cfg_eth1.rendered
+    network_cfg_eth0 = base64encode(data.template_file.network_cfg_eth0.rendered)
+    network_cfg_eth1 = base64encode(data.template_file.network_cfg_eth1.rendered)
   }
   count = var.instance_count
 }
