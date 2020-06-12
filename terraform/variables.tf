@@ -58,3 +58,9 @@ variable "subnet_cidr" {
   description = "CIDR for the subnet"
   default     = "192.168.254.0/24"
 }
+
+variable "location" {
+  type        = string
+  description = "Region"
+  default     = "fsn1"
+}
