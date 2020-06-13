@@ -8,9 +8,9 @@ resource "hcloud_server" "server" {
   user_data   = data.template_file.ignition_config[count.index].rendered
   location    = var.location
   backups     = var.backups
-#  lifecycle {
-#    ignore_changes = [user_data, image]
-#  }
+  #  lifecycle {
+  #    ignore_changes = [user_data, image]
+  #  }
 }
 
 resource "hcloud_rdns" "dns-ptr-ipv4" {

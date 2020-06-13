@@ -85,7 +85,7 @@ variable "ignition_url" {
 variable "ignition_cacert" {
   type        = string
   description = "CA certificate for the machine config server"
-  default = ""
+  default     = ""
 }
 
 variable "subnet" {
