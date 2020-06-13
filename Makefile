@@ -8,6 +8,7 @@ CONTAINER_NAME=docker.io/cmon2k/openshift-toolbox
 CONTAINER_TAG=$(OPENSHIFT_RELEASE)
 
 BOOTSTRAP=false
+MODE=apply
 
 print_version:
 	@echo $(OPENSHIFT_RELEASE)
@@ -57,8 +58,8 @@ infrastructure:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
 	@if [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
 	@if [ -z "$(CLOUDFLARE_API_KEY)" ]; then echo "ERROR: CLOUDFLARE_API_KEY is not set"; exit 1; fi
-	(cd terraform && terraform init && terraform apply -var bootstrap=$(BOOTSTRAP))
-	(cd ansible && ansible-playbook site.yml -vv)
+	(cd terraform && terraform init && terraform $(MODE) -var bootstrap=$(BOOTSTRAP))
+	if [ "$(MODE)" == "apply" ]; then (cd ansible && ansible-playbook site.yml); fi
 
 destroy:
 	(cd terraform && terraform init && terraform destroy)
