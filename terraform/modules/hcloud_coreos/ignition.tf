@@ -11,7 +11,7 @@ data "template_file" "ignition_config" {
   vars = {
     ignition_url     = var.ignition_url
     ignition_cacert  = var.ignition_cacert
-    configure_script = base64encode(data.template_file.configure_sh.rendered)
+    configure_script = base64encode(data.template_file.configure_script.rendered)
   }
   count = var.instance_count
 }
