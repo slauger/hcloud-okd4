@@ -4,6 +4,7 @@ data "template_file" "configure_script" {
     hostname = "${format("${var.name}%02d", count.index + 1)}.${var.dns_domain}"
     domain   = "${var.dns_domain}"
   }
+  count = var.instance_count
 }
 
 data "template_file" "ignition_config" {
@@ -11,7 +12,7 @@ data "template_file" "ignition_config" {
   vars = {
     ignition_url     = var.ignition_url
     ignition_cacert  = var.ignition_cacert
-    configure_script = base64encode(data.template_file.configure_script.rendered)
+    configure_script = base64encode(data.template_file.configure_script[count.index].rendered)
   }
   count = var.instance_count
 }
