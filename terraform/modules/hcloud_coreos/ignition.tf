@@ -59,7 +59,7 @@ data "template_file" "networkmanager_cfg_eth1" {
 #}
 
 data "template_file" "ignition_config" {
-  template = file("${path.module}/template.ign")
+  template = file("${path.module}/templates/ignition.ign")
   vars = {
     ignition_url     = var.ignition_url
     ignition_cacert  = var.ignition_cacert
