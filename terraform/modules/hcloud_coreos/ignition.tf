@@ -20,6 +20,7 @@ data "template_file" "network_cfg_eth1" {
   template = file("${path.module}/templates/network.cfg")
   vars = {
     interface = "eth1"
+    bootproto = "dhcp"
     peerdns = "no"
   }
 }
