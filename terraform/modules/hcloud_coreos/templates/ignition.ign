@@ -56,6 +56,28 @@
           "verification": {}
         },
         "mode": 420
+      },
+      {
+        "filesystem": "root",
+        "group": {},
+        "path": "/etc/NetworkManager/system-connections/Wired connection 1.nmconnection",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,${networkmanager_cfg_eth0}",
+          "verification": {}
+        },
+        "mode": 420
+      },
+      {
+        "filesystem": "root",
+        "group": {},
+        "path": "/etc/NetworkManager/system-connections/Wired connection 2.nmconnection",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,${networkmanager_cfg_eth1}",
+          "verification": {}
+        },
+        "mode": 420
       }
     ]
   },

@@ -28,9 +28,10 @@ data "template_file" "network_cfg_eth1" {
 data "template_file" "networkmanager_cfg_eth0" {
   template = file("${path.module}/templates/networkmanager.cfg")
   vars = {
-    uuid = random_uuid.eth0.result
+    name = "Wired connection 1"
+    uuid = random_uuid.eth0[count.index].result
     interface = "eth0"
-    dnssearch = var.dns_domain
+    domain = var.dns_domain
   }
   count = var.instance_count
 }
@@ -39,9 +40,10 @@ data "template_file" "networkmanager_cfg_eth0" {
 data "template_file" "networkmanager_cfg_eth1" {
   template = file("${path.module}/templates/networkmanager.cfg")
   vars = {
-    uuid = random_uuid.eth0.result
+    name = "Wired connection 2"
+    uuid = random_uuid.eth1[count.index].result
     interface = "eth1"
-    dnssearch = var.dns_domain
+    domain = var.dns_domain
   }
   count = var.instance_count
 }
