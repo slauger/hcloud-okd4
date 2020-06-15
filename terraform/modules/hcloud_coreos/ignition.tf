@@ -9,7 +9,7 @@ resource "random_uuid" "eth1" {
 data "template_file" "network_cfg_eth0" {
   template = file("${path.module}/templates/network.cfg")
   vars = {
-    interface = "eth0"
+    interface = var.image_name == "fcos" ? "eth0" : "ens3"
     bootproto = "dhcp"
     peerdns = "yes"
   }
@@ -19,7 +19,7 @@ data "template_file" "network_cfg_eth0" {
 data "template_file" "network_cfg_eth1" {
   template = file("${path.module}/templates/network.cfg")
   vars = {
-    interface = "eth1"
+    interface = var.image_name == "fcos" ? "eth1" : "ens10"
     bootproto = "dhcp"
     peerdns = "no"
   }
@@ -31,7 +31,7 @@ data "template_file" "networkmanager_cfg_eth0" {
   vars = {
     name = "Wired connection 1"
     uuid = random_uuid.eth0[count.index].result
-    interface = "eth0"
+    interface = var.image_name == "fcos" ? "eth0" : "ens3"
     domain = var.dns_domain
   }
   count = var.instance_count
@@ -43,7 +43,7 @@ data "template_file" "networkmanager_cfg_eth1" {
   vars = {
     name = "Wired connection 2"
     uuid = random_uuid.eth1[count.index].result
-    interface = "eth1"
+    interface = var.image_name == "fcos" ? "eth1" : "ens10"
     domain = var.dns_domain
   }
   count = var.instance_count
