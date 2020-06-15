@@ -1,7 +1,7 @@
 {
   "variables": {
     "location": "nbg1",
-    "server_type": "cx11",
+    "server_type": "cx31",
     "snapshot_prefix": "rhcos",
     "image_type": "generic",
     "ignition_config": "config-2.2.0.ign"
@@ -20,7 +20,7 @@
         "image_type": "{{user `image_type`}}",
         "fcos_stream": "{{user `fcos_stream`}}",
         "rhcos_release": "{{user `rhcos_release`}}",
-        "rhcos_release_minor": "{{split (user `rhcos_release`) \".\" 0}}.{{split (user `rhcos_release`) \".\" 1}}"
+        "rhcos_release_minor": "{{user `rhcos_release_minor`}}"
       }
     }
   ],
@@ -30,9 +30,9 @@
       "inline": [
         "set -x",
         "mkdir /source",
-        "mount -t tmpfs -o size=2G none /source",
+        "mount -t tmpfs -o size=4G none /source",
         "cd /source",
-        "curl -sfL https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{user `rhcos_release_minor`}}/latest/rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2.gz",
+        "curl -sfOL https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{user `rhcos_release_minor`}}/latest/rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2.gz",
         "gzip -d rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2.gz",
         "qemu-img convert rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
