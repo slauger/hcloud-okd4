@@ -62,7 +62,7 @@ variable "subnet_cidr" {
 variable "location" {
   type        = string
   description = "Region"
-  default     = "fsn1"
+  default     = "hel1"
 }
 
 variable "image" {
