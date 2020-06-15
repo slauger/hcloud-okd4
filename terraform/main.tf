@@ -8,7 +8,7 @@ module "ignition" {
   image          = "ubuntu-20.04"
   user_data      = file("templates/cloud-init.tpl")
   ssh_keys       = data.hcloud_ssh_keys.all_keys.ssh_keys.*.name
-  server_type    = "cx11"
+  server_type    = "cpx11"
   subnet         = hcloud_network.network.id
 }
 
@@ -21,7 +21,7 @@ module "bootstrap" {
   dns_zone_id     = var.dns_zone_id
   dns_internal_ip = true
   image           = data.hcloud_image.image.id
-  server_type     = "cx41"
+  server_type     = "cpx41"
   subnet          = hcloud_network.network.id
   ignition_url    = var.bootstrap == true ? "http://${cloudflare_record.dns_a_ignition[0].name}/bootstrap.ign" : ""
   ignition_version = var.image == "fcos" ? "3.0.0" : "2.2.0"
@@ -36,7 +36,7 @@ module "master" {
   dns_zone_id     = var.dns_zone_id
   dns_internal_ip = true
   image           = data.hcloud_image.image.id
-  server_type     = "cx41"
+  server_type     = "cpx41"
   subnet          = hcloud_network.network.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
@@ -52,7 +52,7 @@ module "worker" {
   dns_zone_id     = var.dns_zone_id
   dns_internal_ip = true
   image           = data.hcloud_image.image.id
-  server_type     = "cx41"
+  server_type     = "cpx41"
   subnet          = hcloud_network.network.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
@@ -69,6 +69,6 @@ module "haproxy" {
   image          = "ubuntu-20.04"
   user_data      = file("templates/cloud-init.tpl")
   ssh_keys       = data.hcloud_ssh_keys.all_keys.ssh_keys.*.name
-  server_type    = "cx11"
+  server_type    = "cpx11"
   subnet         = hcloud_network.network.id
 }
