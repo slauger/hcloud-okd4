@@ -4,7 +4,6 @@ install-config.yaml
 inventory.ini
 config
 ignition
-packer/*.ign
 terraform/.terraform
 terraform/.terraform*
 terraform/terraform.tfstate
