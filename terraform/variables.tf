@@ -64,3 +64,9 @@ variable "location" {
   description = "Region"
   default     = "fsn1"
 }
+
+variable "image" {
+  type = string
+  description = "Image selector (either fcos or rhcos)"
+  default = "fcos"
+}
