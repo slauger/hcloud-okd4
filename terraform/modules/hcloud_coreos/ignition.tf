@@ -65,6 +65,7 @@ data "template_file" "ignition_config" {
     hostname         = "${format("${var.name}%02d", count.index + 1)}.${var.dns_domain}"
     hostname_b64     = base64encode("${format("${var.name}%02d", count.index + 1)}.${var.dns_domain}")
     ignition_url     = var.ignition_url
+    ignition_version = var.ignition_version
     ignition_cacert  = var.ignition_cacert
     #configure_script = base64encode(data.template_file.configure_script[count.index].rendered)
     network_cfg_eth0 = base64encode(data.template_file.network_cfg_eth0.rendered)

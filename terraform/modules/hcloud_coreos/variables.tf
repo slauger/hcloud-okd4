@@ -92,3 +92,9 @@ variable "subnet" {
   type        = string
   description = "Id of the additional internal network"
 }
+
+variable "ignition_version" {
+  type        = string
+  description = "Ignition Version"
+  default     = "3.0.0"
+}

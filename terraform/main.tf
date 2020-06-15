@@ -24,6 +24,7 @@ module "bootstrap" {
   server_type     = "cx41"
   subnet          = hcloud_network.network.id
   ignition_url    = var.bootstrap == true ? "http://${cloudflare_record.dns_a_ignition[0].name}/bootstrap.ign" : ""
+  ignition_version = var.image == 'fcos' ? '3.0.0' : '2.2.0'
 }
 
 module "master" {
@@ -39,6 +40,7 @@ module "master" {
   subnet          = hcloud_network.network.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
+  ignition_version = var.image == 'fcos' ? '3.0.0' : '2.2.0'
 }
 
 module "worker" {
@@ -54,6 +56,7 @@ module "worker" {
   subnet          = hcloud_network.network.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
+  ignition_version = var.image == 'fcos' ? '3.0.0' : '2.2.0'
 }
 
 module "haproxy" {
