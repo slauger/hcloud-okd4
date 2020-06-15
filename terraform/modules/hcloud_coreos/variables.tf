@@ -93,6 +93,12 @@ variable "subnet" {
   description = "Id of the additional internal network"
 }
 
+variable "image_name" {
+  type = string
+  description = "Either fcos or rhcos (necessary for ignition rendering)"
+  default = "fcos"
+}
+
 variable "ignition_version" {
   type        = string
   description = "Ignition Version"
