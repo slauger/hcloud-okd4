@@ -33,6 +33,7 @@ data "template_file" "networkmanager_cfg_eth0" {
     uuid = random_uuid.eth0[count.index].result
     interface = var.image_name == "fcos" ? "eth0" : "ens3"
     domain = var.dns_domain
+    defroute = "yes"
   }
   count = var.instance_count
 }
@@ -45,6 +46,7 @@ data "template_file" "networkmanager_cfg_eth1" {
     uuid = random_uuid.eth1[count.index].result
     interface = var.image_name == "fcos" ? "eth1" : "ens10"
     domain = var.dns_domain
+    defroute = "no"
   }
   count = var.instance_count
 }
