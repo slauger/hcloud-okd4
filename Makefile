@@ -65,8 +65,8 @@ generate_ignition:
 
 hcloud_image:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	if [ "$(FLAVOR)" = "okd" ]; then (cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) hcloud-fcos.json); fi
-	if [ "$(FLAVOR)" = "ocp" ]; then (cd packer && packer build -var rhcos_release=$(RHCOS_RELEASE) -var rhcos_release_minor=$(RHCOS_RELEASE_MINOR) hcloud-rhcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" = "okd" ]; then (cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) hcloud-fcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" = "ocp" ]; then (cd packer && packer build -var rhcos_release=$(RHCOS_RELEASE) -var rhcos_release_minor=$(RHCOS_RELEASE_MINOR) hcloud-rhcos.json); fi
 
 sign_csr:
 	@if [ ! -f "ignition/auth/kubeconfig" ]; then echo "ERROR: ignition/auth/kubeconfig not found"; exit 1; fi
