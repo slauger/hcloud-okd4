@@ -21,6 +21,7 @@ module "bootstrap" {
   dns_zone_id     = var.dns_zone_id
   dns_internal_ip = true
   image           = data.hcloud_image.image.id
+  image_name      = var.image
   server_type     = "cx41"
   subnet          = hcloud_network.network.id
   ignition_url    = var.bootstrap == true ? "http://${cloudflare_record.dns_a_ignition[0].name}/bootstrap.ign" : ""
@@ -36,6 +37,7 @@ module "master" {
   dns_zone_id     = var.dns_zone_id
   dns_internal_ip = true
   image           = data.hcloud_image.image.id
+  image_name      = var.image
   server_type     = "cx41"
   subnet          = hcloud_network.network.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
@@ -52,6 +54,7 @@ module "worker" {
   dns_zone_id     = var.dns_zone_id
   dns_internal_ip = true
   image           = data.hcloud_image.image.id
+  image_name      = var.image
   server_type     = "cx41"
   subnet          = hcloud_network.network.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
