@@ -3,7 +3,7 @@ provider "cloudflare" {
 }
 
 provider "hcloud" {
-  version = "1.15.0"
+  version = "1.17.0"
 }
 
 provider "template" {
