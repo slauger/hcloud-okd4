@@ -13,3 +13,7 @@ provider "template" {
 provider "local" {
   version = "1.4.0"
 }
+
+provider "random" {
+  version = "2.2.1"
+}
