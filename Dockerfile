@@ -38,7 +38,6 @@ RUN tar vxzf openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz openshift-insta
 # External tools
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform
 COPY --from=packer /bin/packer /usr/local/bin/packer
-COPY --from=helm /usr/bin/helm /usr/local/bin/helm
 
 # Create workspace
 RUN mkdir /workspace
