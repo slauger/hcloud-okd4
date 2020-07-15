@@ -10,6 +10,3 @@ output "master" {
 output "worker" {
   value = module.worker
 }
-output "haproxy" {
-  value = module.haproxy
-}

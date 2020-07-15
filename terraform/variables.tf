@@ -1,19 +1,13 @@
 variable "replicas_master" {
   type        = number
-  default     = 3
+  default     = 1
   description = "Count of master replicas"
 }
 
 variable "replicas_worker" {
   type        = number
-  default     = 3
+  default     = 0
   description = "Count of worker replicas"
-}
-
-variable "replicas_haproxy" {
-  type        = number
-  default     = 1
-  description = "Count of haproxy replicas"
 }
 
 variable "bootstrap" {
@@ -59,6 +53,12 @@ variable "subnet_cidr" {
   default     = "192.168.254.0/24"
 }
 
+variable "lb_subnet_cidr" {
+  type        = string
+  description = "CIDR for the loadbalancer subnet"
+  default     = "192.168.253.0/24"
+}
+
 variable "location" {
   type        = string
   description = "Region"
@@ -66,7 +66,7 @@ variable "location" {
 }
 
 variable "image" {
-  type = string
+  type        = string
   description = "Image selector (either fcos or rhcos)"
-  default = "fcos"
+  default     = "fcos"
 }

@@ -1,9 +1,9 @@
 provider "cloudflare" {
-  version = "2.3.0"
+  version = "2.8.0"
 }
 
 provider "hcloud" {
-  version = "1.15.0"
+  version = "1.19.0"
 }
 
 provider "template" {
@@ -15,5 +15,5 @@ provider "local" {
 }
 
 provider "random" {
-  version = "2.2.1"
+  version = "2.3.0"
 }
