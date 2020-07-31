@@ -166,6 +166,17 @@ After that just apply the the following manifest.
 oc apply -f https://raw.githubusercontent.com/slauger/csi-driver/openshift/deploy/kubernetes/hcloud-csi-openshift.yml
 ```
 
+## Deployment of OCP
+
+It's also possible OCP (with RedHat CoreOS) instead of OKD. Just add the suffix `DEPLOYMENT_TYPE=ocp` to each `make` command. For example:
+
+```
+make fetch DEPLOYMENT_TYPE=ocp
+make fetch DEPLOYMENT_TYPE=ocp
+```
+
+Besides that a RedHat OpenShift pull secret is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
+
 ## Author
 
 - [slauger](https://github.com/slauger)
