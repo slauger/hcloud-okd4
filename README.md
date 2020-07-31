@@ -120,6 +120,12 @@ make infrastructure BOOTSTRAP=true
 make wait_bootstrap
 ```
 
+### Cleanup bootstrap and ignition node
+
+```
+make infrastructure
+```
+
 ### Finish the installation process
 
 ```
@@ -137,12 +143,6 @@ make sign_csr
 ```
 
 This step is not necessary if you set `replicas_worker` to zero.
-
-### Cleanup bootstrap node
-
-```
-make infrastructure
-```
 
 ## Hetzner CSI
 
