@@ -1,7 +1,7 @@
 {
   "variables": {
     "location": "nbg1",
-    "server_type": "cx11",
+    "server_type": "cx21",
     "snapshot_prefix": "fcos",
     "image_type": "generic",
     "ignition_config": "config-3.0.0.ign"
