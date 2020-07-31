@@ -1,4 +1,5 @@
-![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg)
+![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg) [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=slauger/hcloud-okd4)](https://dependabot.com)
+
 
 # hcloud-okd4
 
