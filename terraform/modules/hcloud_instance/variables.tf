@@ -78,6 +78,6 @@ variable "volume_size" {
 }
 
 variable "subnet" {
-  type = string
+  type        = string
   description = "Id of the additional internal network"
 }

@@ -94,9 +94,9 @@ variable "subnet" {
 }
 
 variable "image_name" {
-  type = string
+  type        = string
   description = "Either fcos or rhcos (necessary for ignition rendering)"
-  default = "fcos"
+  default     = "fcos"
 }
 
 variable "ignition_version" {
