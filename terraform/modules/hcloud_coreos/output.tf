@@ -6,9 +6,9 @@ output "server_names" {
   value = "${hcloud_server.server.*.name}"
 }
 
-output "internal_ipv4_addresses" {
-  value = "${hcloud_server_network.server_network.*.ip}"
-}
+#output "internal_ipv4_addresses" {
+#  value = "${hcloud_server_network.server_network.*.ip}"
+#}
 
 output "ipv4_addresses" {
   value = "${hcloud_server.server.*.ipv4_address}"

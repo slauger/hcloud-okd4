@@ -62,7 +62,7 @@ variable "lb_subnet_cidr" {
 variable "location" {
   type        = string
   description = "Region"
-  default     = "hel1"
+  default     = "nbg1"
 }
 
 variable "image" {
