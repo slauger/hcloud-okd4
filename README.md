@@ -58,7 +58,7 @@ compute:
 controlPlane:
   hyperthreading: Enabled
   name: master
-  replicas: 3
+  replicas: 1
 networking:
   clusterNetworks:
   - cidr: 10.128.0.0/14
