@@ -4,10 +4,9 @@ install-config.yaml
 inventory.ini
 config
 ignition
-packer/*.ign
 terraform/.terraform
 terraform/.terraform*
 terraform/terraform.tfstate
-terraform/terraform.tfstate.backup
+terraform/terraform.tfstate.*
 openshift-install-linux-*.tar.gz
 openshift-client-linux-*.tar.gz

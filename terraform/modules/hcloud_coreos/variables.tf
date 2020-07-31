@@ -85,10 +85,22 @@ variable "ignition_url" {
 variable "ignition_cacert" {
   type        = string
   description = "CA certificate for the machine config server"
-  default = ""
+  default     = ""
 }
 
 variable "subnet" {
   type        = string
   description = "Id of the additional internal network"
+}
+
+variable "image_name" {
+  type        = string
+  description = "Either fcos or rhcos (necessary for ignition rendering)"
+  default     = "fcos"
+}
+
+variable "ignition_version" {
+  type        = string
+  description = "Ignition Version"
+  default     = "3.0.0"
 }

@@ -1,4 +1,5 @@
-![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg)
+![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg) [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=slauger/hcloud-okd4)](https://dependabot.com)
+
 
 # hcloud-okd4
 
@@ -12,9 +13,10 @@ Because of that OpenShift on hcloud is only suitable for small test environments
 
 ## Architecture
 
-- 3x Master Node (CX41)
-- 3x Worker Node (CX41)
-- 1x Loadbalancer Node (CX11) - scaling/clustering is on the roadmap
+The deployment defaults to a single node cluster.
+
+- 1x Master Node (CX41)
+- 1x Loadbalancer (LB11)
 - 1x Bootstrap Node (CX41) - deleted after cluster bootstrap
 - 1x Ignition Node (CX11) - deleted after cluster bootstrap
 
@@ -118,6 +120,12 @@ make infrastructure BOOTSTRAP=true
 make wait_bootstrap
 ```
 
+### Cleanup bootstrap and ignition node
+
+```
+make infrastructure
+```
+
 ### Finish the installation process
 
 ```
@@ -135,12 +143,6 @@ make sign_csr
 ```
 
 This step is not necessary if you set `replicas_worker` to zero.
-
-### Cleanup bootstrap node
-
-```
-make infrastructure
-```
 
 ## Hetzner CSI
 
@@ -163,6 +165,17 @@ After that just apply the the following manifest.
 ```
 oc apply -f https://raw.githubusercontent.com/slauger/csi-driver/openshift/deploy/kubernetes/hcloud-csi-openshift.yml
 ```
+
+## Deployment of OCP
+
+It's also possible OCP (with RedHat CoreOS) instead of OKD. Just add the suffix `DEPLOYMENT_TYPE=ocp` to each `make` command. For example:
+
+```
+make fetch DEPLOYMENT_TYPE=ocp
+make fetch DEPLOYMENT_TYPE=ocp
+```
+
+Besides that a RedHat OpenShift pull secret is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
 
 ## Author
 

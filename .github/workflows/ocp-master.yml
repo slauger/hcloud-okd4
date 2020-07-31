@@ -1,0 +1,22 @@
+name: Docker Build
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-ocp:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Fetch external dependencies
+      run: make fetch DEPLOYMENT_TYPE=ocp
+    - name: Build the Docker image
+      run: make build DEPLOYMENT_TYPE=ocp
+    - name: Test Docker image
+      run: make test DEPLOYMENT_TYPE=ocp
+    - name: Login to Docker Registry
+      run: docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
+    - name: Push Docker image
+      run: make push DEPLOYMENT_TYPE=ocp

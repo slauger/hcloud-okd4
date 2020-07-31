@@ -1,7 +1,7 @@
 {
   "ignition": {
     "config": {
-      "merge": [
+      %{ if ignition_version == "3.0.0" }"merge": [%{ else }"append": [%{ endif }
         {
           "source": "${ignition_url}"%{ if ignition_cacert == "" },
           "verification": {}%{ endif }
@@ -18,7 +18,7 @@
       }
     },%{ endif }
     "timeouts": {},
-    "version": "3.0.0"
+    "version": "${ignition_version}"
   },
   "networkd": {},
   "passwd": {},

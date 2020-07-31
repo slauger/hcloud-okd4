@@ -1,10 +1,10 @@
 {
   "variables": {
     "location": "nbg1",
-    "server_type": "cx21",
-    "snapshot_prefix": "fcos",
+    "server_type": "cx31",
+    "snapshot_prefix": "rhcos",
     "image_type": "generic",
-    "ignition_config": "config-3.0.0.ign"
+    "ignition_config": "config-2.2.0.ign"
   },
   "builders": [
     {
@@ -16,10 +16,11 @@
       "rescue": "linux64",
       "snapshot_name": "{{user `snapshot_prefix`}}-{{timestamp}}",
       "snapshot_labels": {
-        "os": "fcos",
+        "os": "rhcos",
         "image_type": "{{user `image_type`}}",
         "fcos_stream": "{{user `fcos_stream`}}",
-        "fcos_release": "{{user `fcos_release`}}"
+        "rhcos_release": "{{user `rhcos_release`}}",
+        "rhcos_release_minor": "{{user `rhcos_release_minor`}}"
       }
     }
   ],
@@ -29,10 +30,11 @@
       "inline": [
         "set -x",
         "mkdir /source",
-        "mount -t tmpfs -o size=2G none /source",
+        "mount -t tmpfs -o size=4G none /source",
         "cd /source",
-        "curl -sfL https://builds.coreos.fedoraproject.org/prod/streams/{{user `fcos_stream`}}/builds/{{user `fcos_release`}}/x86_64/fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.qcow2.xz | unxz > fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.qcow2",
-        "qemu-img convert fedora-coreos-{{user `fcos_release`}}-qemu.x86_64.qcow2 -O raw /dev/sda",
+        "curl -sfOL https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{user `rhcos_release_minor`}}/latest/rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2.gz",
+        "gzip -d rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2.gz",
+        "qemu-img convert rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
         "mkdir /target",
         "mount /dev/sda1 /target",
