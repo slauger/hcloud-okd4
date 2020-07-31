@@ -6,9 +6,10 @@ Deploy OKD4 (OpenShift) on Hetzner Cloud using Hashicorp Packer, Terraform and A
 
 ## Architecture
 
-- 3x Master Node (CX41)
-- 3x Worker Node (CX41)
-- 1x Loadbalancer Node (CX11) - scaling/clustering is on the roadmap
+The deployment defaults to a single node cluster.
+
+- 1x Master Node (CX41)
+- 1x Loadbalancer (LB11)
 - 1x Bootstrap Node (CX41) - deleted after cluster bootstrap
 - 1x Ignition Node (CX11) - deleted after cluster bootstrap
 
