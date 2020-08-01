@@ -1,6 +1,6 @@
 FROM docker.io/hashicorp/terraform:0.12.29@sha256:a55f6894766bed2becfb8717ca33b5d52e7c7863619f17227b931c2d2df104b5 AS terraform
 FROM docker.io/hashicorp/packer:1.6.1@sha256:0b287500a010c8973739a7c5b44e58d967dce1c647c6f15ca3a526a62c2507a5 AS packer
-FROM docker.io/alpine/helm:3.2.3@sha256:c402dc560aa89f2255283f3919bfc6b2c98f5ab1c4474656d20be403f612657a AS helm
+FROM docker.io/alpine/helm:3.2.4@sha256:47d04364afb9b246484aff708c03e5216295c485d21fafe4c10841d81108700a AS helm
 FROM docker.io/alpine:3.12@sha256:a15790640a6690aa1730c38cf0a440e2aa44aaca9b0e8931a9f2b0d7cc90fd65
 
 LABEL maintainer="simon@lauger.name"
