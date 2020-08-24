@@ -172,7 +172,7 @@ It's also possible OCP (with RedHat CoreOS) instead of OKD. Just add the suffix 
 
 ```
 make fetch DEPLOYMENT_TYPE=ocp
-make fetch DEPLOYMENT_TYPE=ocp
+make build DEPLOYMENT_TYPE=ocp
 ```
 
 Besides that a RedHat OpenShift pull secret is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
