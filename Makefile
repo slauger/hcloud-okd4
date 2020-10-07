@@ -2,7 +2,7 @@
 
 OPENSHIFT_MIRROR=https://mirror.openshift.com/pub/openshift-v4
 
-OKD_RELEASE=4.5.0-0.okd-2020-07-29-070316
+OKD_RELEASE=4.5.0-0.okd-2020-10-03-012432
 FCOS_STREAM=stable
 FCOS_RELEASE=32.20200715.3.0
 
