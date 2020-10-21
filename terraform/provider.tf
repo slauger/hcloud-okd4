@@ -1,5 +1,5 @@
 provider "cloudflare" {
-  version = "2.11.0"
+  version = "2.12.0"
 }
 
 provider "hcloud" {
