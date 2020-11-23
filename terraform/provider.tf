@@ -15,5 +15,5 @@ provider "local" {
 }
 
 provider "random" {
-  version = "2.3.0"
+  version = "2.3.1"
 }
