@@ -21,7 +21,8 @@ RUN apk update && \
       libc6-compat \
       apache2-utils \
       python3 \
-      py3-pip
+      py3-pip \
+      libvirt-client
 
 # OpenShift Installer
 COPY openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz .
