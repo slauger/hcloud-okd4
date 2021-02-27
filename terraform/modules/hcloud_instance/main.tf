@@ -19,7 +19,7 @@ resource "cloudflare_record" "dns-a" {
   name    = element(hcloud_server.server.*.name, count.index)
   value   = element(hcloud_server.server.*.ipv4_address, count.index)
   type    = "A"
-  ttl     = 1
+  ttl     = 120
 }
 
 resource "cloudflare_record" "dns-aaaa" {
@@ -28,7 +28,7 @@ resource "cloudflare_record" "dns-aaaa" {
   name    = element(hcloud_server.server.*.name, count.index)
   value   = "${element(hcloud_server.server.*.ipv6_address, count.index)}1"
   type    = "AAAA"
-  ttl     = 1
+  ttl     = 120
 }
 
 resource "hcloud_rdns" "dns-ptr-ipv4" {
