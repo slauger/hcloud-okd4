@@ -3,7 +3,7 @@ resource "cloudflare_record" "dns_a_ignition" {
   name    = "ignition.${var.dns_domain}"
   value   = module.ignition.ipv4_addresses[0]
   type    = "A"
-  ttl     = 1
+  ttl     = 120
   count   = var.bootstrap == true ? 1 : 0
 }
 
@@ -12,7 +12,7 @@ resource "cloudflare_record" "dns_a_api" {
   name    = "api.${var.dns_domain}"
   value   = hcloud_load_balancer.lb.ipv4
   type    = "A"
-  ttl     = 1
+  ttl     = 120
 }
 
 resource "cloudflare_record" "dns_a_api_int" {
@@ -20,7 +20,7 @@ resource "cloudflare_record" "dns_a_api_int" {
   name    = "api-int.${var.dns_domain}"
   value   = hcloud_load_balancer.lb.ipv4
   type    = "A"
-  ttl     = 1
+  ttl     = 120
 }
 
 resource "cloudflare_record" "dns_a_apps" {
@@ -28,7 +28,7 @@ resource "cloudflare_record" "dns_a_apps" {
   name    = "apps.${var.dns_domain}"
   value   = hcloud_load_balancer.lb.ipv4
   type    = "A"
-  ttl     = 1
+  ttl     = 120
 }
 
 resource "cloudflare_record" "dns_a_apps_wc" {
@@ -36,7 +36,7 @@ resource "cloudflare_record" "dns_a_apps_wc" {
   name    = "*.apps.${var.dns_domain}"
   value   = hcloud_load_balancer.lb.ipv4
   type    = "A"
-  ttl     = 1
+  ttl     = 120
 }
 
 resource "cloudflare_record" "dns_a_etcd" {
@@ -44,7 +44,7 @@ resource "cloudflare_record" "dns_a_etcd" {
   name    = "etcd-${count.index}.${var.dns_domain}"
   value   = module.master.ipv4_addresses[count.index]
   type    = "A"
-  ttl     = 1
+  ttl     = 120
 
   count = length(module.master.ipv4_addresses)
 }
