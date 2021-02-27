@@ -13,7 +13,7 @@ RHCOS_RELEASE_MINOR=$(shell echo $(RHCOS_RELEASE) | egrep -o 4\.[0-9]+)
 CONTAINER_NAME=docker.io/cmon2k/openshift-toolbox
 CONTAINER_TAG=$(OPENSHIFT_RELEASE)
 
-DEPLOYMENT_TYPE=okd
+DEPLOYMENT_TYPE?=okd
 BOOTSTRAP=false
 MODE=apply
 

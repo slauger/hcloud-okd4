@@ -168,11 +168,11 @@ oc apply -f https://raw.githubusercontent.com/slauger/csi-driver/openshift/deplo
 
 ## Deployment of OCP
 
-It's also possible OCP (with RedHat CoreOS) instead of OKD. Just add the suffix `DEPLOYMENT_TYPE=ocp` to each `make` command. For example:
+It's also possible OCP (with RedHat CoreOS) instead of OKD. Just export `DEPLOYMENT_TYPE=ocp`. For example:
 
 ```
-make fetch DEPLOYMENT_TYPE=ocp
-make build DEPLOYMENT_TYPE=ocp
+export DEPLOYMENT_TYPE=ocp
+make fetch build run
 ```
 
 Besides that a RedHat OpenShift pull secret is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
