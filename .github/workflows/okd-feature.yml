@@ -11,8 +11,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Fetch external dependencies
-      run: make fetch
+      run: make fetch OPENSHIFT_RELEASE=$(make latest_version)
     - name: Build the Docker image
-      run: make build
+      run: make build OPENSHIFT_RELEASE=$(make latest_version)
     - name: Test Docker image
-      run: make test
+      run: make test OPENSHIFT_RELEASE=$(make latest_version)

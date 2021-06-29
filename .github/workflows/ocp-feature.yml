@@ -11,8 +11,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Fetch external dependencies
-      run: make fetch DEPLOYMENT_TYPE=ocp
+      run: make fetch DEPLOYMENT_TYPE=ocp OPENSHIFT_RELEASE=$(make latest_version DEPLOYMENT_TYPE=ocp)
     - name: Build the Docker image
-      run: make build DEPLOYMENT_TYPE=ocp
+      run: make build DEPLOYMENT_TYPE=ocp OPENSHIFT_RELEASE=$(make latest_version DEPLOYMENT_TYPE=ocp)
     - name: Test Docker image
-      run: make test DEPLOYMENT_TYPE=ocp
+      run: make test DEPLOYMENT_TYPE=ocp OPENSHIFT_RELEASE=$(make latest_version DEPLOYMENT_TYPE=ocp)
