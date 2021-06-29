@@ -2,82 +2,117 @@
 
 OPENSHIFT_MIRROR=https://mirror.openshift.com/pub/openshift-v4
 
-OKD_RELEASE=4.7.0-0.okd-2021-03-07-090821
+DEPLOYMENT_TYPE?=okd
+RELEASE_CHANNEL?=stable-4.7
+
 FCOS_STREAM=stable
-FCOS_RELEASE=33.20210217.3.0
 
-OCP_RELEASE=4.7.0
-RHCOS_RELEASE=4.7.0
-RHCOS_RELEASE_MINOR=$(shell echo $(RHCOS_RELEASE) | egrep -o 4\.[0-9]+)
+OPENSHIFT_RELEASE?=none
+COREOS_RELEASE?=none
+COREOS_RELEASE_MINOR=$(shell echo $(COREOS_RELEASE) | egrep -o 4\.[0-9]+)
 
-CONTAINER_NAME=docker.io/cmon2k/openshift-toolbox
+CONTAINER_NAME=quay.io/slauger/hcloud-okd4
 CONTAINER_TAG=$(OPENSHIFT_RELEASE)
 
-DEPLOYMENT_TYPE?=okd
+#DEPLOYMENT_TYPE?=okd
+
 BOOTSTRAP=false
 MODE=apply
 
 ifeq ($(DEPLOYMENT_TYPE),ocp)
-  OPENSHIFT_RELEASE=$(OCP_RELEASE)
   COREOS_IMAGE=rhcos
-  COREOS_RELEASE=$(RHCOS_RELEASE)
 else ifeq ($(DEPLOYMENT_TYPE),okd)
-  OPENSHIFT_RELEASE=$(OKD_RELEASE)
   COREOS_IMAGE=fcos
-  COREOS_RELEASE=$(FCOS_RELEASE)
 else
   $(error installer only supports ocp or okd)
 endif
 
-print_version:
-	@echo $(OPENSHIFT_RELEASE)
+# openshift version
+.PHONY: latest_version
+latest_version: latest_version_$(DEPLOYMENT_TYPE)
 
+.PHONY: latest_version_okd
+latest_version_okd:
+	@curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/openshift/okd/tags | jq -j -r .[0].name
+
+.PHONY: latest_version_ocp
+latest_version_ocp:
+	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(RELEASE_CHANNEL).yaml | egrep '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
+
+# coreos version
+.PHONY: latest_coreos_version
+latest_coreos_version: latest_coreos_version_$(DEPLOYMENT_TYPE)
+
+.PHONY: latest_coreos_version_okd
+latest_coreos_version_okd:
+	@curl -s https://builds.coreos.fedoraproject.org/streams/$(FCOS_STREAM).json | jq -r '.architectures.x86_64.artifacts.qemu.release'
+
+.PHONY: latest_coreos_version_ocp
+latest_coreos_version_ocp:
+	@echo "please define a rhcos version manually"
+	exit 1
+
+# fetch
+.PHONY: fetch
 fetch: fetch_$(DEPLOYMENT_TYPE)
 
+.PHONY: fetch_okd
 fetch_okd:
 	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
 	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
 
+.PHONY: fetch_ocp
 fetch_ocp:
 	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz $(OPENSHIFT_MIRROR)/clients/ocp/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
 	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz $(OPENSHIFT_MIRROR)/clients/ocp/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
 
+.PHONY: build
 build:
 	docker build --build-arg OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) -t $(CONTAINER_NAME):$(CONTAINER_TAG) .
 
+.PHONY: test
 test:
 	docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(shell pwd):/src:ro gcr.io/gcp-runtimes/container-structure-test:latest test --image $(CONTAINER_NAME):$(CONTAINER_TAG) --config /src/tests/image.tests.yaml
 
+.PHONY: push
 push:
 	docker push $(CONTAINER_NAME):$(CONTAINER_TAG)
 
+.PHONY: run
 run:
 	docker run -it --hostname openshift-toolbox --mount type=bind,source="$(shell pwd)",target=/workspace --mount type=bind,source="$(HOME)/.ssh,target=/root/.ssh" $(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
 
+.PHONY: generate_manifests
 generate_manifests:
 	mkdir config
 	cp install-config.yaml config/install-config.yaml
 	openshift-install create manifests --dir=config
 
+.PHONY: generate_ignition
 generate_ignition:
 	rsync -av config/ ignition
 	openshift-install create ignition-configs --dir=ignition
 
+.PHONY: hcloud_image
 hcloud_image:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(FCOS_RELEASE) hcloud-fcos.json); fi
-	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var rhcos_release=$(RHCOS_RELEASE) -var rhcos_release_minor=$(RHCOS_RELEASE_MINOR) hcloud-rhcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(COREOS_RELEASE) hcloud-fcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var rhcos_release=$(COREOS_RELEASE) -var rhcos_release_minor=$(RHCOS_RELEASE_MINOR) hcloud-rhcos.json); fi
 
+.PHONY: sign_csr
 sign_csr:
 	@if [ ! -f "ignition/auth/kubeconfig" ]; then echo "ERROR: ignition/auth/kubeconfig not found"; exit 1; fi
 	bash -c "export KUBECONFIG=$(shell pwd)/ignition/auth/kubeconfig; oc get csr -o name | xargs oc adm certificate approve || true"
 
+.PHONY: wait_bootstrap
 wait_bootstrap:
 	openshift-install --dir=ignition/ wait-for bootstrap-complete --log-level=debug
 
+.PHONY: wait_completion
 wait_completion:
 	openshift-install --dir=ignition/ wait-for install-complete --log-level=debug
 
+.PHONY: infrastructure
 infrastructure:
 	@if [ -z "$(TF_VAR_dns_domain)" ]; then echo "ERROR: TF_VAR_dns_domain is not set"; exit 1; fi
 	@if [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
@@ -86,5 +121,6 @@ infrastructure:
 	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var bootstrap=$(BOOTSTRAP))
 	if [ "$(MODE)" == "apply" ]; then (cd ansible && ansible-playbook site.yml); fi
 
+.PHONY: destroy
 destroy:
 	(cd terraform && terraform init && terraform destroy)
