@@ -19,4 +19,4 @@ jobs:
     - name: Login to Docker Registry
       run: docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} ${{ secrets.REGISTRY_HOST }}
     - name: Push Docker image
-      run: make push DEPLOYMENT_TYPE=ocp
+      run: make push DEPLOYMENT_TYPE=ocp OPENSHIFT_RELEASE=$(make latest_version DEPLOYMENT_TYPE=ocp)
