@@ -5,6 +5,7 @@ FROM docker.io/alpine:3.14.0@sha256:234cb88d3020898631af0ccbbcca9a66ae7306ecd30c
 LABEL maintainer="simon@lauger.name"
 
 ARG OPENSHIFT_RELEASE
+ENV OPENSHIFT_RELEASE=${OPENSHIFT_RELEASE}
 
 RUN apk update && \
     apk add \
@@ -17,6 +18,7 @@ RUN apk update && \
       rsync \
       curl \
       git \
+      jq \
       libc6-compat \
       apache2-utils \
       python3 \
@@ -39,7 +41,6 @@ RUN tar vxzf openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz openshift-insta
 # External tools
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform
 COPY --from=packer /bin/packer /usr/local/bin/packer
-COPY --from=helm /usr/bin/helm /usr/local/bin/helm
 
 # Create workspace
 RUN mkdir /workspace
