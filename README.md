@@ -43,6 +43,15 @@ make run
 
 All the following commands will be executed inside the container. 
 
+### Set Version
+
+Set a target version of use the targets `latest_version` and `latest_coreos_version` to fetch the latest available version.
+
+```
+export OPENSHIFT_RELEASE=$(make latest_version)
+export COREOS_RELEASE=$(make latest_coreos_version)
+```
+
 ### Create your install-config.yaml
 
 ```
@@ -172,6 +181,8 @@ It's also possible OCP (with RedHat CoreOS) instead of OKD. Just export `DEPLOYM
 
 ```
 export DEPLOYMENT_TYPE=ocp
+export OPENSHIFT_RELEASE=4.6.35
+export COREOS_RELEASE=4.6.8
 make fetch build run
 ```
 
