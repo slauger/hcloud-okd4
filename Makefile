@@ -3,9 +3,9 @@
 OPENSHIFT_MIRROR=https://mirror.openshift.com/pub/openshift-v4
 
 DEPLOYMENT_TYPE?=okd
-RELEASE_CHANNEL?=stable-4.7
 
 FCOS_STREAM=stable
+OCP_RELEASE_CHANNEL?=stable-4.7
 
 OPENSHIFT_RELEASE?=none
 COREOS_RELEASE?=none
@@ -37,7 +37,7 @@ latest_version_okd:
 
 .PHONY: latest_version_ocp
 latest_version_ocp:
-	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(RELEASE_CHANNEL).yaml | egrep '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
+	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(OCP_RELEASE_CHANNEL).yaml | egrep '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
 
 # coreos version
 .PHONY: latest_coreos_version
