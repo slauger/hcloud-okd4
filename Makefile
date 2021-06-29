@@ -1,23 +1,23 @@
 .DEFAULT_GOAL := build
 
-OPENSHIFT_MIRROR=https://mirror.openshift.com/pub/openshift-v4
+OPENSHIFT_MIRROR?=https://mirror.openshift.com/pub/openshift-v4
 
 DEPLOYMENT_TYPE?=okd
 
-FCOS_STREAM=stable
+FCOS_STREAM?=stable
 OCP_RELEASE_CHANNEL?=stable-4.7
 
 OPENSHIFT_RELEASE?=none
 COREOS_RELEASE?=none
 COREOS_RELEASE_MINOR=$(shell echo $(COREOS_RELEASE) | egrep -o 4\.[0-9]+)
 
-CONTAINER_NAME=quay.io/slauger/hcloud-okd4
-CONTAINER_TAG=$(OPENSHIFT_RELEASE)
+CONTAINER_NAME?=quay.io/slauger/hcloud-okd4
+CONTAINER_TAG?=$(OPENSHIFT_RELEASE)
 
 #DEPLOYMENT_TYPE?=okd
 
-BOOTSTRAP=false
-MODE=apply
+BOOTSTRAP?=false
+MODE?=apply
 
 ifeq ($(DEPLOYMENT_TYPE),ocp)
   COREOS_IMAGE=rhcos
