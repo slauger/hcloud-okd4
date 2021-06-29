@@ -31,7 +31,7 @@ make fetch
 make build
 ```
 
-If you do not want to build the container by your own, it is also available on [Docker Hub](https://hub.docker.com/repository/docker/cmon2k/openshift-toolbox).
+If you do not want to build the container by your own, it is also available on [quay.io](https://quay.io/repository/slauger/hcloud-okd4).
 
 ### Run toolbox
 

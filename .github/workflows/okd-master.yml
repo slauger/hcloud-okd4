@@ -17,6 +17,6 @@ jobs:
     - name: Test Docker image
       run: make test OPENSHIFT_RELEASE=$(make latest_version)
     - name: Login to Docker Registry
-      run: docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }}
+      run: docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} ${{ secrets.REGISTRY_HOST }}
     - name: Push Docker image
       run: make push OPENSHIFT_RELEASE=$(make latest_version)
