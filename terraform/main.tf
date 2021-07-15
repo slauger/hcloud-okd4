@@ -38,6 +38,13 @@ module "master" {
   image           = data.hcloud_image.image.id
   image_name      = var.image
   server_type     = "cx41"
+  labels          = {
+    "okd.io/node" = "true",
+    "okd.io/master" = "true",
+    "okd.io/ingress" = "true"
+  }
+  # Manually add apply_to for the labels, until tf_hcloud allows apply_to in the firewall
+  # firewall_ids    = [hcloud_firewall.okd-base.id, hcloud_firewall.okd-master.id, hcloud_firewall.okd-ingress.id]
   subnet          = hcloud_network_subnet.subnet.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
@@ -54,6 +61,13 @@ module "worker" {
   image           = data.hcloud_image.image.id
   image_name      = var.image
   server_type     = "cx41"
+  labels          = {
+    "okd.io/node" = "true",
+    "okd.io/ingress" = "true"
+    "okd.io/worker" = "true"
+  }
+  # Manually add apply_to for the labels, until tf_hcloud allows apply_to in the firewall
+  # firewall_ids    = [hcloud_firewall.okd-base.id, hcloud_firewall.okd-ingress.id]
   subnet          = hcloud_network_subnet.subnet.id
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
