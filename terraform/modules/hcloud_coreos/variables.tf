@@ -59,10 +59,22 @@ variable "location" {
   default     = "nbg1"
 }
 
+variable "labels" {
+  type        = map(string)
+  description = "Labels that the instance is tagged with."
+  default     = {}
+}
+
 variable "backups" {
   type        = bool
   description = "Enable or disable backups"
   default     = false
+}
+
+variable "firewall_ids" {
+  type        = list(number)
+  description = "Assigned firewalls"
+  default     = []
 }
 
 variable "volume" {

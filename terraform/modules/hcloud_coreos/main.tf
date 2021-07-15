@@ -7,10 +7,12 @@ resource "hcloud_server" "server" {
   ssh_keys    = var.ssh_keys
   user_data   = data.template_file.ignition_config[count.index].rendered
   location    = var.location
+  labels      = var.labels
   backups     = var.backups
-  #  lifecycle {
-  #    ignore_changes = [user_data, image]
-  #  }
+  firewall_ids = var.firewall_ids
+  lifecycle {
+    ignore_changes = [user_data, image, firewall_ids]
+  }
 }
 
 resource "hcloud_rdns" "dns-ptr-ipv4" {
