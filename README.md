@@ -196,6 +196,10 @@ In order to do that, you should visit your Hetzner Web Console and apply the `ok
 
 Note: This will keep hosts pingable, but isolate them complete from the internet, making the cluster only reachable through the load balancer. If you require direct SSH access, you can add another rule, that you apply nodes that allows access to port 22.
 
+## Cloudflare API Token
+
+Checkout [this issue](https://github.com/slauger/hcloud-okd4/issues/176) to get details about how to obtain an API token for the Cloudflare API.
+
 ## Author
 
 - [slauger](https://github.com/slauger)
