@@ -6,7 +6,7 @@ terraform {
     }
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.27.2"
+      version = "1.33.2"
     }
     template = {
       source  = "hashicorp/template"
