@@ -5,7 +5,7 @@ OPENSHIFT_MIRROR?=https://mirror.openshift.com/pub/openshift-v4
 DEPLOYMENT_TYPE?=okd
 
 FCOS_STREAM?=stable
-OCP_RELEASE_CHANNEL?=stable-4.7
+OCP_RELEASE_CHANNEL?=stable-4.10
 
 OPENSHIFT_RELEASE?=none
 COREOS_RELEASE?=none
