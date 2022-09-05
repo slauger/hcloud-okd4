@@ -33,7 +33,7 @@ latest_version: latest_version_$(DEPLOYMENT_TYPE)
 
 .PHONY: latest_version_okd
 latest_version_okd:
-	@curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/openshift/okd/tags | jq -j -r .[0].name
+	@curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/okd-project/okd/tags | jq -j -r .[0].name
 
 .PHONY: latest_version_ocp
 latest_version_ocp:
@@ -58,8 +58,8 @@ fetch: fetch_$(DEPLOYMENT_TYPE)
 
 .PHONY: fetch_okd
 fetch_okd:
-	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
-	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/openshift/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
+	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/okd-project/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
+	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/okd-project/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
 
 .PHONY: fetch_ocp
 fetch_ocp:
