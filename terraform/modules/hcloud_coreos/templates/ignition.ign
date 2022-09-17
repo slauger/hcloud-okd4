@@ -42,6 +42,7 @@
       {
         "filesystem": "root",
         "group": {},
+        "overwrite": true,
         "path": "/etc/resolv.conf",
         "user": {},
         "contents": {
