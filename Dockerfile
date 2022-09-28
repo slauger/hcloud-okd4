@@ -7,6 +7,9 @@ LABEL maintainer="simon@lauger.name"
 ARG OPENSHIFT_RELEASE
 ENV OPENSHIFT_RELEASE=${OPENSHIFT_RELEASE}
 
+ARG DEPLOYMENT_TYPE
+ENV DEPLOYMENT_TYPE=${DEPLOYMENT_TYPE}
+
 RUN apk update && \
     apk add \
       bash \
