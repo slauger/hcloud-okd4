@@ -32,12 +32,12 @@
         "mkdir /source",
         "mount -t tmpfs -o size=4G none /source",
         "cd /source",
-        "curl -sfOL https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{user `rhcos_release_minor`}}/latest/rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2.gz",
-        "gzip -d rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2.gz",
-        "qemu-img convert rhcos-{{user `rhcos_release`}}-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
+        "curl -sfL -o rhcos-x86_64-qemu.x86_64.qcow2.gz {{user `rhcos_url`}}",
+        "gzip -d rhcos-x86_64-qemu.x86_64.qcow2.gz",
+        "qemu-img convert rhcos-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
         "mkdir /target",
-        "mount /dev/sda1 /target",
+        "mount /dev/sda2 /target",
         "mkdir /target/ignition"
       ]
     },

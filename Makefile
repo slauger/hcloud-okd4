@@ -1,31 +1,25 @@
 .DEFAULT_GOAL := build
 
+# ocp
 OPENSHIFT_MIRROR?=https://mirror.openshift.com/pub/openshift-v4
-
-DEPLOYMENT_TYPE?=okd
-
-FCOS_STREAM?=stable
 OCP_RELEASE_CHANNEL?=stable-4.10
 
-OPENSHIFT_RELEASE?=none
-COREOS_RELEASE?=none
-COREOS_RELEASE_MINOR=$(shell echo $(COREOS_RELEASE) | egrep -o 4\.[0-9]+)
+# okd
+OKD_MIRROR?=https://github.com/okd-project/okd/releases/download
 
+# either okd or ocp
+DEPLOYMENT_TYPE?=okd
+
+# fixed release version
+OPENSHIFT_RELEASE?=none
+
+# image name
 CONTAINER_NAME?=quay.io/slauger/hcloud-okd4
 CONTAINER_TAG?=$(OPENSHIFT_RELEASE)
 
-#DEPLOYMENT_TYPE?=okd
-
+# terraform switches
 BOOTSTRAP?=false
 MODE?=apply
-
-ifeq ($(DEPLOYMENT_TYPE),ocp)
-  COREOS_IMAGE=rhcos
-else ifeq ($(DEPLOYMENT_TYPE),okd)
-  COREOS_IMAGE=fcos
-else
-  $(error installer only supports ocp or okd)
-endif
 
 # openshift version
 .PHONY: latest_version
@@ -39,27 +33,14 @@ latest_version_okd:
 latest_version_ocp:
 	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(OCP_RELEASE_CHANNEL).yaml | egrep '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
 
-# coreos version
-.PHONY: latest_coreos_version
-latest_coreos_version: latest_coreos_version_$(DEPLOYMENT_TYPE)
-
-.PHONY: latest_coreos_version_okd
-latest_coreos_version_okd:
-	@curl -s https://builds.coreos.fedoraproject.org/streams/$(FCOS_STREAM).json | jq -r '.architectures.x86_64.artifacts.qemu.release'
-
-.PHONY: latest_coreos_version_ocp
-latest_coreos_version_ocp:
-	@echo "please define a rhcos version manually"
-	exit 1
-
 # fetch
 .PHONY: fetch
 fetch: fetch_$(DEPLOYMENT_TYPE)
 
 .PHONY: fetch_okd
 fetch_okd:
-	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/okd-project/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
-	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz https://github.com/okd-project/okd/releases/download/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
+	wget -O openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz $(OKD_MIRROR)/$(OPENSHIFT_RELEASE)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz
+	wget -O openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz $(OKD_MIRROR)/$(OPENSHIFT_RELEASE)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz
 
 .PHONY: fetch_ocp
 fetch_ocp:
@@ -68,7 +49,7 @@ fetch_ocp:
 
 .PHONY: build
 build:
-	docker build --build-arg OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) -t $(CONTAINER_NAME):$(CONTAINER_TAG) .
+	docker build --build-arg DEPLOYMENT_TYPE=$(DEPLOYMENT_TYPE) --build-arg OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) -t $(CONTAINER_NAME):$(CONTAINER_TAG) .
 
 .PHONY: test
 test:
@@ -96,8 +77,8 @@ generate_ignition:
 .PHONY: hcloud_image
 hcloud_image:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var fcos_stream=$(FCOS_STREAM) -var fcos_release=$(COREOS_RELEASE) hcloud-fcos.json); fi
-	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var rhcos_release=$(COREOS_RELEASE) -var rhcos_release_minor=$(RHCOS_RELEASE_MINOR) hcloud-rhcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var fcos_url=$(shell openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.xz".disk.location') hcloud-fcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var rhcos_url=$(shell openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-rhcos.json); fi
 
 .PHONY: sign_csr
 sign_csr:

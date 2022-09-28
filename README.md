@@ -45,11 +45,10 @@ All the following commands will be executed inside the container.
 
 ### Set Version
 
-Set a target version of use the targets `latest_version` and `latest_coreos_version` to fetch the latest available version.
+Set a target version of use the targets `latest_version` to fetch the latest available version.
 
 ```
 export OPENSHIFT_RELEASE=$(make latest_version)
-export COREOS_RELEASE=$(make latest_coreos_version)
 ```
 
 ### Create your install-config.yaml
@@ -153,28 +152,6 @@ make sign_csr
 
 This step is not necessary if you set `replicas_worker` to zero.
 
-## Hetzner CSI
-
-To install the CSI driver create a secret with your hcloud token first.
-
-```
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: hcloud-csi
-  namespace: kube-system
-stringData:
-  token: ${HCLOUD_TOKEN}
-EOF
-```
-
-After that just apply the the following manifest.
-
-```
-oc apply -f https://raw.githubusercontent.com/slauger/csi-driver/openshift/deploy/kubernetes/hcloud-csi-openshift.yml
-```
-
 ## Deployment of OCP
 
 It's also possible OCP (with RedHat CoreOS) instead of OKD. Just export `DEPLOYMENT_TYPE=ocp`. For example:
@@ -182,11 +159,18 @@ It's also possible OCP (with RedHat CoreOS) instead of OKD. Just export `DEPLOYM
 ```
 export DEPLOYMENT_TYPE=ocp
 export OPENSHIFT_RELEASE=4.6.35
-export COREOS_RELEASE=4.6.8
 make fetch build run
 ```
 
-Besides that a RedHat OpenShift pull secret is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
+You can also select the latest version from a specific channel via:
+
+```
+export OCP_RELEASE_CHANNEL=stable-4.11
+export OPENSHIFT_RELEASE=$(make latest_version)
+make fetch build run
+```
+
+To setup OCP a pull secret in your install-config.yaml is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
 
 ## Enforce Firewall rules
 
