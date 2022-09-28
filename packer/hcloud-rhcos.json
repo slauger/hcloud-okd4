@@ -32,7 +32,7 @@
         "mkdir /source",
         "mount -t tmpfs -o size=4G none /source",
         "cd /source",
-        "curl -sfL -o rhcos-x86_64-qemu.x86_64.qcow2 {{user `rhcos_url`}}",
+        "curl -sfL -o rhcos-x86_64-qemu.x86_64.qcow2.gz {{user `rhcos_url`}}",
         "gzip -d rhcos-x86_64-qemu.x86_64.qcow2.gz",
         "qemu-img convert rhcos-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
