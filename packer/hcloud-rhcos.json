@@ -37,7 +37,7 @@
         "qemu-img convert rhcos-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
         "mkdir /target",
-        "mount /dev/sda1 /target",
+        "mount /dev/sda2 /target",
         "mkdir /target/ignition"
       ]
     },
