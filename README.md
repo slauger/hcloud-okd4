@@ -49,7 +49,6 @@ Set a target version of use the targets `latest_version` and `latest_coreos_vers
 
 ```
 export OPENSHIFT_RELEASE=$(make latest_version)
-export COREOS_RELEASE=$(make latest_coreos_version)
 ```
 
 ### Create your install-config.yaml
