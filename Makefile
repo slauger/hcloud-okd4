@@ -26,6 +26,11 @@ else
 	$(error installer only supports ocp or okd)
 endif
 
+# die if OPENSHIFT_RELEASE is empty
+ifeq ($(OPENSHIFT_RELEASE),none)
+  $(error flag OPENSHIFT_RELEASE is not set)
+endif
+
 # terraform switches
 BOOTSTRAP?=false
 MODE?=apply
