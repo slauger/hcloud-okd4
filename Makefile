@@ -17,6 +17,15 @@ OPENSHIFT_RELEASE?=none
 CONTAINER_NAME?=quay.io/slauger/hcloud-okd4
 CONTAINER_TAG?=$(OPENSHIFT_RELEASE)
 
+# coreos
+ifeq ($(DEPLOYMENT_TYPE),ocp)
+	COREOS_IMAGE=rhcos
+else ifeq ($(DEPLOYMENT_TYPE),okd)
+	COREOS_IMAGE=fcos
+else
+	$(error installer only supports ocp or okd)
+endif
+
 # terraform switches
 BOOTSTRAP?=false
 MODE?=apply
