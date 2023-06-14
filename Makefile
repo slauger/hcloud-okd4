@@ -2,7 +2,7 @@
 
 # ocp
 OPENSHIFT_MIRROR?=https://mirror.openshift.com/pub/openshift-v4
-OCP_RELEASE_CHANNEL?=stable-4.10
+OCP_RELEASE_CHANNEL?=stable-4.13
 
 # okd
 OKD_MIRROR?=https://github.com/okd-project/okd/releases/download
