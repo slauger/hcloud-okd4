@@ -1,5 +1,5 @@
 FROM docker.io/hashicorp/terraform:1.5.3@sha256:34e5bdc8ce13dabfcf6d1369e33f5eed059478c637742a9259068e5bed9737bd AS terraform
-FROM docker.io/hashicorp/packer:1.9.1@sha256:5195cfe0739cff95d38a0c34807e4063fdb7b41fedf17e629f05a872c64b3201 AS packer
+FROM docker.io/hashicorp/packer:1.9.2@sha256:9af80b3a43e1f408dd6c5787088031da317b533e6cf0c950e60c4a5abef496a6 AS packer
 FROM docker.io/alpine:3.18.2@sha256:82d1e9d7ed48a7523bdebc18cf6290bdb97b82302a8a9c27d4fe885949ea94d1
 
 LABEL maintainer="simon@lauger.name"
