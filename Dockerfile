@@ -45,6 +45,9 @@ RUN tar vxzf openshift-install-linux-${OPENSHIFT_RELEASE}.tar.gz openshift-insta
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform
 COPY --from=packer /bin/packer /usr/local/bin/packer
 
+# Install Packer Plugin
+RUN packer plugins install github.com/hashicorp/hcloud
+
 # Create workspace
 RUN mkdir /workspace
 WORKDIR /workspace
