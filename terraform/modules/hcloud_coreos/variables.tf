@@ -33,7 +33,7 @@ variable "server_type" {
 variable "image" {
   type        = string
   description = "Hetzner Cloud system image"
-  default     = "ubuntu-18.04"
+  default     = "ubuntu-22.04"
 }
 
 variable "user_data" {

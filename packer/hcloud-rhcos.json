@@ -9,7 +9,7 @@
   "builders": [
     {
       "type": "hcloud",
-      "image": "ubuntu-18.04",
+      "image": "ubuntu-22.04",
       "location": "{{user `location`}}",
       "server_type": "{{user `server_type`}}",
       "ssh_username": "root",
