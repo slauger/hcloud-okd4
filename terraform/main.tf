@@ -5,7 +5,7 @@ module "ignition" {
   name           = "ignition"
   dns_domain     = var.dns_domain
   dns_zone_id    = var.dns_zone_id
-  image          = "ubuntu-20.04"
+  image          = "ubuntu-22.04"
   user_data      = file("templates/cloud-init.tpl")
   ssh_keys       = data.hcloud_ssh_keys.all_keys.ssh_keys.*.name
   server_type    = "cx11"
