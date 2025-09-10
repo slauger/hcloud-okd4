@@ -42,6 +42,7 @@ module "master" {
     "okd.io/node" = "true",
     "okd.io/master" = "true",
     "okd.io/ingress" = "true"
+    "okd.io/cluster" = var.dns_domain
   }
   # Manually add apply_to for the labels, until tf_hcloud allows apply_to in the firewall
   # firewall_ids    = [hcloud_firewall.okd-base.id, hcloud_firewall.okd-master.id, hcloud_firewall.okd-ingress.id]
@@ -65,6 +66,7 @@ module "worker" {
     "okd.io/node" = "true",
     "okd.io/ingress" = "true"
     "okd.io/worker" = "true"
+    "okd.io/cluster" = var.dns_domain
   }
   # Manually add apply_to for the labels, until tf_hcloud allows apply_to in the firewall
   # firewall_ids    = [hcloud_firewall.okd-base.id, hcloud_firewall.okd-ingress.id]
