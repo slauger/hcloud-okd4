@@ -1,7 +1,7 @@
 {
   "variables": {
     "location": "nbg1",
-    "server_type": "cx21",
+    "server_type": "cpx31",
     "snapshot_prefix": "fcos",
     "image_type": "generic",
     "ignition_config": "config-3.0.0.ign"
@@ -29,10 +29,10 @@
       "inline": [
         "set -x",
         "mkdir /source",
-        "mount -t tmpfs -o size=2G none /source",
+        "mount -t tmpfs -o size=4G none /source",
         "cd /source",
-        "curl -sfL {{user `fcos_url`}} | unxz > fedora-coreos-qemu.x86_64.qcow2",
-        "qemu-img convert fedora-coreos-qemu.x86_64.qcow2 -O raw /dev/sda",
+        "curl -sfL {{user `fcos_url`}} | gzip -d > fcos-x86_64-qemu.x86_64.qcow2",
+        "qemu-img convert fcos-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
         "mkdir /target",
         "mount /dev/sda3 /target",

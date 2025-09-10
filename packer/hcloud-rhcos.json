@@ -1,7 +1,7 @@
 {
   "variables": {
     "location": "nbg1",
-    "server_type": "cx31",
+    "server_type": "cpx31",
     "snapshot_prefix": "rhcos",
     "image_type": "generic",
     "ignition_config": "config-2.2.0.ign"
@@ -32,8 +32,7 @@
         "mkdir /source",
         "mount -t tmpfs -o size=4G none /source",
         "cd /source",
-        "curl -sfL -o rhcos-x86_64-qemu.x86_64.qcow2.gz {{user `rhcos_url`}}",
-        "gzip -d rhcos-x86_64-qemu.x86_64.qcow2.gz",
+        "curl -sfL {{user `rhcos_url`}} | gzip -d rhcos-x86_64-qemu.x86_64.qcow2",
         "qemu-img convert rhcos-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
         "mkdir /target",

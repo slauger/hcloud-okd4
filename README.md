@@ -15,10 +15,16 @@ Because of that OpenShift on hcloud is only suitable for small test environments
 
 The deployment defaults to a single node cluster.
 
-- 1x Master Node (CX41)
-- 1x Loadbalancer (LB11)
-- 1x Bootstrap Node (CX41) - deleted after cluster bootstrap
-- 1x Ignition Node (CX11) - deleted after cluster bootstrap
+- 1x Master Node (cpx41)
+- 1x Loadbalancer (lb11)
+- 1x Bootstrap Node (cpx41) - deleted after cluster bootstrap
+- 1x Ignition Node (cpx21) - deleted after cluster bootstrap
+
+Additional worker nodes can be added via the following environment variable (during terraform deployment).
+
+```
+export TF_VAR_replicas_worker=3 # deploy 3 worker nodes
+```
 
 ## Usage
 
@@ -71,7 +77,7 @@ networking:
   clusterNetworks:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   serviceNetwork:
   - 172.30.0.0/16
   machineCIDR:
@@ -150,7 +156,7 @@ sleep 60
 make sign_csr
 ```
 
-This step is not necessary if you set `replicas_worker` to zero.
+This step is only necessary if you set `TF_VAR_replicas_worker` to >= 1.
 
 ## Deployment of OCP
 
