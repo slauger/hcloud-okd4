@@ -5,6 +5,8 @@
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud using Hashicorp Packer, Terraform and Ansible.
 
+![OKD4 on Hetzner Cloud](screenshot.png)
+
 ## Current status
 
 The Hetzner Cloud does not fulfill the I/O performance/latency requirements for etcd - even when using local SSDs (instead of ceph storage). This could result in different problems during the cluster bootstrap. You could check the I/O performance via `etcdctl check perf`.
