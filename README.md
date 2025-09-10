@@ -15,10 +15,10 @@ Because of that OpenShift on hcloud is only suitable for small test environments
 
 The deployment defaults to a single node cluster.
 
-- 1x Master Node (ccx23)
+- 1x Master Node (cpx41)
 - 1x Loadbalancer (lb11)
-- 1x Bootstrap Node (ccx23) - deleted after cluster bootstrap
-- 1x Ignition Node (ccx13) - deleted after cluster bootstrap
+- 1x Bootstrap Node (cpx41) - deleted after cluster bootstrap
+- 1x Ignition Node (cpx21) - deleted after cluster bootstrap
 
 Additional worker nodes can be added via the following environment variable (during terraform deployment).
 
