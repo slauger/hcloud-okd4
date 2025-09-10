@@ -7,7 +7,7 @@ Deploy OKD4 (OpenShift) on Hetzner Cloud using Hashicorp Packer, Terraform and A
 
 ![OKD4 on Hetzner Cloud](screenshot.png)
 
-## Current status
+## Important note
 
 The Hetzner Cloud does not fulfill the I/O performance/latency requirements for etcd - even when using local SSDs (instead of ceph storage). This could result in different problems during the cluster bootstrap. You could check the I/O performance via `etcdctl check perf`.
 
@@ -181,13 +181,9 @@ make fetch build run
 
 To setup OCP a pull secret in your install-config.yaml is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
 
-## Enforce Firewall rules
+## Firewall rules
 
-As the Terraform module from Hetzer is currently unable to produce applied rules that contain hosts you deploy at the same time, you have to deploy them afterwards.
-
-In order to do that, you should visit your Hetzner Web Console and apply the `okd-master` firewall rule to all hosts with the label `okd.io/master: true`, the `okd-base` to the label `okd.io/node: true` and `okd-ingress` to all nodes with the `okd.io/ingress: true` label. Since terraform will ignore firewall changes, this should not interfere with your existing state.
-
-Note: This will keep hosts pingable, but isolate them complete from the internet, making the cluster only reachable through the load balancer. If you require direct SSH access, you can add another rule, that you apply nodes that allows access to port 22.
+Nodes will be pingable but isolated from the internet. The cluster is only reachable through the load balancer. If you require direct SSH access, you can add another rule to the nodes that allows access to port 22.
 
 ## Cloudflare API Token
 
