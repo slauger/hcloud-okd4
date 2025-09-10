@@ -22,6 +22,14 @@ The deployment defaults to a single node cluster.
 
 ## Usage
 
+### Set Version
+
+Set a target version of use the targets `latest_version` to fetch the latest available version.
+
+```
+export OPENSHIFT_RELEASE=$(make latest_version)
+```
+
 ### Build toolbox
 
 To ensure that the we have a proper build environment, we create a toolbox container first.
@@ -42,14 +50,6 @@ make run
 ```
 
 All the following commands will be executed inside the container. 
-
-### Set Version
-
-Set a target version of use the targets `latest_version` to fetch the latest available version.
-
-```
-export OPENSHIFT_RELEASE=$(make latest_version)
-```
 
 ### Create your install-config.yaml
 
