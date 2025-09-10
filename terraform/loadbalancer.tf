@@ -27,7 +27,7 @@ resource "hcloud_load_balancer_service" "lb_api" {
     protocol = "tcp"
     port     = 6443
     interval = 10
-    timeout  = 1
+    timeout  = 5
     retries  = 3
   }
 }
@@ -42,7 +42,7 @@ resource "hcloud_load_balancer_service" "lb_mcs" {
     protocol = "tcp"
     port     = 22623
     interval = 10
-    timeout  = 1
+    timeout  = 5
     retries  = 3
   }
 }
@@ -57,7 +57,7 @@ resource "hcloud_load_balancer_service" "lb_ingress_http" {
     protocol = "tcp"
     port     = 80
     interval = 10
-    timeout  = 1
+    timeout  = 5
     retries  = 3
   }
 }
@@ -72,7 +72,7 @@ resource "hcloud_load_balancer_service" "lb_ingress_https" {
     protocol = "tcp"
     port     = 443
     interval = 10
-    timeout  = 1
+    timeout  = 5
     retries  = 3
   }
 }
