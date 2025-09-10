@@ -30,9 +30,10 @@ export TF_VAR_replicas_worker=3 # deploy 3 worker nodes
 
 ### Set Version
 
-Set a target version of use the targets `latest_version` to fetch the latest available version.
+Set a target version via the `OPENSHIFT_RELEASE` environment variable. You could also use the `latest_version` target to fetch the latest available version.
 
 ```
+export DEPLOYMENT_TYPE=okd # "okd" or "ocp", default is "okd"
 export OPENSHIFT_RELEASE=$(make latest_version)
 ```
 
@@ -164,14 +165,14 @@ It's also possible OCP (with RedHat CoreOS) instead of OKD. Just export `DEPLOYM
 
 ```
 export DEPLOYMENT_TYPE=ocp
-export OPENSHIFT_RELEASE=4.6.35
+export OPENSHIFT_RELEASE=4.19.10
 make fetch build run
 ```
 
 You can also select the latest version from a specific channel via:
 
 ```
-export OCP_RELEASE_CHANNEL=stable-4.11
+export OCP_RELEASE_CHANNEL=stable-4.19
 export OPENSHIFT_RELEASE=$(make latest_version)
 make fetch build run
 ```
