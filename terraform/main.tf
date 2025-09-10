@@ -8,7 +8,7 @@ module "ignition" {
   image          = "ubuntu-22.04"
   user_data      = file("templates/cloud-init.tpl")
   ssh_keys       = data.hcloud_ssh_keys.all_keys.ssh_keys.*.name
-  server_type    = "cx11"
+  server_type    = "ccx13"
   subnet         = hcloud_network_subnet.subnet.id
 }
 
@@ -22,7 +22,7 @@ module "bootstrap" {
   dns_internal_ip = false
   image           = data.hcloud_image.image.id
   image_name      = var.image
-  server_type     = "cx41"
+  server_type     = "ccx23"
   subnet          = hcloud_network_subnet.subnet.id
   ignition_url    = var.bootstrap == true ? "http://${cloudflare_record.dns_a_ignition[0].name}/bootstrap.ign" : ""
 }
@@ -37,7 +37,7 @@ module "master" {
   dns_internal_ip = false
   image           = data.hcloud_image.image.id
   image_name      = var.image
-  server_type     = "cx41"
+  server_type     = "ccx23"
   labels          = {
     "okd.io/node" = "true",
     "okd.io/master" = "true",
@@ -60,7 +60,7 @@ module "worker" {
   dns_internal_ip = false
   image           = data.hcloud_image.image.id
   image_name      = var.image
-  server_type     = "cx41"
+  server_type     = "ccx23"
   labels          = {
     "okd.io/node" = "true",
     "okd.io/ingress" = "true"
