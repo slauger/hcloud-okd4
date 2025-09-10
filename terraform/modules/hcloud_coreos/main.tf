@@ -1,14 +1,14 @@
 resource "hcloud_server" "server" {
-  count       = var.instance_count
-  name        = "${format("${var.name}%02d", count.index + 1)}.${var.dns_domain}"
-  image       = var.image
-  server_type = var.server_type
-  keep_disk   = var.keep_disk
-  ssh_keys    = var.ssh_keys
-  user_data   = data.template_file.ignition_config[count.index].rendered
-  location    = var.location
-  labels      = var.labels
-  backups     = var.backups
+  count        = var.instance_count
+  name         = "${format("${var.name}%02d", count.index + 1)}.${var.dns_domain}"
+  image        = var.image
+  server_type  = var.server_type
+  keep_disk    = var.keep_disk
+  ssh_keys     = var.ssh_keys
+  user_data    = data.template_file.ignition_config[count.index].rendered
+  location     = var.location
+  labels       = var.labels
+  backups      = var.backups
   firewall_ids = var.firewall_ids
   lifecycle {
     ignore_changes = [user_data, image, firewall_ids]

@@ -38,11 +38,10 @@ module "master" {
   image           = data.hcloud_image.image.id
   image_name      = var.image
   server_type     = "cpx41"
-  labels          = {
-    "okd.io/node" = "true",
-    "okd.io/master" = "true",
-    "okd.io/ingress" = "true"
-    "okd.io/cluster" = var.dns_domain
+  labels = {
+    "${var.dns_domain}/master"  = "true",
+    "${var.dns_domain}/ingress" = "true"
+    "cluster"                   = var.dns_domain
   }
   # Manually add apply_to for the labels, until tf_hcloud allows apply_to in the firewall
   # firewall_ids    = [hcloud_firewall.okd-base.id, hcloud_firewall.okd-master.id, hcloud_firewall.okd-ingress.id]
@@ -62,11 +61,10 @@ module "worker" {
   image           = data.hcloud_image.image.id
   image_name      = var.image
   server_type     = "cpx41"
-  labels          = {
-    "okd.io/node" = "true",
-    "okd.io/ingress" = "true"
-    "okd.io/worker" = "true"
-    "okd.io/cluster" = var.dns_domain
+  labels = {
+    "${var.dns_domain}/worker"  = "true"
+    "${var.dns_domain}/ingress" = "true"
+    "cluster"                   = var.dns_domain
   }
   # Manually add apply_to for the labels, until tf_hcloud allows apply_to in the firewall
   # firewall_ids    = [hcloud_firewall.okd-base.id, hcloud_firewall.okd-ingress.id]
