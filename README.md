@@ -59,7 +59,7 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    make run
    ```
 2. Create `install-config.yaml` (see example in *Configuration*)
-3. Export required environment variables (Terraform, credentials, etc. - see example in *Configuration*)
+3. Export required environment variables (see example in *Configuration*)
 3. Generate manifests
    ```bash
    make generate_manifests
@@ -158,9 +158,7 @@ To deploy OCP instead of OKD:
 ```bash
 export DEPLOYMENT_TYPE=ocp
 export OPENSHIFT_RELEASE=4.19.9 # example version
-make fetch
-make build
-make run
+make fetch build run
 ```
 
 You can also choose the latest version from a specific channel:
