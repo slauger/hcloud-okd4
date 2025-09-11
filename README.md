@@ -59,7 +59,6 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    make run
    ```
 2. Create `install-config.yaml` (see example in *Configuration*)
-3. Export required environment variables (see example in *Configuration*)
 3. Generate manifests
    ```bash
    make generate_manifests
@@ -68,27 +67,28 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    ```bash
    make generate_ignition
    ```
-5. Build Fedora/RedHat CoreOS image using Packer
+5. Export required environment variables (see example in *Configuration*)
+6. Build Fedora/RedHat CoreOS image using Packer
    ```bash
    make hcloud_image
    ```
-6. Deploy infrastructure with Terraform (including bootstrap and ignition node)
+7. Deploy infrastructure with Terraform (including bootstrap and ignition node)
    ```bash
    make infrastructure BOOTSTRAP=true
    ```
-7. Wait for bootstrap completion
+8. Wait for bootstrap completion
    ```bash
    make wait_bootstrap
    ```
-8. Remove bootstrap and ignition node
+9. Remove bootstrap and ignition node
    ```bash
    make infrastructure
    ```
-9. Wait for installation to finish
+10. Wait for installation to finish
     ```bash
     make wait_completion
     ```
-10. Approve worker CSRs (if workers are deployed)
+11. Approve worker CSRs (if workers are deployed)
     ```bash
     make sign_csr
     sleep 60
