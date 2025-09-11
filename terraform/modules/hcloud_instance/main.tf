@@ -13,20 +13,20 @@ resource "hcloud_server" "server" {
   }
 }
 
-resource "cloudflare_record" "dns-a" {
+resource "cloudflare_dns_record" "dns-a" {
   count   = var.instance_count
   zone_id = var.dns_zone_id
   name    = element(hcloud_server.server.*.name, count.index)
-  value   = element(hcloud_server.server.*.ipv4_address, count.index)
+  content = element(hcloud_server.server.*.ipv4_address, count.index)
   type    = "A"
   ttl     = 120
 }
 
-resource "cloudflare_record" "dns-aaaa" {
+resource "cloudflare_dns_record" "dns-aaaa" {
   count   = var.instance_count
   zone_id = var.dns_zone_id
   name    = element(hcloud_server.server.*.name, count.index)
-  value   = "${element(hcloud_server.server.*.ipv6_address, count.index)}1"
+  content = "${element(hcloud_server.server.*.ipv6_address, count.index)}1"
   type    = "AAAA"
   ttl     = 120
 }
