@@ -1,7 +1,6 @@
 {
   "extends": [
-    "github>slauger/renovate-config",
-    "group:all"
+    "github>slauger/renovate-config"
   ],
   "packageRules": [
     {
@@ -15,6 +14,13 @@
         "digest"
       ],
       "automerge": true
+    },
+    {
+      "matchManagers": [
+        "terraform"
+      ],
+      "groupName": "all terraform dependencies",
+      "groupSlug": "terraform-all"
     }
   ]
 }
