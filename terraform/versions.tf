@@ -6,7 +6,7 @@ terraform {
     }
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.48.0"
+      version = "1.52.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -14,7 +14,7 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.6.2"
+      version = "3.7.2"
     }
   }
   required_version = ">= 0.14"
