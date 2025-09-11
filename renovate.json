@@ -1,7 +1,19 @@
 {
+  "extends": [
+    "github>slauger/renovate-config",
+    "group:all"
+  ],
   "packageRules": [
     {
-      "updateTypes": ["minor", "patch", "pin", "digest"],
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "updateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true
     }
   ]
