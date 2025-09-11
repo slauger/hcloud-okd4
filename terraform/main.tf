@@ -24,7 +24,7 @@ module "bootstrap" {
   image_name      = var.image
   server_type     = "cpx41"
   subnet          = hcloud_network_subnet.subnet.id
-  ignition_url    = var.bootstrap == true ? "http://${cloudflare_record.dns_a_ignition[0].name}/bootstrap.ign" : ""
+  ignition_url    = var.bootstrap == true ? "http://${cloudflare_dns_record.dns_a_ignition[0].name}/bootstrap.ign" : ""
 }
 
 module "master" {
