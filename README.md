@@ -1,194 +1,187 @@
 ![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg)
 
-
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud using Hashicorp Packer, Terraform and Ansible.
+Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer, Terraform, and Ansible.
 
-![OKD4 on Hetzner Cloud](screenshot.png)
+---
 
-## Important note
+## Important Notice
 
-The Hetzner Cloud does not fulfill the I/O performance/latency requirements for etcd - even when using local SSDs (instead of ceph storage). This could result in different problems during the cluster bootstrap. You could check the I/O performance via `etcdctl check perf`.
+Hetzner Cloud does **not** meet the I/O performance and latency requirements for etcd – even when using local SSDs (not Ceph).  
+This may cause issues during the cluster bootstrap phase.  
 
-Because of that OpenShift on hcloud is only suitable for small test environments. Please do not use it for production clusters.
+**Use case:** This setup is suitable for small test environments only.  
+**Not recommended for production clusters.**
+
+---
 
 ## Architecture
 
-The deployment defaults to a single node cluster.
+By default, a single-node cluster is deployed with the following components:
 
-- 1x Master Node (cpx41)
-- 1x Loadbalancer (lb11)
-- 1x Bootstrap Node (cpx41) - deleted after cluster bootstrap
-- 1x Ignition Node (cpx21) - deleted after cluster bootstrap
+| Component     | Type / Size |
+|---------------|-------------|
+| Master Node   | cpx41       |
+| Load Balancer | lb11        |
+| Bootstrap Node| cpx41 (removed after bootstrap) |
+| Ignition Node | cpx21 (removed after bootstrap) |
 
-Additional worker nodes can be added via the following environment variable (during terraform deployment).
+Additional worker nodes can be added by setting an environment variable **before** running Terraform:
 
+```bash
+export TF_VAR_replicas_worker=3  # Example: 3 worker nodes
 ```
-export TF_VAR_replicas_worker=3 # deploy 3 worker nodes
-```
 
-## Usage
+---
 
-### Set Version
+## Version & Deployment Options
 
-Set a target version via the `OPENSHIFT_RELEASE` environment variable. You could also use the `latest_version` target to fetch the latest available version.
+You can set the desired release version with the `OPENSHIFT_RELEASE` environment variable.
 
-```
-export DEPLOYMENT_TYPE=okd # "okd" or "ocp", default is "okd"
+Example:
+
+```bash
+export DEPLOYMENT_TYPE=okd   # Options: "okd" or "ocp", default is "okd"
 export OPENSHIFT_RELEASE=$(make latest_version)
 ```
 
-### Build toolbox
+For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from cloud.redhat.com.
 
-To ensure that the we have a proper build environment, we create a toolbox container first.
-
-```
-make fetch
-make build
-```
-
-If you do not want to build the container by your own, it is also available on [quay.io](https://quay.io/repository/slauger/hcloud-okd4).
-
-### Run toolbox
-
-Use the following command to start the container.
-
-```
-make run
-```
-
-All the following commands will be executed inside the container. 
-
-### Create your install-config.yaml
-
-```
 ---
+
+## Quick Start
+
+1. Build and start the toolbox  
+   ```bash
+   make fetch
+   make build
+   make run
+   ```
+2. Create `install-config.yaml` (see example in *Configuration*)  
+3. Generate manifests  
+   ```bash
+   make generate_manifests
+   ```
+4. Generate ignition configs  
+   ```bash
+   make generate_ignition
+   ```
+5. Export required environment variables (Terraform, credentials, etc.)  
+6. Build Fedora CoreOS image using Packer  
+   ```bash
+   make hcloud_image
+   ```
+7. Deploy infrastructure with Terraform (including bootstrap)  
+   ```bash
+   make infrastructure BOOTSTRAP=true
+   ```
+8. Wait for bootstrap completion  
+   ```bash
+   make wait_bootstrap
+   ```
+9. Remove bootstrap and ignition nodes  
+   ```bash
+   make infrastructure
+   ```
+10. Wait for installation to finish  
+    ```bash
+    make wait_completion
+    ```
+11. Approve worker CSRs (if workers are deployed)  
+    ```bash
+    make sign_csr
+    sleep 60
+    make sign_csr
+    ```
+
+---
+
+## Configuration
+
+### Example: install-config.yaml
+
+```yaml
 apiVersion: v1
 baseDomain: 'example.com'
 metadata:
   name: 'okd4'
 compute:
-- hyperthreading: Enabled
-  name: worker
-  replicas: 0
+  - hyperthreading: Enabled
+    name: worker
+    replicas: 0
 controlPlane:
   hyperthreading: Enabled
   name: master
   replicas: 1
 networking:
   clusterNetworks:
-  - cidr: 10.128.0.0/14
-    hostPrefix: 23
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
   networkType: OVNKubernetes
   serviceNetwork:
-  - 172.30.0.0/16
-  machineCIDR:
-platform:
+    - 172.30.0.0/16
+machineCIDR: platform:
   none: {}
-pullSecret: '{"auths":{"none":{"auth": "none"}}}'
-sshKey: ssh-rsa AABBCC... Some_Service_User
+pullSecret: '{"auths":{"none":{"auth":"none"}}}'
+sshKey: ssh-rsa AAAA…<your ssh key here>
 ```
 
-### Create cluster manifests
+### Required Environment Variables
 
-```
-make generate_manifests
-```
-
-### Create ignition config
-
-```
-make generate_ignition
-```
-
-### Set required environment variables
-
-```
-# terraform variables
+```bash
+# Terraform / DNS
 export TF_VAR_dns_domain=okd4.example.com
-export TF_VAR_dns_zone_id=14758f1afd44c09b7992073ccf00b43d
+export TF_VAR_dns_zone_id=YOUR_ZONE_ID
 
-# credentials for hcloud
-export HCLOUD_TOKEN=14758f1afd44c09b7992073ccf00b43d14758f1afd44c09b7992073ccf00b43d
+# Hetzner Cloud access
+export HCLOUD_TOKEN=YOUR_HCLOUD_TOKEN
 
-# credentials for cloudflare
+# Cloudflare access (if required)
 export CLOUDFLARE_EMAIL=user@example.com
-export CLOUDFLARE_API_KEY=14758f1afd44c09b7992073ccf00b43d
+export CLOUDFLARE_API_KEY=YOUR_API_KEY
 ```
 
-### Create Fedora CoreOS image
+---
 
-Build a Fedora CoreOS hcloud image with Packer and embed the hcloud user data source (`http://169.254.169.254/hetzner/v1/userdata`).
+## Firewall & Access
 
-```
-make hcloud_image
-```
+- Nodes are **not directly exposed to the internet** by default.  
+- Only the load balancer is publicly accessible.  
+- SSH access to nodes is possible if port 22 is explicitly opened.
 
-### Build infrastructure with Terraform
+---
 
-```
-make infrastructure BOOTSTRAP=true
-```
+## Deploying OCP (Red Hat OpenShift)
 
-### Wait for the bootstrap to complete
+To deploy OCP instead of OKD:
 
-```
-make wait_bootstrap
-```
-
-### Cleanup bootstrap and ignition node
-
-```
-make infrastructure
-```
-
-### Finish the installation process
-
-```
-make wait_completion
-```
-
-### Sign Worker CSRs
-
-CSRs of the master nodes get signed by the bootstrap node automaticaly during the cluster bootstrap. CSRs from worker nodes must be signed manually.
-
-```
-make sign_csr
-sleep 60
-make sign_csr
-```
-
-This step is only necessary if you set `TF_VAR_replicas_worker` to >= 1.
-
-## Deployment of OCP
-
-It's also possible OCP (with RedHat CoreOS) instead of OKD. Just export `DEPLOYMENT_TYPE=ocp`. For example:
-
-```
+```bash
 export DEPLOYMENT_TYPE=ocp
-export OPENSHIFT_RELEASE=4.19.10
-make fetch build run
+export OPENSHIFT_RELEASE=4.19.10  # example version
+make fetch
+make build
+make run
 ```
 
-You can also select the latest version from a specific channel via:
+You can also choose the latest version from a specific channel:
 
-```
+```bash
 export OCP_RELEASE_CHANNEL=stable-4.19
 export OPENSHIFT_RELEASE=$(make latest_version)
 make fetch build run
 ```
 
-To setup OCP a pull secret in your install-config.yaml is necessary, which could be obtained from [cloud.redhat.com](https://cloud.redhat.com/).
+---
 
-## Firewall rules
+## Limitations / Not for Production
 
-Nodes will be pingable but isolated from the internet. The cluster is only reachable through the load balancer. If you require direct SSH access, you can add another rule to the nodes that allows access to port 22.
+- I/O performance and latency issues with etcd (see above).  
+- Components that rely on strong consistency (like etcd) may suffer under heavy load.  
+- No stability guarantees for large clusters or production use.
 
-## Cloudflare API Token
-
-Checkout [this issue](https://github.com/slauger/hcloud-okd4/issues/176) to get details about how to obtain an API token for the Cloudflare API.
+---
 
 ## Author
 
-- [slauger](https://github.com/slauger)
+[slauger](https://github.com/slauger)
