@@ -4,7 +4,7 @@
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer, Terraform, and Ansible.
 
-![OKD4 on Hetzner Cloud](screenshot.png)
+![OKD4 on Hetzner Cloud](okd4-hcloud.png)
 
 ---
 
@@ -94,7 +94,6 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
     sleep 60
     make sign_csr
     ```
-
 ---
 
 ## Configuration
@@ -148,7 +147,7 @@ export CLOUDFLARE_API_KEY=YOUR_API_KEY
 
 - Nodes are **not directly exposed to the internet** by default.
 - Only the load balancer is public accessible.
-- SSH access to nodes is possible if port 22 is explicitly opened.
+- SSH access to nodes will only be possible with additional firewall configuration.
 
 ---
 
