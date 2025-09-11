@@ -12,7 +12,7 @@ Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer, Terraform, and 
 
 Hetzner Cloud does **not** meet the I/O performance and latency requirements for etcd – even when using local SSDs (not Ceph). This may cause issues during the cluster bootstrap phase.
 
-This setup is suitable for small test environments only. Not recommended for production clusters.**
+This setup is suitable for small test environments only. Not recommended for production clusters.
 
 ---
 
@@ -42,8 +42,8 @@ You can set the desired release version with the `OPENSHIFT_RELEASE` environment
 Example:
 
 ```bash
-export DEPLOYMENT_TYPE=okd   # Options: "okd" or "ocp", default is "okd"
-export OPENSHIFT_RELEASE=$(make latest_version)
+export DEPLOYMENT_TYPE=okd # Options: "okd" or "ocp", default is "okd"
+export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.19.9"
 ```
 
 For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from cloud.redhat.com.
@@ -59,8 +59,7 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    make run
    ```
 2. Create `install-config.yaml` (see example in *Configuration*)
-3. Export required environment variables (Terraform, credentials, etc.)
-
+3. Export required environment variables (Terraform, credentials, etc. - see example in *Configuration*)
 3. Generate manifests
    ```bash
    make generate_manifests
@@ -69,11 +68,11 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    ```bash
    make generate_ignition
    ```
-5. Build Fedora CoreOS image using Packer
+5. Build Fedora/RedHat CoreOS image using Packer
    ```bash
    make hcloud_image
    ```
-6. Deploy infrastructure with Terraform (including bootstrap)
+6. Deploy infrastructure with Terraform (including bootstrap and ignition node)
    ```bash
    make infrastructure BOOTSTRAP=true
    ```
@@ -81,7 +80,7 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    ```bash
    make wait_bootstrap
    ```
-8. Remove bootstrap and ignition nodes
+8. Remove bootstrap and ignition node
    ```bash
    make infrastructure
    ```
@@ -135,10 +134,10 @@ sshKey: ssh-rsa AAAA…<your ssh key here>
 export TF_VAR_dns_domain=okd4.example.com
 export TF_VAR_dns_zone_id=YOUR_ZONE_ID
 
-# Hetzner Cloud access
+# Hetzner Cloud credentials
 export HCLOUD_TOKEN=YOUR_HCLOUD_TOKEN
 
-# Cloudflare access (if required)
+# Cloudflare credentials
 export CLOUDFLARE_EMAIL=user@example.com
 export CLOUDFLARE_API_KEY=YOUR_API_KEY
 ```
@@ -148,7 +147,7 @@ export CLOUDFLARE_API_KEY=YOUR_API_KEY
 ## Firewall & Access
 
 - Nodes are **not directly exposed to the internet** by default.
-- Only the load balancer is publicly accessible.
+- Only the load balancer is public accessible.
 - SSH access to nodes is possible if port 22 is explicitly opened.
 
 ---
@@ -159,7 +158,7 @@ To deploy OCP instead of OKD:
 
 ```bash
 export DEPLOYMENT_TYPE=ocp
-export OPENSHIFT_RELEASE=4.19.10  # example version
+export OPENSHIFT_RELEASE=4.19.9 # example version
 make fetch
 make build
 make run
