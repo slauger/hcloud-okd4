@@ -4,7 +4,7 @@
 
 Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer, Terraform, and Ansible.
 
-![OKD4 on Hetzner Cloud](okd4-hcloud.png)
+![OKD4 on Hetzner Cloud](https://raw.githubusercontent.com/slauger/hcloud-okd4/master/okd4-hcloud.png)
 
 ---
 
