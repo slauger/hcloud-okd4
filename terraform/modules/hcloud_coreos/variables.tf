@@ -118,8 +118,8 @@ variable "nameservers_ipv4" {
 
 variable "nameservers_ipv6" {
   type        = list(string)
-  description = "IPv6 resolvers configured on the nodes"
-  default     = ["2606:4700:4700::1111", "2606:4700:4700::1001"]
+  description = "IPv6 resolvers configured on the nodes (libc uses at most three resolvers in total)"
+  default     = ["2606:4700:4700::1111"]
 }
 
 variable "private_interface" {
