@@ -1,5 +1,3 @@
-#resource "hcloud_server_network" "server_network" {
-#  server_id  = element(hcloud_server.server.*.id, count.index)
-#  subnet_id = var.subnet
-#  count      = length(hcloud_server.server.*.id)
-#}
+locals {
+  internal_ipv4_addresses = [for s in hcloud_server.server : one(s.network[*].ip)]
+}

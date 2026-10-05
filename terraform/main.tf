@@ -5,12 +5,16 @@ module "bootstrap" {
   name            = "bootstrap"
   dns_domain      = var.dns_domain
   dns_zone_id     = var.dns_zone_id
-  dns_internal_ip = false
+  dns_internal_ip = true
   image           = data.hcloud_image.image.id
   image_name      = var.image
   server_type     = "cpx42"
-  subnet          = hcloud_network_subnet.subnet.id
-  ignition_url    = var.bootstrap == true ? var.bootstrap_ignition_url : ""
+  labels = {
+    "cluster" = var.dns_domain
+  }
+  network_id   = hcloud_network_subnet.subnet.network_id
+  nodeip_hint  = cidrhost(var.subnet_cidr, 0)
+  ignition_url = var.bootstrap == true ? var.bootstrap_ignition_url : ""
 }
 
 module "master" {
@@ -20,7 +24,7 @@ module "master" {
   name            = "master"
   dns_domain      = var.dns_domain
   dns_zone_id     = var.dns_zone_id
-  dns_internal_ip = false
+  dns_internal_ip = true
   image           = data.hcloud_image.image.id
   image_name      = var.image
   server_type     = "cpx42"
@@ -29,7 +33,8 @@ module "master" {
     "${var.dns_domain}/ingress" = "true"
     "cluster"                   = var.dns_domain
   }
-  subnet          = hcloud_network_subnet.subnet.id
+  network_id      = hcloud_network_subnet.subnet.network_id
+  nodeip_hint     = cidrhost(var.subnet_cidr, 0)
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
 }
@@ -41,7 +46,7 @@ module "worker" {
   name            = "worker"
   dns_domain      = var.dns_domain
   dns_zone_id     = var.dns_zone_id
-  dns_internal_ip = false
+  dns_internal_ip = true
   image           = data.hcloud_image.image.id
   image_name      = var.image
   server_type     = "cpx42"
@@ -50,7 +55,8 @@ module "worker" {
     "${var.dns_domain}/ingress" = "true"
     "cluster"                   = var.dns_domain
   }
-  subnet          = hcloud_network_subnet.subnet.id
+  network_id      = hcloud_network_subnet.subnet.network_id
+  nodeip_hint     = cidrhost(var.subnet_cidr, 0)
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
 }

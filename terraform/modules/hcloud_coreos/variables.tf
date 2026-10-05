@@ -95,9 +95,14 @@ variable "ignition_cacert" {
   default     = ""
 }
 
-variable "subnet" {
+variable "network_id" {
   type        = string
-  description = "Id of the additional internal network"
+  description = "Id of the private network the instance is attached to"
+}
+
+variable "nodeip_hint" {
+  type        = string
+  description = "Address within the private subnet, used to select the node IP"
 }
 
 variable "image_name" {

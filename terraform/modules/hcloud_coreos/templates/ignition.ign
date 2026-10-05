@@ -37,6 +37,17 @@
       {
         "group": {},
         "overwrite": true,
+        "path": "/etc/default/nodeip-configuration",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,${base64encode("KUBELET_NODEIP_HINT=${nodeip_hint}\n")}",
+          "verification": {}
+        },
+        "mode": 420
+      },
+      {
+        "group": {},
+        "overwrite": true,
         "path": "/etc/resolv.conf",
         "user": {},
         "contents": {

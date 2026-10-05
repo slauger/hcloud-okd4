@@ -9,6 +9,7 @@ resource "local_file" "ignition_config" {
     ignition_url     = var.ignition_url
     ignition_version = var.ignition_version
     ignition_cacert  = var.ignition_cacert
+    nodeip_hint      = var.nodeip_hint
   })
 
   filename = "${path.root}/../ignition/${format("%s%02d.%s", var.name, count.index + 1, var.dns_domain)}.ign"

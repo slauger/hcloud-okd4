@@ -2,13 +2,16 @@ resource "hcloud_load_balancer" "lb" {
   name               = "lb.${var.dns_domain}"
   load_balancer_type = "lb11"
   location           = var.location
-  dynamic "target" {
-    for_each = concat(module.master.server_ids, module.worker.server_ids, module.bootstrap.server_ids)
-    content {
-      type      = "server"
-      server_id = target.value
-    }
-  }
+}
+
+resource "hcloud_load_balancer_target" "nodes" {
+  for_each         = { for i, id in concat(module.master.server_ids, module.worker.server_ids, module.bootstrap.server_ids) : tostring(i) => id }
+  type             = "server"
+  load_balancer_id = hcloud_load_balancer.lb.id
+  server_id        = each.value
+  use_private_ip   = true
+
+  depends_on = [hcloud_load_balancer_network.lb_network]
 }
 
 resource "hcloud_load_balancer_network" "lb_network" {

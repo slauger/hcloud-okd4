@@ -87,6 +87,7 @@ generate_manifests:
 	mkdir config
 	cp install-config.yaml config/install-config.yaml
 	openshift-install create manifests --dir=config
+	cp manifests/*.yml config/manifests/
 
 .PHONY: generate_ignition
 generate_ignition:
