@@ -36,11 +36,6 @@ variable "image" {
   default     = "ubuntu-22.04"
 }
 
-variable "user_data" {
-  description = "Cloud-Init user data to use during server creation"
-  default     = null
-}
-
 variable "ssh_keys" {
   type        = list(any)
   description = "SSH key IDs or names which should be injected into the server at creation time"
@@ -91,7 +86,7 @@ variable "volume_size" {
 
 variable "ignition_url" {
   type        = string
-  description = "URL to the external ignition webserver"
+  description = "URL of the ignition config the instance merges on first boot"
 }
 
 variable "ignition_cacert" {
