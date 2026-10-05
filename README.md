@@ -26,25 +26,29 @@ Need an OKD or OpenShift test cluster without reading all of this? Copy the prom
 flowchart TB
   user(["Users / oc"])
   dns["DNS<br/>Cloudflare or your own"]
-  internet(["Internet"])
-  s3[("Object Storage<br/>bootstrap.ign")]
 
   subgraph hcloud["Hetzner Cloud"]
-    lb["Public Load Balancer<br/>api :6443<br/>*.apps :80/443"]
+    subgraph lbs["Load Balancers"]
+      direction LR
+      lb["Public<br/>api :6443<br/>*.apps :80/443"]
+      lbint["Internal (private only)<br/>api-int<br/>:6443 :22623"]
+    end
     subgraph net["Private network"]
       direction LR
       bootstrap["Bootstrap<br/>(temporary)"]
       master["Masters"]
       workers["Workers"]
-      lbint["Internal Load Balancer<br/>api-int<br/>:6443 :22623"]
     end
   end
+
+  internet(["Internet"])
+  s3[("Object Storage<br/>bootstrap.ign")]
 
   user -.->|"resolve"| dns
   user -->|"API, console, routes"| lb
   lb -->|"API"| master
   lb -->|"ingress"| workers
-  bootstrap & master & workers -->|"API, ignition"| lbint
+  lbint -->|"API, ignition"| bootstrap & master
   net -->|"egress via public interface"| internet
   bootstrap -.->|"pre-signed URL"| s3
 ```
