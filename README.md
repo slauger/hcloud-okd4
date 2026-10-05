@@ -8,11 +8,33 @@ Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer and Terraform.
 
 ---
 
-## Important Notice
+## Deploy with a Coding Agent
 
-Hetzner Cloud does **not** meet the I/O performance and latency requirements for etcd – even when using local SSDs (not Ceph). This may cause issues during the cluster bootstrap phase.
+Need an OKD test cluster? Copy the following prompt into your AI coding agent of choice and let it do the work:
 
-This setup is suitable for small test environments only. Not recommended for production clusters.
+```text
+Deploy an OKD test cluster on Hetzner Cloud using https://github.com/slauger/hcloud-okd4.
+
+1. Clone the repository and read the README.
+2. Ask me for everything you need and do not have yet: Hetzner Cloud API token,
+   Cloudflare e-mail, API key and zone ID, the cluster domain (e.g. okd4.example.com),
+   the Hetzner Object Storage bucket and S3 credentials, my SSH public key and the
+   number of worker nodes. Keep secrets in a local env.sh only and never commit them.
+3. Determine the latest stable OKD release with `make latest_version`, fetch the
+   binaries and build the toolbox image. Run all further make targets inside the
+   toolbox container non-interactively (docker run ... make <target>).
+4. Create install-config.yaml from the README example, generate manifests and
+   ignition configs and build the CoreOS image with Packer.
+5. Before creating any billable infrastructure, show me what will be created and
+   wait for my confirmation.
+6. Follow the Quick Start: deploy with BOOTSTRAP=true, wait for the bootstrap to
+   complete, remove the bootstrap node, approve CSRs until all nodes are Ready and
+   wait for the installation to complete.
+7. If a step fails, find the root cause (nodes, cluster operators, load balancer
+   health checks) instead of blindly retrying.
+8. When finished, give me the console URL and the paths to the kubeconfig and the
+   kubeadmin password.
+```
 
 ---
 
@@ -27,6 +49,10 @@ By default, a single-node cluster is deployed with the following components:
 | Bootstrap Node| cpx42 (removed after bootstrap) |
 
 The bootstrap ignition config is too large for Hetzner Cloud user data. It is therefore uploaded to a private Hetzner Object Storage bucket and the bootstrap node fetches it through a short-lived pre-signed HTTPS URL.
+
+### Networking
+
+All nodes are attached to a Hetzner private network. Cluster traffic (etcd, API, OVN-Kubernetes overlay, kubelet) uses the private interface, while the public interface is only used as default route for outbound traffic. The load balancer reaches its targets via their private IPs, and `api-int` as well as the node DNS records resolve to private addresses. The overlay MTU is lowered to 1350 to fit the private network (MTU 1450), see `manifests/cluster-network-03-config.yml`.
 
 Additional worker nodes can be added by setting an environment variable **before** running Terraform:
 
@@ -169,9 +195,9 @@ make delete_ignition
 
 ## Firewall & Access
 
-- Nodes are **not directly exposed to the internet** by default.
-- Only the load balancer is public accessible.
-- SSH access to nodes will only be possible with additional firewall configuration.
+- Nodes are **not directly exposed to the internet**: the hcloud firewall only allows ICMP on their public interfaces. Hetzner firewalls do not apply to private networks, so cluster traffic is not affected.
+- Only the load balancer is publicly accessible (API on 6443, ingress on 80/443).
+- SSH access to nodes is only possible with additional firewall configuration.
 
 ---
 
@@ -197,8 +223,6 @@ make fetch build run
 
 ## Limitations / Not for Production
 
-- I/O performance and latency issues with etcd (see above).
-- Components that rely on strong consistency (like etcd) may suffer under heavy load.
 - No stability guarantees for large clusters or production use.
 
 ---
