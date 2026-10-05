@@ -12,19 +12,41 @@ Deploy OKD (and Red Hat OpenShift) clusters on Hetzner Cloud using Packer and Te
 - Bootstrap ignition config served from Hetzner Object Storage, no helper VMs
 - About 45 minutes from zero to a running cluster, from ~0.12 € per hour
 
-Not intended for production use, see [Limitations](#limitations--not-for-production).
-
-![OKD4 on Hetzner Cloud](https://raw.githubusercontent.com/slauger/hcloud-okd4/master/okd4-hcloud.png)
-
 ---
 
 ## Deploy with a Coding Agent
 
-Need an OKD test cluster without reading all of this? Copy the prompt from [docs/coding-agent.md](docs/coding-agent.md) into your AI coding agent of choice.
+Need an OKD or OpenShift test cluster without reading all of this? Copy the prompt from [docs/coding-agent.md](docs/coding-agent.md) into your AI coding agent of choice.
 
 ---
 
 ## Architecture
+
+```mermaid
+flowchart LR
+  user(["Users / oc"])
+  dns["Cloudflare DNS<br/>api, *.apps: LB public IP<br/>api-int, nodes: private IPs"]
+  s3[("Hetzner Object Storage<br/>bootstrap.ign")]
+  internet(("Internet"))
+
+  subgraph hcloud["Hetzner Cloud"]
+    lb["Load Balancer<br/>6443, 22623, 80, 443"]
+    subgraph net["Private network 192.168.254.0/24"]
+      bootstrap["Bootstrap<br/>(temporary)"]
+      master["Master"]
+      worker["Workers"]
+    end
+  end
+
+  user -.-> dns
+  user -->|"API, console, routes"| lb
+  lb -->|"private IPs"| master
+  lb --> worker
+  lb -.-> bootstrap
+  master <-->|"etcd, API, overlay"| worker
+  bootstrap -.->|"pre-signed URL"| s3
+  master & worker -->|"egress via public interface"| internet
+```
 
 By default, a single-node cluster is deployed with the following components:
 
