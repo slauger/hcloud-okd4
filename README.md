@@ -10,7 +10,7 @@ Deploy OKD (and Red Hat OpenShift) clusters on Hetzner Cloud using Packer and Te
 - User provisioned infrastructure (`platform: none`), no cloud integration required
 - Cluster traffic over a Hetzner private network, nodes are not exposed to the internet
 - Bootstrap ignition config served from Hetzner Object Storage, no helper VMs
-- About 45 minutes from zero to a running cluster, from ~0.12 € per hour
+- About 45 minutes from zero to a running cluster, from ~0.13 € per hour
 
 ---
 
@@ -30,18 +30,20 @@ flowchart TB
   s3[("Object Storage<br/>bootstrap.ign")]
 
   subgraph hcloud["Hetzner Cloud"]
-    lb["Load Balancer<br/>API 6443<br/>Ingress 80/443<br/>MCS 22623"]
+    lb["Public Load Balancer<br/>API 6443<br/>Ingress 80/443"]
     subgraph net["Private network"]
       direction LR
       bootstrap["Bootstrap<br/>(temporary)"]
       master["Master"]
       workers["Workers"]
+      lbint["Internal Load Balancer<br/>API 6443<br/>MCS 22623"]
     end
   end
 
   user -.->|"resolve"| dns
   user -->|"HTTPS"| lb
-  lb -->|"private IPs"| net
+  lb -->|"private IPs"| master & workers
+  master & workers & bootstrap -->|"api-int"| lbint
   net -->|"egress via public interface"| internet
   bootstrap -.->|"pre-signed URL"| s3
 ```
@@ -51,7 +53,7 @@ By default, a single-node cluster is deployed with the following components:
 | Component     | Type / Size |
 |---------------|-------------|
 | Master Node   | cpx42       |
-| Load Balancer | lb11        |
+| Load Balancer | 2× lb11 (public and internal) |
 | Bootstrap Node| cpx42 (removed after bootstrap) |
 
 The bootstrap ignition config is too large for Hetzner Cloud user data. It is therefore uploaded to a private Hetzner Object Storage bucket and the bootstrap node fetches it through a short-lived pre-signed HTTPS URL.
@@ -72,8 +74,8 @@ Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the H
 
 | Setup | Per hour | Per month |
 |---|---|---|
-| Single node (1× master cpx42, lb11, IPv4) | ~0.12 € | ~77 € |
-| Default with 2 workers (3× cpx42, lb11, 3× IPv4) | ~0.35 € | ~217 € |
+| Single node (1× master cpx42, 2× lb11, IPv4) | ~0.13 € | ~84 € |
+| Default with 2 workers (3× cpx42, 2× lb11, 3× IPv4) | ~0.36 € | ~224 € |
 | Bootstrap node during installation (cpx42, billed as one hour) | ~0.11 € once | – |
 | Additional volumes (`TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
 | CoreOS snapshot (~1 GB) | – | ~0.01 € |
@@ -241,7 +243,7 @@ By default, all DNS records are managed in Cloudflare. With `TF_VAR_dns_provider
 
 | Record | Value | Needed |
 |---|---|---|
-| `api-int.<cluster domain>` | private load balancer IP (`192.168.253.254` by default) | **before** `make infrastructure BOOTSTRAP=true` |
+| `api-int.<cluster domain>` | IP of the internal load balancer (`192.168.253.254` by default) | **before** `make infrastructure BOOTSTRAP=true` |
 | `<node>.<cluster domain>` | private node IP (bootstrap `.5`, masters `.10+`, workers `.50+` of the node subnet) | **before** `make infrastructure BOOTSTRAP=true` |
 | `api.<cluster domain>`, `apps.<cluster domain>`, `*.apps.<cluster domain>` | public load balancer IP | after the infrastructure has been created |
 
@@ -271,7 +273,7 @@ make delete_ignition
 ## Firewall & Access
 
 - Nodes are **not directly exposed to the internet**: the hcloud firewall only allows ICMP on their public interfaces. Hetzner firewalls do not apply to private networks, so cluster traffic is not affected.
-- Only the load balancer is publicly accessible (API on 6443, ingress on 80/443).
+- Only the public load balancer is reachable from the internet (API on 6443, ingress on 80/443). The machine config server (22623) is only served by the internal load balancer, which has no public interface.
 - SSH access to nodes is only possible with additional firewall configuration.
 
 ---
