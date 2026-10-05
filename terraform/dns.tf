@@ -6,7 +6,7 @@ locals {
   dns_records = concat(
     [
       { name = "api.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 },
-      { name = "api-int.${var.dns_domain}", type = "A", value = hcloud_load_balancer_network.lb_network.ip },
+      { name = "api-int.${var.dns_domain}", type = "A", value = hcloud_load_balancer_network.internal.ip },
       { name = "apps.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 },
       { name = "*.apps.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 },
     ],
@@ -29,7 +29,7 @@ resource "cloudflare_dns_record" "dns_a_api_int" {
   count   = local.cloudflare_dns ? 1 : 0
   zone_id = var.dns_zone_id
   name    = "api-int.${var.dns_domain}"
-  content = hcloud_load_balancer_network.lb_network.ip
+  content = hcloud_load_balancer_network.internal.ip
   type    = "A"
   ttl     = 120
 
