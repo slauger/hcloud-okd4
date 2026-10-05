@@ -245,7 +245,7 @@ controlPlane:
   name: master
   replicas: 1
 networking:
-  clusterNetworks:
+  clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
   networkType: OVNKubernetes
