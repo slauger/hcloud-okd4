@@ -17,6 +17,9 @@ commandTests:
   - name: "packer works"
     command: "packer"
     args: ["version"]
+  - name: "aws cli works"
+    command: "aws"
+    args: ["--version"]
   - name: "make exists"
     command: "which"
     args: ["make"]

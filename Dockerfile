@@ -16,7 +16,7 @@ RUN apk update && \
       ca-certificates \
       openssh-client \
       openssl \
-      ansible \
+      aws-cli \
       make \
       rsync \
       curl \
