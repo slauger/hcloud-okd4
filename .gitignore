@@ -9,5 +9,6 @@ terraform/.terraform*
 terraform/terraform.tfstate
 terraform/*.auto.tfvars
 terraform/terraform.tfstate.*
+downloads
 openshift-install-linux-*.tar.gz
 openshift-client-linux-*.tar.gz

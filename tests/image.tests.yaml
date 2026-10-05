@@ -2,24 +2,30 @@
 schemaVersion: "2.0.0"
 
 commandTests:
-  - name: "openshift clients works"
-    command: "oc"
-    args: ["version"]
-  - name: "openshift-install client works"
-    command: "openshift-install"
-    args: ["version"]
-  - name: "kubectl works"
-    command: "kubectl"
-    args: ["version", "--client"]
   - name: "terraform works"
     command: "terraform"
     args: ["version"]
   - name: "packer works"
     command: "packer"
     args: ["version"]
+  - name: "packer hcloud plugin is installed"
+    command: "packer"
+    args: ["plugins", "installed"]
+    expectedOutput: ["hcloud"]
   - name: "aws cli works"
     command: "aws"
+    args: ["--version"]
+  - name: "jq works"
+    command: "jq"
+    args: ["--version"]
+  - name: "curl works"
+    command: "curl"
     args: ["--version"]
   - name: "make exists"
     command: "which"
     args: ["make"]
+
+fileExistenceTests:
+  - name: "no openshift binaries baked in"
+    path: "/usr/local/bin/openshift-install"
+    shouldExist: false
