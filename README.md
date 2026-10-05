@@ -31,7 +31,8 @@ Deploy an OKD test cluster on Hetzner Cloud using https://github.com/slauger/hcl
    toolbox container non-interactively: docker run --rm -v "$PWD:/workspace"
    -e <every variable from env.sh> <image> make <target>.
 4. Create install-config.yaml from the README example. metadata.name plus baseDomain
-   must result in exactly the cluster domain (TF_VAR_dns_domain).
+   must result in exactly the cluster domain (TF_VAR_dns_domain), and machineNetwork
+   has to be the private node subnet (TF_VAR_subnet_cidr, default 192.168.254.0/24).
 5. Generate manifests and ignition configs and build the CoreOS image with Packer.
    The ignition certificates expire after 24 hours, so the bootstrap has to be
    completed within that time, otherwise regenerate them.
@@ -163,13 +164,15 @@ networking:
   networkType: OVNKubernetes
   serviceNetwork:
     - 172.30.0.0/16
+  machineNetwork:
+    - cidr: 192.168.254.0/24 # has to match TF_VAR_subnet_cidr (default)
 platform:
   none: {}
 pullSecret: '{"auths":{"none":{"auth":"none"}}}'
 sshKey: ssh-rsa AAAA…<your ssh key here>
 ```
 
-`metadata.name` and `baseDomain` together form the cluster domain (`okd4.example.com` in this example), which has to match `TF_VAR_dns_domain`.
+`metadata.name` and `baseDomain` together form the cluster domain (`okd4.example.com` in this example), which has to match `TF_VAR_dns_domain`. `machineNetwork` has to be the private subnet of the nodes, otherwise the bootstrap etcd advertises its public address, which is not reachable through the firewall.
 
 ### Required Environment Variables
 
