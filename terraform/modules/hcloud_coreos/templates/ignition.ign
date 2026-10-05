@@ -20,13 +20,12 @@
     "timeouts": {},
     "version": "${ignition_version}"
   },
-  "networkd": {},
   "passwd": {},
   "storage": {
     "files": [
       {
-        "filesystem": "root",
         "group": {},
+        "overwrite": true,
         "path": "/etc/hostname",
         "user": {},
         "contents": {
@@ -34,13 +33,8 @@
           "verification": {}
         },
         "mode": 420
-      }
-    ]
-  },
-  "storage": {
-    "files": [
+      },
       {
-        "filesystem": "root",
         "group": {},
         "overwrite": true,
         "path": "/etc/resolv.conf",
