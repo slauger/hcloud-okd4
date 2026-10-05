@@ -30,13 +30,13 @@ https://github.com/slauger/hcloud-okd4.
      required for OCP, optional for OKD (it enables the Red Hat operator catalogs)
    Store all secrets in a local env.sh (it is gitignored) and never commit them.
 4. Set DEPLOYMENT_TYPE=okd or DEPLOYMENT_TYPE=ocp, TF_VAR_replicas_master,
-   TF_VAR_replicas_worker and
-   TF_VAR_dns_provider (cloudflare or none) according to my answers. For OCP, set
-   OCP_RELEASE_CHANNEL to the newest stable-4.x channel before running
-   `make latest_version`. Fetch the binaries and build the toolbox image. Run
-   all further make targets inside the toolbox container non-interactively:
+   TF_VAR_replicas_worker and TF_VAR_dns_provider (cloudflare or none) according
+   to my answers. For OCP, set OCP_RELEASE_CHANNEL to the newest stable-4.x
+   channel before running `make latest_version`. Run `make fetch` for the chosen
+   release and pull the toolbox image quay.io/slauger/hcloud-okd4:latest. Run all
+   further make targets inside the toolbox non-interactively:
    docker run --rm -v "$PWD:/workspace" -e <every variable from env.sh> <image>
-   make <target>, and pass DEPLOYMENT_TYPE to every make call.
+   make <target>, and pass DEPLOYMENT_TYPE and OPENSHIFT_RELEASE to every make call.
 5. Create install-config.yaml from the README example. metadata.name plus baseDomain
    must result in exactly the cluster domain (TF_VAR_dns_domain), and machineNetwork
    has to be the private node subnet (TF_VAR_subnet_cidr, default 192.168.254.0/24),
