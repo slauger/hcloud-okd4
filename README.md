@@ -1,8 +1,18 @@
-![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg)
+[![OKD Build](https://github.com/slauger/hcloud-okd4/actions/workflows/okd-master.yml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/okd-master.yml)
+[![OCP Build](https://github.com/slauger/hcloud-okd4/actions/workflows/ocp-master.yml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/ocp-master.yml)
+[![License: MIT](https://img.shields.io/github/license/slauger/hcloud-okd4)](LICENSE)
 
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer and Terraform.
+Deploy OKD (and Red Hat OpenShift) clusters on Hetzner Cloud using Packer and Terraform – a cheap and fast way to get a real OpenShift cluster for testing, development and learning.
+
+- OKD and OCP 4.x, single node or with additional workers
+- User provisioned infrastructure (`platform: none`), no cloud integration required
+- Cluster traffic over a Hetzner private network, nodes are not exposed to the internet
+- Bootstrap ignition config served from Hetzner Object Storage, no helper VMs
+- About 45 minutes from zero to a running cluster, from ~0.12 € per hour
+
+Not intended for production use, see [Limitations](#limitations--not-for-production).
 
 ![OKD4 on Hetzner Cloud](https://raw.githubusercontent.com/slauger/hcloud-okd4/master/okd4-hcloud.png)
 
