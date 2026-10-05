@@ -28,6 +28,14 @@ else
 	$(error installer only supports ocp or okd)
 endif
 
+# s3 bucket (hetzner object storage) for the bootstrap ignition config
+S3_BUCKET?=
+S3_LOCATION?=nbg1
+S3_ENDPOINT?=https://$(S3_LOCATION).your-objectstorage.com
+S3_PRESIGN_EXPIRY?=86400
+S3_OBJECT=$(shell jq -r .infraID ignition/metadata.json 2>/dev/null)/bootstrap.ign
+AWS_CLI=aws --endpoint-url $(S3_ENDPOINT) --region $(S3_LOCATION)
+
 # terraform switches
 BOOTSTRAP?=false
 MODE?=apply
@@ -104,14 +112,30 @@ wait_bootstrap:
 wait_completion:
 	openshift-install --dir=ignition/ wait-for install-complete --log-level=debug
 
+.PHONY: upload_ignition
+upload_ignition:
+	@if [ -z "$(S3_BUCKET)" ]; then echo "ERROR: S3_BUCKET is not set"; exit 1; fi
+	@if [ -z "$(AWS_ACCESS_KEY_ID)" ] || [ -z "$(AWS_SECRET_ACCESS_KEY)" ]; then echo "ERROR: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is not set"; exit 1; fi
+	@if [ ! -f "ignition/bootstrap.ign" ]; then echo "ERROR: ignition/bootstrap.ign not found"; exit 1; fi
+	$(AWS_CLI) s3 cp ignition/bootstrap.ign s3://$(S3_BUCKET)/$(S3_OBJECT) --content-type application/vnd.coreos.ignition+json
+	@echo "bootstrap_ignition_url = \"$$($(AWS_CLI) s3 presign s3://$(S3_BUCKET)/$(S3_OBJECT) --expires-in $(S3_PRESIGN_EXPIRY))\"" > terraform/bootstrap.auto.tfvars
+	@echo "pre-signed URL written to terraform/bootstrap.auto.tfvars"
+
+.PHONY: delete_ignition
+delete_ignition:
+	@if [ -z "$(S3_BUCKET)" ]; then echo "ERROR: S3_BUCKET is not set"; exit 1; fi
+	$(AWS_CLI) s3 rm s3://$(S3_BUCKET)/$(S3_OBJECT)
+	rm -f terraform/bootstrap.auto.tfvars
+
 .PHONY: infrastructure
 infrastructure:
 	@if [ -z "$(TF_VAR_dns_domain)" ]; then echo "ERROR: TF_VAR_dns_domain is not set"; exit 1; fi
 	@if [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
 	@if [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
+	if [ "$(BOOTSTRAP)" == "true" ] && [ "$(MODE)" == "apply" ]; then $(MAKE) upload_ignition; fi
 	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var bootstrap=$(BOOTSTRAP))
-	if [ "$(MODE)" == "apply" ]; then (cd ansible && ansible-playbook site.yml); fi
+	if [ "$(BOOTSTRAP)" == "false" ] && [ "$(MODE)" == "apply" ] && [ -f terraform/bootstrap.auto.tfvars ]; then $(MAKE) delete_ignition; fi
 
 .PHONY: destroy
 destroy:

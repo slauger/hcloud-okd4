@@ -1,6 +1,3 @@
-output "ignition" {
-  value = module.ignition
-}
 output "bootstrap" {
   value = module.bootstrap
 }

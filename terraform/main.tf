@@ -1,17 +1,3 @@
-module "ignition" {
-  source         = "./modules/hcloud_instance"
-  instance_count = var.bootstrap == true ? 1 : 0
-  location       = var.location
-  name           = "ignition"
-  dns_domain     = var.dns_domain
-  dns_zone_id    = var.dns_zone_id
-  image          = "ubuntu-22.04"
-  user_data      = file("templates/cloud-init.tpl")
-  ssh_keys       = data.hcloud_ssh_keys.all_keys.ssh_keys.*.name
-  server_type    = "cpx22"
-  subnet         = hcloud_network_subnet.subnet.id
-}
-
 module "bootstrap" {
   source          = "./modules/hcloud_coreos"
   instance_count  = var.bootstrap == true ? 1 : 0
@@ -24,7 +10,7 @@ module "bootstrap" {
   image_name      = var.image
   server_type     = "cpx42"
   subnet          = hcloud_network_subnet.subnet.id
-  ignition_url    = var.bootstrap == true ? "http://${cloudflare_dns_record.dns_a_ignition[0].name}/bootstrap.ign" : ""
+  ignition_url    = var.bootstrap == true ? var.bootstrap_ignition_url : ""
 }
 
 module "master" {

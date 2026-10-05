@@ -2,12 +2,12 @@
 *.swp
 env.sh
 install-config.yaml
-inventory.ini
 config
 ignition
 terraform/.terraform
 terraform/.terraform*
 terraform/terraform.tfstate
+terraform/*.auto.tfvars
 terraform/terraform.tfstate.*
 openshift-install-linux-*.tar.gz
 openshift-client-linux-*.tar.gz

@@ -1,4 +1,4 @@
-# required for the upload to the ignition host
+# rendered pointer configs, kept for debugging
 resource "local_file" "ignition_config" {
   count = var.instance_count
 

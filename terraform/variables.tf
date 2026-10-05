@@ -16,6 +16,13 @@ variable "bootstrap" {
   description = "Whether to deploy a bootstrap instance"
 }
 
+variable "bootstrap_ignition_url" {
+  type        = string
+  description = "Pre-signed URL of the bootstrap ignition config (set by make upload_ignition)"
+  default     = ""
+  sensitive   = true
+}
+
 variable "dns_domain" {
   type        = string
   description = "Name of the Cloudflare domain"
