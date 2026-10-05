@@ -220,12 +220,13 @@ sshKey: ssh-rsa AAAA…<your ssh key here>
 ```bash
 # Terraform / DNS
 export TF_VAR_dns_domain=okd4.example.com
-export TF_VAR_dns_zone_id=YOUR_ZONE_ID
+export TF_VAR_dns_provider=cloudflare # or "none", see DNS
+export TF_VAR_dns_zone_id=YOUR_ZONE_ID # only for cloudflare
 
 # Hetzner Cloud credentials
 export HCLOUD_TOKEN=YOUR_HCLOUD_TOKEN
 
-# Cloudflare credentials
+# Cloudflare credentials (only for dns_provider=cloudflare)
 export CLOUDFLARE_EMAIL=user@example.com
 export CLOUDFLARE_API_KEY=YOUR_API_KEY
 
@@ -234,6 +235,26 @@ export S3_BUCKET=YOUR_BUCKET
 export S3_LOCATION=nbg1 # optional, default: nbg1
 export AWS_ACCESS_KEY_ID=YOUR_S3_ACCESS_KEY
 export AWS_SECRET_ACCESS_KEY=YOUR_S3_SECRET_KEY
+```
+
+### DNS
+
+By default, all DNS records are managed in Cloudflare. With `TF_VAR_dns_provider=none` Terraform does not create any records (bring your own DNS) and prints the required records as output `dns_records`:
+
+| Record | Value | Needed |
+|---|---|---|
+| `api-int.<cluster domain>` | private load balancer IP (`192.168.253.254` by default) | **before** `make infrastructure BOOTSTRAP=true` |
+| `<node>.<cluster domain>` | private node IP (bootstrap `.5`, masters `.10+`, workers `.50+` of the node subnet) | **before** `make infrastructure BOOTSTRAP=true` |
+| `api.<cluster domain>`, `apps.<cluster domain>`, `*.apps.<cluster domain>` | public load balancer IP | after the infrastructure has been created |
+
+`api-int` and the node records have to exist before the nodes boot, otherwise resolvers cache the negative answer and the nodes cannot fetch their configuration. Their addresses are fixed, so they can be created upfront.
+
+The nodes use Cloudflare resolvers (`1.1.1.1`, `1.0.0.1`), also during the first boot. To use other resolvers, e.g. internal ones for your own DNS, set them for the image build and for Terraform:
+
+```bash
+make hcloud_image NAMESERVERS="10.0.0.53 10.0.0.54"
+export TF_VAR_nameservers_ipv4='["10.0.0.53","10.0.0.54"]'
+export TF_VAR_nameservers_ipv6='[]'
 ```
 
 ### Object Storage
