@@ -252,14 +252,14 @@ To deploy OCP instead of OKD:
 
 ```bash
 export DEPLOYMENT_TYPE=ocp
-export OPENSHIFT_RELEASE=4.19.9 # example version
+export OPENSHIFT_RELEASE=4.22.15 # example version
 make fetch build run
 ```
 
 You can also choose the latest version from a specific channel:
 
 ```bash
-export OCP_RELEASE_CHANNEL=stable-4.19
+export OCP_RELEASE_CHANNEL=stable-4.22
 export OPENSHIFT_RELEASE=$(make latest_version)
 make fetch build run
 ```
