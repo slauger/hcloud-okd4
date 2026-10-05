@@ -20,13 +20,12 @@
     "timeouts": {},
     "version": "${ignition_version}"
   },
-  "networkd": {},
   "passwd": {},
   "storage": {
     "files": [
       {
-        "filesystem": "root",
         "group": {},
+        "overwrite": true,
         "path": "/etc/hostname",
         "user": {},
         "contents": {
@@ -34,22 +33,39 @@
           "verification": {}
         },
         "mode": 420
-      }
-    ]
-  },
-  "storage": {
-    "files": [
+      },
       {
-        "filesystem": "root",
         "group": {},
         "overwrite": true,
-        "path": "/etc/resolv.conf",
+        "path": "/etc/default/nodeip-configuration",
         "user": {},
         "contents": {
-          "source": "data:text/plain;charset=utf-8;base64,${resolvconf_b64}",
+          "source": "data:text/plain;charset=utf-8;base64,${base64encode("KUBELET_NODEIP_HINT=${nodeip_hint}\n")}",
           "verification": {}
         },
         "mode": 420
+      },
+      {
+        "group": {},
+        "overwrite": true,
+        "path": "/etc/NetworkManager/system-connections/public.nmconnection",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,${public_nm_b64}",
+          "verification": {}
+        },
+        "mode": 384
+      },
+      {
+        "group": {},
+        "overwrite": true,
+        "path": "/etc/NetworkManager/system-connections/private.nmconnection",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,${private_nm_b64}",
+          "verification": {}
+        },
+        "mode": 384
       }
     ]
   },

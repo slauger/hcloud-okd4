@@ -1,0 +1,17 @@
+# Cluster traffic runs over the Hetzner private network (MTU 1450), so the
+# overlay MTU has to account for the Geneve overhead. Pod egress is routed via
+# the host routing table, which uses the public interface as default route.
+# This interface is not managed by OVN-Kubernetes, so IP forwarding has to be
+# enabled globally instead of only on the OVN interfaces.
+apiVersion: operator.openshift.io/v1
+kind: Network
+metadata:
+  name: cluster
+spec:
+  defaultNetwork:
+    type: OVNKubernetes
+    ovnKubernetesConfig:
+      mtu: 1350
+      gatewayConfig:
+        routingViaHost: true
+        ipForwarding: Global

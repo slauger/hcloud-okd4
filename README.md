@@ -1,37 +1,124 @@
-![Docker Build](https://github.com/slauger/hcloud-okd4/workflows/Docker%20Build/badge.svg)
+[![OKD Build](https://github.com/slauger/hcloud-okd4/actions/workflows/okd-master.yml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/okd-master.yml)
+[![OCP Build](https://github.com/slauger/hcloud-okd4/actions/workflows/ocp-master.yml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/ocp-master.yml)
+[![License: MIT](https://img.shields.io/github/license/slauger/hcloud-okd4)](LICENSE)
 
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer, Terraform, and Ansible.
+Deploy OKD (and Red Hat OpenShift) clusters on Hetzner Cloud using Packer and Terraform – a cheap and fast way to get a real OpenShift cluster for testing, development and learning.
 
-![OKD4 on Hetzner Cloud](https://raw.githubusercontent.com/slauger/hcloud-okd4/master/okd4-hcloud.png)
+- OKD and OCP 4.x, single node or with additional workers
+- User provisioned infrastructure (`platform: none`), no cloud integration required
+- Cluster traffic over a Hetzner private network, nodes are not exposed to the internet
+- Bootstrap ignition config served from Hetzner Object Storage, no helper VMs
+- About 45 minutes from zero to a running cluster, from ~0.13 € per hour
 
 ---
 
-## Important Notice
+## Deploy with a Coding Agent
 
-Hetzner Cloud does **not** meet the I/O performance and latency requirements for etcd – even when using local SSDs (not Ceph). This may cause issues during the cluster bootstrap phase.
-
-This setup is suitable for small test environments only. Not recommended for production clusters.
+Need an OKD or OpenShift test cluster without reading all of this? Copy the prompt from [docs/coding-agent.md](docs/coding-agent.md) into your AI coding agent of choice.
 
 ---
 
 ## Architecture
 
+```mermaid
+flowchart TB
+  user(["Users / oc"])
+  dns["DNS<br/>Cloudflare or your own"]
+
+  subgraph hcloud["Hetzner Cloud"]
+    subgraph lbs["Load Balancers"]
+      direction LR
+      lb["Public<br/>api :6443<br/>*.apps :80/443"]
+      lbint["Internal (private only)<br/>api-int<br/>:6443 :22623"]
+    end
+    subgraph net["Private network"]
+      direction LR
+      bootstrap["Bootstrap<br/>(temporary)"]
+      master["Masters"]
+      workers["Workers"]
+    end
+  end
+
+  internet(["Internet"])
+  s3[("Object Storage<br/>bootstrap.ign")]
+
+  user -.->|"resolve"| dns
+  user -->|"API, console, routes"| lb
+  lb -->|"API"| master
+  lb -->|"ingress"| workers
+  lbint -->|"API, ignition"| bootstrap & master
+  net -->|"egress via public interface"| internet
+  bootstrap -.->|"pre-signed URL"| s3
+```
+
 By default, a single-node cluster is deployed with the following components:
 
 | Component     | Type / Size |
 |---------------|-------------|
-| Master Node   | cpx41       |
-| Load Balancer | lb11        |
-| Bootstrap Node| cpx41 (removed after bootstrap) |
-| Ignition Node | cpx21 (removed after bootstrap) |
+| Master Node   | cpx42       |
+| Load Balancer | 2× lb11 (public and internal) |
+| Bootstrap Node| cpx42 (removed after bootstrap) |
 
-Additional worker nodes can be added by setting an environment variable **before** running Terraform:
+The bootstrap ignition config is too large for Hetzner Cloud user data. It is therefore uploaded to a private Hetzner Object Storage bucket and the bootstrap node fetches it through a short-lived pre-signed HTTPS URL.
+
+### Networking
+
+All nodes are attached to a Hetzner private network. Cluster traffic (etcd, API, OVN-Kubernetes overlay, kubelet) uses the private interface, while the public interface is only used as default route for outbound traffic. The load balancer reaches its targets via their private IPs, and `api-int` as well as the node DNS records resolve to private addresses. The overlay MTU is lowered to 1350 to fit the private network (MTU 1450), see `manifests/cluster-network-03-config.yml`.
+
+Hetzner Cloud offers neither SLAAC nor DHCPv6, so each node gets a pre-allocated IPv6 primary IP, which is configured statically (`<prefix>::1/64`, gateway `fe80::1`) together with Cloudflare resolvers. The cluster network itself stays IPv4 only.
+
+### Hetzner Cloud Specifics
+
+Hetzner Cloud is not a supported OpenShift platform and several of its properties (DNS caching, `/32` private addresses, no IPv6 autoconfiguration, user data limits, ...) need special handling. They are explained in [docs/hetzner-specifics.md](docs/hetzner-specifics.md), read it before changing the network setup or when debugging an installation.
+
+### Costs
+
+Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the Hetzner Cloud pricing API). Prices change over time, check the current [Hetzner Cloud pricing](https://www.hetzner.com/cloud/) before deploying. Hetzner bills hourly, capped at the monthly price.
+
+| Setup | Per hour | Per month |
+|---|---|---|
+| Single node (1× master cpx42, 2× lb11, IPv4) | ~0.13 € | ~84 € |
+| Default with 2 workers (3× cpx42, 2× lb11, 3× IPv4) | ~0.36 € | ~224 € |
+| Bootstrap node during installation (cpx42, billed as one hour) | ~0.11 € once | – |
+| Additional volumes (`TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
+| CoreOS snapshot (~1 GB) | – | ~0.01 € |
+
+Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page.
+
+### Duration
+
+Measured with OKD 4.22 and OCP 4.22, 1 master and 2 workers:
+
+| Step | Duration |
+|---|---|
+| Toolbox image (`make fetch build`) | ~5 min |
+| CoreOS image (`make hcloud_image`) | ~10 min |
+| Infrastructure (`make infrastructure BOOTSTRAP=true`) | ~3 min |
+| Bootstrap (`make wait_bootstrap`) | ~12 min |
+| Installation (`make wait_completion`) | ~15–25 min |
+| **Total** | **~45–55 min**, ~30–40 min with an existing image |
+
+Additional worker nodes and a highly available control plane can be configured by setting environment variables **before** running Terraform:
 
 ```bash
 export TF_VAR_replicas_worker=3  # Example: 3 worker nodes
+export TF_VAR_replicas_master=3  # 1 (default) or 3 masters
 ```
+
+The number of masters has to match `controlPlane.replicas` in `install-config.yaml`. With 3 masters the control plane survives the restarts during the installation and updates without API outages.
+
+### Additional Disks (LVM Storage / Ceph)
+
+Master and worker nodes can get an additional, unformatted Hetzner Volume for storage operators:
+
+```bash
+export TF_VAR_worker_volume_size=100 # GB per worker, 0 (default) = no volume
+make infrastructure
+```
+
+Details and examples for the LVM Storage operator and Rook-Ceph are in [docs/storage.md](docs/storage.md).
 
 ---
 
@@ -43,7 +130,13 @@ Example:
 
 ```bash
 export DEPLOYMENT_TYPE=okd # Options: "okd" or "ocp", default is "okd"
-export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.19.9"
+export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.22.0-okd-scos.9"
+```
+
+`make latest_version` returns the most recent stable (non pre-release) OKD release. To stay on a specific minor stream, set `OKD_RELEASE_STREAM`:
+
+```bash
+export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
 ```
 
 For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from cloud.redhat.com.
@@ -68,11 +161,11 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    make generate_ignition
    ```
 5. Export required environment variables (see example in *Configuration*)
-6. Build Fedora/RedHat CoreOS image using Packer
+6. Build CentOS Stream CoreOS (OKD) or Red Hat CoreOS (OCP) image using Packer
    ```bash
    make hcloud_image
    ```
-7. Deploy infrastructure with Terraform (including bootstrap and ignition node)
+7. Deploy infrastructure with Terraform (uploads the bootstrap ignition config to Object Storage and creates the bootstrap node)
    ```bash
    make infrastructure BOOTSTRAP=true
    ```
@@ -80,7 +173,7 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    ```bash
    make wait_bootstrap
    ```
-9. Remove bootstrap and ignition node
+9. Remove bootstrap node (also deletes the bootstrap ignition config from Object Storage)
    ```bash
    make infrastructure
    ```
@@ -114,40 +207,82 @@ controlPlane:
   name: master
   replicas: 1
 networking:
-  clusterNetworks:
+  clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
   networkType: OVNKubernetes
   serviceNetwork:
     - 172.30.0.0/16
-machineCIDR: platform:
+  machineNetwork:
+    - cidr: 192.168.254.0/24 # has to match TF_VAR_subnet_cidr (default)
+platform:
   none: {}
 pullSecret: '{"auths":{"none":{"auth":"none"}}}'
 sshKey: ssh-rsa AAAA…<your ssh key here>
 ```
+
+`metadata.name` and `baseDomain` together form the cluster domain (`okd4.example.com` in this example), which has to match `TF_VAR_dns_domain`. `machineNetwork` has to be the private subnet of the nodes, otherwise the bootstrap etcd advertises its public address, which is not reachable through the firewall.
 
 ### Required Environment Variables
 
 ```bash
 # Terraform / DNS
 export TF_VAR_dns_domain=okd4.example.com
-export TF_VAR_dns_zone_id=YOUR_ZONE_ID
+export TF_VAR_dns_provider=cloudflare # or "none", see DNS
+export TF_VAR_dns_zone_id=YOUR_ZONE_ID # only for cloudflare
 
 # Hetzner Cloud credentials
 export HCLOUD_TOKEN=YOUR_HCLOUD_TOKEN
 
-# Cloudflare credentials
+# Cloudflare credentials (only for dns_provider=cloudflare)
 export CLOUDFLARE_EMAIL=user@example.com
 export CLOUDFLARE_API_KEY=YOUR_API_KEY
+
+# Hetzner Object Storage (bootstrap ignition config)
+export S3_BUCKET=YOUR_BUCKET
+export S3_LOCATION=nbg1 # optional, default: nbg1
+export AWS_ACCESS_KEY_ID=YOUR_S3_ACCESS_KEY
+export AWS_SECRET_ACCESS_KEY=YOUR_S3_SECRET_KEY
+```
+
+### DNS
+
+By default, all DNS records are managed in Cloudflare. With `TF_VAR_dns_provider=none` Terraform does not create any records (bring your own DNS) and prints the required records as output `dns_records`:
+
+| Record | Value | Needed |
+|---|---|---|
+| `api-int.<cluster domain>` | IP of the internal load balancer (`192.168.253.254` by default) | **before** `make infrastructure BOOTSTRAP=true` |
+| `<node>.<cluster domain>` | private node IP (bootstrap `.5`, masters `.10+`, workers `.50+` of the node subnet) | **before** `make infrastructure BOOTSTRAP=true` |
+| `api.<cluster domain>`, `apps.<cluster domain>`, `*.apps.<cluster domain>` | public load balancer IP | after the infrastructure has been created |
+
+`api-int` and the node records have to exist before the nodes boot, otherwise resolvers cache the negative answer and the nodes cannot fetch their configuration. Their addresses are fixed, so they can be created upfront.
+
+The nodes use Cloudflare resolvers (`1.1.1.1`, `1.0.0.1`), also during the first boot. To use other resolvers, e.g. internal ones for your own DNS, set them for the image build and for Terraform:
+
+```bash
+make hcloud_image NAMESERVERS="10.0.0.53 10.0.0.54"
+export TF_VAR_nameservers_ipv4='["10.0.0.53","10.0.0.54"]'
+export TF_VAR_nameservers_ipv6='[]'
+```
+
+### Object Storage
+
+Hetzner does not offer an API to manage Object Storage credentials, so the bucket and the S3 credentials have to be created once in the Hetzner Console (*Object Storage* and *Security → S3 Credentials*). Keep the bucket private, access is granted through a pre-signed URL that expires after 24 hours (`S3_PRESIGN_EXPIRY`, matching the lifetime of the ignition certificates).
+
+The config can also be uploaded or removed manually:
+
+```bash
+make upload_ignition
+make delete_ignition
 ```
 
 ---
 
 ## Firewall & Access
 
-- Nodes are **not directly exposed to the internet** by default.
-- Only the load balancer is public accessible.
-- SSH access to nodes will only be possible with additional firewall configuration.
+- Nodes are **not directly exposed to the internet**: the hcloud firewall only allows ICMP on their public interfaces. Hetzner firewalls do not apply to private networks, so cluster traffic is not affected.
+- Only the public load balancer is reachable from the internet (API on 6443, ingress on 80/443). The machine config server (22623) is only served by the internal load balancer, which has no public interface.
+- SSH access to nodes is only possible with additional firewall configuration.
 
 ---
 
@@ -157,14 +292,14 @@ To deploy OCP instead of OKD:
 
 ```bash
 export DEPLOYMENT_TYPE=ocp
-export OPENSHIFT_RELEASE=4.19.9 # example version
+export OPENSHIFT_RELEASE=4.22.15 # example version
 make fetch build run
 ```
 
 You can also choose the latest version from a specific channel:
 
 ```bash
-export OCP_RELEASE_CHANNEL=stable-4.19
+export OCP_RELEASE_CHANNEL=stable-4.22
 export OPENSHIFT_RELEASE=$(make latest_version)
 make fetch build run
 ```
@@ -173,8 +308,6 @@ make fetch build run
 
 ## Limitations / Not for Production
 
-- I/O performance and latency issues with etcd (see above).
-- Components that rely on strong consistency (like etcd) may suffer under heavy load.
 - No stability guarantees for large clusters or production use.
 
 ---
