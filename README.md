@@ -15,25 +15,35 @@ Need an OKD test cluster? Copy the following prompt into your AI coding agent of
 ```text
 Deploy an OKD test cluster on Hetzner Cloud using https://github.com/slauger/hcloud-okd4.
 
-1. Clone the repository and read the README.
-2. Ask me for everything you need and do not have yet: Hetzner Cloud API token,
-   Cloudflare e-mail, API key and zone ID, the cluster domain (e.g. okd4.example.com),
-   the Hetzner Object Storage bucket and S3 credentials, my SSH public key and the
-   number of worker nodes. Keep secrets in a local env.sh only and never commit them.
+1. Clone the repository and read the README completely. Make sure docker, git, make,
+   curl and jq are available on this machine.
+2. Ask me for everything you need and do not have yet:
+   - Hetzner Cloud API token of the project to deploy into
+   - Cloudflare e-mail, API key and the zone ID of an existing zone that hosts the
+     cluster domain (e.g. okd4.example.com)
+   - Hetzner Object Storage bucket name, location and S3 access/secret key. Hetzner
+     has no API for S3 credentials, so if I have none yet, tell me to create the
+     bucket and the credentials in the Hetzner Console (see "Object Storage").
+   - my SSH public key and the number of worker nodes (TF_VAR_replicas_worker)
+   Store all secrets in a local env.sh (it is gitignored) and never commit them.
 3. Determine the latest stable OKD release with `make latest_version`, fetch the
    binaries and build the toolbox image. Run all further make targets inside the
-   toolbox container non-interactively (docker run ... make <target>).
-4. Create install-config.yaml from the README example, generate manifests and
-   ignition configs and build the CoreOS image with Packer.
-5. Before creating any billable infrastructure, show me what will be created and
+   toolbox container non-interactively: docker run --rm -v "$PWD:/workspace"
+   -e <every variable from env.sh> <image> make <target>.
+4. Create install-config.yaml from the README example. metadata.name plus baseDomain
+   must result in exactly the cluster domain (TF_VAR_dns_domain).
+5. Generate manifests and ignition configs and build the CoreOS image with Packer.
+   The ignition certificates expire after 24 hours, so the bootstrap has to be
+   completed within that time, otherwise regenerate them.
+6. Before creating any billable infrastructure, show me what will be created and
    wait for my confirmation.
-6. Follow the Quick Start: deploy with BOOTSTRAP=true, wait for the bootstrap to
+7. Follow the Quick Start: deploy with BOOTSTRAP=true, wait for the bootstrap to
    complete, remove the bootstrap node, approve CSRs until all nodes are Ready and
    wait for the installation to complete.
-7. If a step fails, find the root cause (nodes, cluster operators, load balancer
+8. If a step fails, find the root cause (nodes, cluster operators, load balancer
    health checks) instead of blindly retrying.
-8. When finished, give me the console URL and the paths to the kubeconfig and the
-   kubeadmin password.
+9. When finished, give me the console URL, the paths to the kubeconfig and the
+   kubeadmin password, and remind me that `make destroy` removes the cluster.
 ```
 
 ---
@@ -158,6 +168,8 @@ platform:
 pullSecret: '{"auths":{"none":{"auth":"none"}}}'
 sshKey: ssh-rsa AAAA…<your ssh key here>
 ```
+
+`metadata.name` and `baseDomain` together form the cluster domain (`okd4.example.com` in this example), which has to match `TF_VAR_dns_domain`.
 
 ### Required Environment Variables
 
