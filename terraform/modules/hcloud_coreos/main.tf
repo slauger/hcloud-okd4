@@ -12,11 +12,12 @@ resource "hcloud_server" "server" {
     ignition_url     = var.ignition_url
     ignition_version = var.ignition_version
     ignition_cacert  = var.ignition_cacert
-    nodeip_hint      = var.nodeip_hint
+    nodeip_hint      = local.private_ipv4_addresses[count.index]
   })
   location = var.location
   network {
     network_id = var.network_id
+    ip         = local.private_ipv4_addresses[count.index]
   }
   labels       = var.labels
   backups      = var.backups

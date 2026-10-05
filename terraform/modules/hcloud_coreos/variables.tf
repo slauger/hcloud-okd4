@@ -100,9 +100,14 @@ variable "network_id" {
   description = "Id of the private network the instance is attached to"
 }
 
-variable "nodeip_hint" {
+variable "subnet_cidr" {
   type        = string
-  description = "Address within the private subnet, used to select the node IP"
+  description = "CIDR of the private subnet the instance addresses are taken from"
+}
+
+variable "ip_offset" {
+  type        = number
+  description = "Host number of the first instance address within the subnet"
 }
 
 variable "image_name" {

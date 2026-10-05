@@ -13,7 +13,8 @@ module "bootstrap" {
     "cluster" = var.dns_domain
   }
   network_id   = hcloud_network_subnet.subnet.network_id
-  nodeip_hint  = cidrhost(var.subnet_cidr, 0)
+  subnet_cidr  = var.subnet_cidr
+  ip_offset    = 5
   ignition_url = var.bootstrap == true ? var.bootstrap_ignition_url : ""
 }
 
@@ -34,7 +35,8 @@ module "master" {
     "cluster"                   = var.dns_domain
   }
   network_id      = hcloud_network_subnet.subnet.network_id
-  nodeip_hint     = cidrhost(var.subnet_cidr, 0)
+  subnet_cidr     = var.subnet_cidr
+  ip_offset       = 10
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
 
@@ -60,7 +62,8 @@ module "worker" {
     "cluster"                   = var.dns_domain
   }
   network_id      = hcloud_network_subnet.subnet.network_id
-  nodeip_hint     = cidrhost(var.subnet_cidr, 0)
+  subnet_cidr     = var.subnet_cidr
+  ip_offset       = 50
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
 

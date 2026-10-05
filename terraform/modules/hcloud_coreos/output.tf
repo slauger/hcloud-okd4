@@ -7,7 +7,7 @@ output "server_names" {
 }
 
 output "internal_ipv4_addresses" {
-  value = local.internal_ipv4_addresses
+  value = local.private_ipv4_addresses
 }
 
 output "ipv4_addresses" {
