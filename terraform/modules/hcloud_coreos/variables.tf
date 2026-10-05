@@ -105,6 +105,17 @@ variable "subnet_cidr" {
   description = "CIDR of the private subnet the instance addresses are taken from"
 }
 
+variable "network_gateway" {
+  type        = string
+  description = "Gateway of the private network"
+}
+
+variable "private_interface" {
+  type        = string
+  description = "Name of the private network interface"
+  default     = "enp7s0"
+}
+
 variable "ip_offset" {
   type        = number
   description = "Host number of the first instance address within the subnet"

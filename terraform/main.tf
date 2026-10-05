@@ -12,10 +12,11 @@ module "bootstrap" {
   labels = {
     "cluster" = var.dns_domain
   }
-  network_id   = hcloud_network_subnet.subnet.network_id
-  subnet_cidr  = var.subnet_cidr
-  ip_offset    = 5
-  ignition_url = var.bootstrap == true ? var.bootstrap_ignition_url : ""
+  network_id      = hcloud_network_subnet.subnet.network_id
+  subnet_cidr     = var.subnet_cidr
+  network_gateway = cidrhost(var.network_cidr, 1)
+  ip_offset       = 5
+  ignition_url    = var.bootstrap == true ? var.bootstrap_ignition_url : ""
 }
 
 module "master" {
@@ -36,6 +37,7 @@ module "master" {
   }
   network_id      = hcloud_network_subnet.subnet.network_id
   subnet_cidr     = var.subnet_cidr
+  network_gateway = cidrhost(var.network_cidr, 1)
   ip_offset       = 10
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
@@ -63,6 +65,7 @@ module "worker" {
   }
   network_id      = hcloud_network_subnet.subnet.network_id
   subnet_cidr     = var.subnet_cidr
+  network_gateway = cidrhost(var.network_cidr, 1)
   ip_offset       = 50
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
