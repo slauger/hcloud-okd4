@@ -37,6 +37,10 @@ module "master" {
   nodeip_hint     = cidrhost(var.subnet_cidr, 0)
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
+
+  # Resolvers cache negative answers, so api-int has to exist before the
+  # nodes try to resolve it during their first boot.
+  depends_on = [cloudflare_dns_record.dns_a_api_int]
 }
 
 module "worker" {
@@ -59,4 +63,8 @@ module "worker" {
   nodeip_hint     = cidrhost(var.subnet_cidr, 0)
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
+
+  # Resolvers cache negative answers, so api-int has to exist before the
+  # nodes try to resolve it during their first boot.
+  depends_on = [cloudflare_dns_record.dns_a_api_int]
 }
