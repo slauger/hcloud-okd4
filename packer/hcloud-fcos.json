@@ -4,7 +4,8 @@
     "server_type": "cpx32",
     "snapshot_prefix": "fcos",
     "image_type": "generic",
-    "ignition_config": "config-3.0.0.ign"
+    "ignition_config": "config-3.0.0.ign",
+    "first_boot_kargs": "rd.neednet=1 ip=dhcp nameserver=1.1.1.1 nameserver=1.0.0.1"
   },
   "builders": [
     {
@@ -48,6 +49,9 @@
       "type": "shell",
       "inline": [
         "set -x",
+        "cat /target/ignition.firstboot || true",
+        "echo \"set ignition_network_kcmdline='{{user `first_boot_kargs`}}'\" > /target/ignition.firstboot",
+        "cat /target/ignition.firstboot",
         "cd /",
         "umount /source",
         "umount /target"
