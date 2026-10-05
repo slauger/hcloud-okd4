@@ -111,7 +111,7 @@ resource "hcloud_firewall" "master" {
     direction  = "in"
     protocol   = "tcp"
     port       = "2379-2380"
-    source_ips = [for s in module.master.ipv4_addresses : "${s}/32"]
+    source_ips = [for s in concat(module.master.ipv4_addresses, module.bootstrap.ipv4_addresses) : "${s}/32"]
   }
 }
 
