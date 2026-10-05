@@ -9,6 +9,7 @@ variable "dns_domain" {
 }
 
 variable "dns_zone_id" {
+  type        = string
   description = "Zone ID"
   default     = null
 }
@@ -132,12 +133,6 @@ variable "private_interface" {
 variable "ip_offset" {
   type        = number
   description = "Host number of the first instance address within the subnet"
-}
-
-variable "image_name" {
-  type        = string
-  description = "Either fcos or rhcos (necessary for ignition rendering)"
-  default     = "fcos"
 }
 
 variable "ignition_version" {

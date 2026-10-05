@@ -9,7 +9,6 @@ module "bootstrap" {
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
   image            = data.hcloud_image.image.id
-  image_name       = var.image
   server_type      = "cpx42"
   labels = {
     "cluster" = var.dns_domain
@@ -32,7 +31,6 @@ module "master" {
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
   image            = data.hcloud_image.image.id
-  image_name       = var.image
   server_type      = "cpx42"
   labels = {
     "${var.dns_domain}/master"  = "true",
@@ -63,7 +61,6 @@ module "worker" {
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
   image            = data.hcloud_image.image.id
-  image_name       = var.image
   server_type      = "cpx42"
   labels = {
     "${var.dns_domain}/worker"  = "true"

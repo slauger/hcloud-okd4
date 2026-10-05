@@ -69,21 +69,6 @@ variable "dns_zone_id" {
   default     = null
 }
 
-variable "ip_loadbalancer_api" {
-  description = "IP of an external loadbalancer for api (optional)"
-  default     = null
-}
-
-variable "ip_loadbalancer_api_int" {
-  description = "IP of an external loadbalancer for api-int (optional)"
-  default     = null
-}
-
-variable "ip_loadbalancer_apps" {
-  description = "IP of an external loadbalancer for apps (optional)"
-  default     = null
-}
-
 variable "network_cidr" {
   type        = string
   description = "CIDR for the network"
