@@ -22,10 +22,10 @@ By default, a single-node cluster is deployed with the following components:
 
 | Component     | Type / Size |
 |---------------|-------------|
-| Master Node   | cpx41       |
+| Master Node   | cpx42       |
 | Load Balancer | lb11        |
-| Bootstrap Node| cpx41 (removed after bootstrap) |
-| Ignition Node | cpx21 (removed after bootstrap) |
+| Bootstrap Node| cpx42 (removed after bootstrap) |
+| Ignition Node | cpx22 (removed after bootstrap) |
 
 Additional worker nodes can be added by setting an environment variable **before** running Terraform:
 
