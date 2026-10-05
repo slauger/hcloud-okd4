@@ -14,8 +14,13 @@ resource "hcloud_server" "server" {
     ignition_cacert  = var.ignition_cacert
     nodeip_hint      = cidrhost(var.subnet_cidr, 0)
     private_nm_b64   = base64encode(local.private_nmconnection[count.index])
+    public_nm_b64    = base64encode(local.public_nmconnection[count.index])
   })
   location = var.location
+  public_net {
+    ipv4_enabled = true
+    ipv6         = hcloud_primary_ip.ipv6[count.index].id
+  }
   network {
     network_id = var.network_id
     ip         = local.private_ipv4_addresses[count.index]
@@ -38,6 +43,6 @@ resource "hcloud_rdns" "dns-ptr-ipv4" {
 resource "hcloud_rdns" "dns-ptr-ipv6" {
   count      = var.instance_count
   server_id  = element(hcloud_server.server.*.id, count.index)
-  ip_address = "${element(hcloud_server.server.*.ipv6_address, count.index)}1"
+  ip_address = local.public_ipv6_addresses[count.index]
   dns_ptr    = element(hcloud_server.server.*.name, count.index)
 }

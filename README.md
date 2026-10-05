@@ -65,6 +65,8 @@ The bootstrap ignition config is too large for Hetzner Cloud user data. It is th
 
 All nodes are attached to a Hetzner private network. Cluster traffic (etcd, API, OVN-Kubernetes overlay, kubelet) uses the private interface, while the public interface is only used as default route for outbound traffic. The load balancer reaches its targets via their private IPs, and `api-int` as well as the node DNS records resolve to private addresses. The overlay MTU is lowered to 1350 to fit the private network (MTU 1450), see `manifests/cluster-network-03-config.yml`.
 
+Hetzner Cloud offers neither SLAAC nor DHCPv6, so each node gets a pre-allocated IPv6 primary IP, which is configured statically (`<prefix>::1/64`, gateway `fe80::1`) together with Cloudflare resolvers. The cluster network itself stays IPv4 only.
+
 Additional worker nodes can be added by setting an environment variable **before** running Terraform:
 
 ```bash

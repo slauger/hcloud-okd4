@@ -104,6 +104,24 @@ variable "network_gateway" {
   description = "Gateway of the private network"
 }
 
+variable "public_interface" {
+  type        = string
+  description = "Name of the public network interface"
+  default     = "enp1s0"
+}
+
+variable "nameservers_ipv4" {
+  type        = list(string)
+  description = "IPv4 resolvers configured on the nodes"
+  default     = ["1.1.1.1", "1.0.0.1"]
+}
+
+variable "nameservers_ipv6" {
+  type        = list(string)
+  description = "IPv6 resolvers configured on the nodes"
+  default     = ["2606:4700:4700::1111", "2606:4700:4700::1001"]
+}
+
 variable "private_interface" {
   type        = string
   description = "Name of the private network interface"
