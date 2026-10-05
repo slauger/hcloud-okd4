@@ -36,6 +36,14 @@ S3_PRESIGN_EXPIRY?=86400
 S3_OBJECT=$(shell jq -r .infraID ignition/metadata.json 2>/dev/null)/bootstrap.ign
 AWS_CLI=aws --endpoint-url $(S3_ENDPOINT) --region $(S3_LOCATION)
 
+# resolvers used by the nodes, also during the first boot (baked into the image)
+NAMESERVERS?=1.1.1.1 1.0.0.1
+FIRST_BOOT_KARGS=rd.neednet=1 ip=dhcp $(foreach ns,$(NAMESERVERS),nameserver=$(ns))
+
+# dns provider: cloudflare or none (bring your own DNS)
+TF_VAR_dns_provider?=cloudflare
+export TF_VAR_dns_provider
+
 # terraform switches
 BOOTSTRAP?=false
 MODE?=apply
@@ -97,8 +105,8 @@ generate_ignition:
 .PHONY: hcloud_image
 hcloud_image:
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var fcos_url=$(shell openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-fcos.json); fi
-	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var rhcos_url=$(shell openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-rhcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var fcos_url=$(shell openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-fcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var rhcos_url=$(shell openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-rhcos.json); fi
 
 .PHONY: sign_csr
 sign_csr:
@@ -131,9 +139,9 @@ delete_ignition:
 .PHONY: infrastructure
 infrastructure:
 	@if [ -z "$(TF_VAR_dns_domain)" ]; then echo "ERROR: TF_VAR_dns_domain is not set"; exit 1; fi
-	@if [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	@if [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
+	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
+	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
 	if [ "$(BOOTSTRAP)" == "true" ] && [ "$(MODE)" == "apply" ]; then $(MAKE) upload_ignition; fi
 	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var bootstrap=$(BOOTSTRAP))
 	if [ "$(BOOTSTRAP)" == "false" ] && [ "$(MODE)" == "apply" ] && [ -f terraform/bootstrap.auto.tfvars ]; then $(MAKE) delete_ignition; fi

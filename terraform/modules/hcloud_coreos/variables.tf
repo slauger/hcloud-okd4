@@ -13,9 +13,10 @@ variable "dns_zone_id" {
   default     = null
 }
 
-variable "dns_internal_ip" {
-  description = "Point DNS record to internal ip"
-  default     = false
+variable "dns_records" {
+  type        = bool
+  description = "Create a DNS record for each instance in Cloudflare"
+  default     = true
 }
 
 variable "instance_count" {

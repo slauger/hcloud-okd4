@@ -40,9 +40,33 @@ variable "dns_domain" {
   description = "Name of the Cloudflare domain"
 }
 
+variable "dns_provider" {
+  type        = string
+  description = "Provider that manages the DNS records: cloudflare or none (bring your own DNS)"
+  default     = "cloudflare"
+
+  validation {
+    condition     = contains(["cloudflare", "none"], var.dns_provider)
+    error_message = "dns_provider must be either cloudflare or none."
+  }
+}
+
+variable "nameservers_ipv4" {
+  type        = list(string)
+  description = "IPv4 resolvers configured on the nodes (keep in sync with NAMESERVERS of the image build)"
+  default     = ["1.1.1.1", "1.0.0.1"]
+}
+
+variable "nameservers_ipv6" {
+  type        = list(string)
+  description = "IPv6 resolvers configured on the nodes (libc uses at most three resolvers in total)"
+  default     = ["2606:4700:4700::1111"]
+}
+
 variable "dns_zone_id" {
   type        = string
-  description = "Zone ID of the Cloudflare domain"
+  description = "Zone ID of the Cloudflare domain (only for dns_provider = cloudflare)"
+  default     = null
 }
 
 variable "ip_loadbalancer_api" {

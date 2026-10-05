@@ -1,14 +1,16 @@
 module "bootstrap" {
-  source          = "./modules/hcloud_coreos"
-  instance_count  = var.bootstrap == true ? 1 : 0
-  location        = var.location
-  name            = "bootstrap"
-  dns_domain      = var.dns_domain
-  dns_zone_id     = var.dns_zone_id
-  dns_internal_ip = true
-  image           = data.hcloud_image.image.id
-  image_name      = var.image
-  server_type     = "cpx42"
+  source           = "./modules/hcloud_coreos"
+  instance_count   = var.bootstrap == true ? 1 : 0
+  location         = var.location
+  name             = "bootstrap"
+  dns_domain       = var.dns_domain
+  dns_zone_id      = var.dns_zone_id
+  dns_records      = local.cloudflare_dns
+  nameservers_ipv4 = var.nameservers_ipv4
+  nameservers_ipv6 = var.nameservers_ipv6
+  image            = data.hcloud_image.image.id
+  image_name       = var.image
+  server_type      = "cpx42"
   labels = {
     "cluster" = var.dns_domain
   }
@@ -20,16 +22,18 @@ module "bootstrap" {
 }
 
 module "master" {
-  source          = "./modules/hcloud_coreos"
-  instance_count  = var.replicas_master
-  location        = var.location
-  name            = "master"
-  dns_domain      = var.dns_domain
-  dns_zone_id     = var.dns_zone_id
-  dns_internal_ip = true
-  image           = data.hcloud_image.image.id
-  image_name      = var.image
-  server_type     = "cpx42"
+  source           = "./modules/hcloud_coreos"
+  instance_count   = var.replicas_master
+  location         = var.location
+  name             = "master"
+  dns_domain       = var.dns_domain
+  dns_zone_id      = var.dns_zone_id
+  dns_records      = local.cloudflare_dns
+  nameservers_ipv4 = var.nameservers_ipv4
+  nameservers_ipv6 = var.nameservers_ipv6
+  image            = data.hcloud_image.image.id
+  image_name       = var.image
+  server_type      = "cpx42"
   labels = {
     "${var.dns_domain}/master"  = "true",
     "${var.dns_domain}/ingress" = "true"
@@ -49,16 +53,18 @@ module "master" {
 }
 
 module "worker" {
-  source          = "./modules/hcloud_coreos"
-  instance_count  = var.replicas_worker
-  location        = var.location
-  name            = "worker"
-  dns_domain      = var.dns_domain
-  dns_zone_id     = var.dns_zone_id
-  dns_internal_ip = true
-  image           = data.hcloud_image.image.id
-  image_name      = var.image
-  server_type     = "cpx42"
+  source           = "./modules/hcloud_coreos"
+  instance_count   = var.replicas_worker
+  location         = var.location
+  name             = "worker"
+  dns_domain       = var.dns_domain
+  dns_zone_id      = var.dns_zone_id
+  dns_records      = local.cloudflare_dns
+  nameservers_ipv4 = var.nameservers_ipv4
+  nameservers_ipv6 = var.nameservers_ipv6
+  image            = data.hcloud_image.image.id
+  image_name       = var.image
+  server_type      = "cpx42"
   labels = {
     "${var.dns_domain}/worker"  = "true"
     "${var.dns_domain}/ingress" = "true"
