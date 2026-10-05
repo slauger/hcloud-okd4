@@ -5,8 +5,8 @@ Need an OKD test cluster? Copy the following prompt into your AI coding agent of
 ```text
 Deploy an OKD test cluster on Hetzner Cloud using https://github.com/slauger/hcloud-okd4.
 
-1. Clone the repository and read the README completely, including "Hetzner Cloud
-   Specifics". Make sure docker, git, make, curl and jq are available.
+1. Clone the repository and read the README and docs/hetzner-specifics.md
+   completely. Make sure docker, git, make, curl and jq are available.
 2. Ask me for everything you need and do not have yet:
    - Hetzner Cloud API token of the project to deploy into
    - Cloudflare e-mail, API key and the zone ID of an existing zone that hosts the
@@ -47,4 +47,4 @@ Deploy an OKD test cluster on Hetzner Cloud using https://github.com/slauger/hcl
     removes the cluster. Never run `make destroy` without asking me first.
 ```
 
-The prompt relies on the [README](../README.md), in particular the sections "Hetzner Cloud Specifics", "Costs" and "Duration".
+The prompt relies on the [README](../README.md), in particular the sections "Costs" and "Duration", and on [Hetzner Cloud Specifics](hetzner-specifics.md).
