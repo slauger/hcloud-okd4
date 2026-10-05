@@ -13,7 +13,8 @@ https://github.com/slauger/hcloud-okd4.
    - distribution: OKD or OCP (Red Hat OpenShift)
    - version: the latest stable release (determine it with `make latest_version`)
      or a specific version
-   - number of worker nodes: 0 (single node cluster), 2 or a custom number
+   - control plane: 1 master or 3 masters (highly available)
+   - number of worker nodes: 0 (masters run all workloads), 2 or a custom number
    - DNS: Cloudflare (records are managed automatically) or my own DNS (I create
      the records myself, see "DNS" in the README)
 3. Ask me for everything else you need and do not have yet:
@@ -28,7 +29,8 @@ https://github.com/slauger/hcloud-okd4.
    - a pull secret from https://console.redhat.com/openshift/install/pull-secret,
      required for OCP, optional for OKD (it enables the Red Hat operator catalogs)
    Store all secrets in a local env.sh (it is gitignored) and never commit them.
-4. Set DEPLOYMENT_TYPE=okd or DEPLOYMENT_TYPE=ocp, TF_VAR_replicas_worker and
+4. Set DEPLOYMENT_TYPE=okd or DEPLOYMENT_TYPE=ocp, TF_VAR_replicas_master,
+   TF_VAR_replicas_worker and
    TF_VAR_dns_provider (cloudflare or none) according to my answers. For OCP, set
    OCP_RELEASE_CHANNEL to the newest stable-4.x channel before running
    `make latest_version`. Fetch the binaries and build the toolbox image. Run
@@ -37,7 +39,8 @@ https://github.com/slauger/hcloud-okd4.
    make <target>, and pass DEPLOYMENT_TYPE to every make call.
 5. Create install-config.yaml from the README example. metadata.name plus baseDomain
    must result in exactly the cluster domain (TF_VAR_dns_domain), and machineNetwork
-   has to be the private node subnet (TF_VAR_subnet_cidr, default 192.168.254.0/24).
+   has to be the private node subnet (TF_VAR_subnet_cidr, default 192.168.254.0/24),
+   and controlPlane.replicas has to match TF_VAR_replicas_master.
    Use my pull secret if I provided one, otherwise (OKD only) the placeholder.
 6. Generate manifests and ignition configs and build the CoreOS image with Packer.
    The ignition certificates expire after 24 hours, so the bootstrap has to be

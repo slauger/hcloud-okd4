@@ -30,20 +30,21 @@ flowchart TB
   s3[("Object Storage<br/>bootstrap.ign")]
 
   subgraph hcloud["Hetzner Cloud"]
-    lb["Public Load Balancer<br/>API 6443<br/>Ingress 80/443"]
+    lb["Public Load Balancer<br/>api :6443<br/>*.apps :80/443"]
     subgraph net["Private network"]
       direction LR
       bootstrap["Bootstrap<br/>(temporary)"]
-      master["Master"]
+      master["Masters"]
       workers["Workers"]
-      lbint["Internal Load Balancer<br/>API 6443<br/>MCS 22623"]
+      lbint["Internal Load Balancer<br/>api-int<br/>:6443 :22623"]
     end
   end
 
   user -.->|"resolve"| dns
-  user -->|"HTTPS"| lb
-  lb -->|"private IPs"| master & workers
-  master & workers & bootstrap -->|"api-int"| lbint
+  user -->|"API, console, routes"| lb
+  lb -->|"API"| master
+  lb -->|"ingress"| workers
+  bootstrap & master & workers -->|"API, ignition"| lbint
   net -->|"egress via public interface"| internet
   bootstrap -.->|"pre-signed URL"| s3
 ```
@@ -95,11 +96,14 @@ Measured with OKD 4.22 and OCP 4.22, 1 master and 2 workers:
 | Installation (`make wait_completion`) | ~15–25 min |
 | **Total** | **~45–55 min**, ~30–40 min with an existing image |
 
-Additional worker nodes can be added by setting an environment variable **before** running Terraform:
+Additional worker nodes and a highly available control plane can be configured by setting environment variables **before** running Terraform:
 
 ```bash
 export TF_VAR_replicas_worker=3  # Example: 3 worker nodes
+export TF_VAR_replicas_master=3  # 1 (default) or 3 masters
 ```
+
+The number of masters has to match `controlPlane.replicas` in `install-config.yaml`. With 3 masters the control plane survives the restarts during the installation and updates without API outages.
 
 ### Additional Disks (LVM Storage / Ceph)
 
