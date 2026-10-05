@@ -14,7 +14,7 @@ resource "hcloud_load_balancer" "lb" {
 resource "hcloud_load_balancer_network" "lb_network" {
   load_balancer_id = hcloud_load_balancer.lb.id
   subnet_id        = hcloud_network_subnet.lb_subnet.id
-  ip               = "192.168.254.254"
+  ip               = cidrhost(var.lb_subnet_cidr, -2)
 }
 
 resource "hcloud_load_balancer_service" "lb_api" {
