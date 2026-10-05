@@ -2,7 +2,7 @@
 
 # hcloud-okd4
 
-Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer, Terraform, and Ansible.
+Deploy OKD4 (OpenShift) on Hetzner Cloud using HashiCorp Packer and Terraform.
 
 ![OKD4 on Hetzner Cloud](https://raw.githubusercontent.com/slauger/hcloud-okd4/master/okd4-hcloud.png)
 
@@ -25,7 +25,8 @@ By default, a single-node cluster is deployed with the following components:
 | Master Node   | cpx42       |
 | Load Balancer | lb11        |
 | Bootstrap Node| cpx42 (removed after bootstrap) |
-| Ignition Node | cpx22 (removed after bootstrap) |
+
+The bootstrap ignition config is too large for Hetzner Cloud user data. It is therefore uploaded to a private Hetzner Object Storage bucket and the bootstrap node fetches it through a short-lived pre-signed HTTPS URL.
 
 Additional worker nodes can be added by setting an environment variable **before** running Terraform:
 
@@ -78,7 +79,7 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    ```bash
    make hcloud_image
    ```
-7. Deploy infrastructure with Terraform (including bootstrap and ignition node)
+7. Deploy infrastructure with Terraform (uploads the bootstrap ignition config to Object Storage and creates the bootstrap node)
    ```bash
    make infrastructure BOOTSTRAP=true
    ```
@@ -86,7 +87,7 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    ```bash
    make wait_bootstrap
    ```
-9. Remove bootstrap and ignition node
+9. Remove bootstrap node (also deletes the bootstrap ignition config from Object Storage)
    ```bash
    make infrastructure
    ```
@@ -145,6 +146,23 @@ export HCLOUD_TOKEN=YOUR_HCLOUD_TOKEN
 # Cloudflare credentials
 export CLOUDFLARE_EMAIL=user@example.com
 export CLOUDFLARE_API_KEY=YOUR_API_KEY
+
+# Hetzner Object Storage (bootstrap ignition config)
+export S3_BUCKET=YOUR_BUCKET
+export S3_LOCATION=nbg1 # optional, default: nbg1
+export AWS_ACCESS_KEY_ID=YOUR_S3_ACCESS_KEY
+export AWS_SECRET_ACCESS_KEY=YOUR_S3_SECRET_KEY
+```
+
+### Object Storage
+
+Hetzner does not offer an API to manage Object Storage credentials, so the bucket and the S3 credentials have to be created once in the Hetzner Console (*Object Storage* and *Security → S3 Credentials*). Keep the bucket private, access is granted through a pre-signed URL that expires after 24 hours (`S3_PRESIGN_EXPIRY`, matching the lifetime of the ignition certificates).
+
+The config can also be uploaded or removed manually:
+
+```bash
+make upload_ignition
+make delete_ignition
 ```
 
 ---
