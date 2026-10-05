@@ -43,7 +43,13 @@ Example:
 
 ```bash
 export DEPLOYMENT_TYPE=okd # Options: "okd" or "ocp", default is "okd"
-export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.19.9"
+export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.22.0-okd-scos.9"
+```
+
+`make latest_version` returns the most recent stable (non pre-release) OKD release. To stay on a specific minor stream, set `OKD_RELEASE_STREAM`:
+
+```bash
+export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
 ```
 
 For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from cloud.redhat.com.
@@ -68,7 +74,7 @@ For OCP (Red Hat OpenShift), you will also need a valid pull secret, available f
    make generate_ignition
    ```
 5. Export required environment variables (see example in *Configuration*)
-6. Build Fedora/RedHat CoreOS image using Packer
+6. Build CentOS Stream CoreOS (OKD) or Red Hat CoreOS (OCP) image using Packer
    ```bash
    make hcloud_image
    ```
@@ -120,7 +126,7 @@ networking:
   networkType: OVNKubernetes
   serviceNetwork:
     - 172.30.0.0/16
-machineCIDR: platform:
+platform:
   none: {}
 pullSecret: '{"auths":{"none":{"auth":"none"}}}'
 sshKey: ssh-rsa AAAA…<your ssh key here>
