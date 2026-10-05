@@ -99,7 +99,7 @@ Hetzner Cloud is not a supported OpenShift platform (`platform: none`), and seve
 
 ### Costs
 
-Approximate prices (net, location `nbg1`, October 2026). Hetzner bills hourly, capped at the monthly price.
+Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the Hetzner Cloud pricing API). Prices change over time, check the current [Hetzner Cloud pricing](https://www.hetzner.com/cloud/) before deploying. Hetzner bills hourly, capped at the monthly price.
 
 | Setup | Per hour | Per month |
 |---|---|---|
