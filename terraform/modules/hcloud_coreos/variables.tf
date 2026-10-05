@@ -72,16 +72,10 @@ variable "firewall_ids" {
   default     = []
 }
 
-variable "volume" {
-  type        = bool
-  description = "Enable or disable an additional volume"
-  default     = false
-}
-
 variable "volume_size" {
   type        = number
-  description = "Size of the additional data volume"
-  default     = 20
+  description = "Size in GB of an additional raw data volume per instance (0 = none)"
+  default     = 0
 }
 
 variable "ignition_url" {

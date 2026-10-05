@@ -41,6 +41,7 @@ module "master" {
   ip_offset       = 10
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/master"
   ignition_cacert = local.ignition_master_cacert
+  volume_size     = var.master_volume_size
 
   # Resolvers cache negative answers, so api-int has to exist before the
   # nodes try to resolve it during their first boot.
@@ -69,6 +70,7 @@ module "worker" {
   ip_offset       = 50
   ignition_url    = "https://api-int.${var.dns_domain}:22623/config/worker"
   ignition_cacert = local.ignition_worker_cacert
+  volume_size     = var.worker_volume_size
 
   # Resolvers cache negative answers, so api-int has to exist before the
   # nodes try to resolve it during their first boot.

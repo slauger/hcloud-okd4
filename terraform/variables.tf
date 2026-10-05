@@ -23,6 +23,18 @@ variable "bootstrap_ignition_url" {
   sensitive   = true
 }
 
+variable "master_volume_size" {
+  type        = number
+  description = "Size in GB of an additional raw data volume per master node (0 = none)"
+  default     = 0
+}
+
+variable "worker_volume_size" {
+  type        = number
+  description = "Size in GB of an additional raw data volume per worker node (0 = none)"
+  default     = 0
+}
+
 variable "dns_domain" {
   type        = string
   description = "Name of the Cloudflare domain"
