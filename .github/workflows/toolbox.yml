@@ -1,0 +1,104 @@
+name: Toolbox
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    # weekly check that the latest releases can still be fetched
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.5.0
+        with:
+          dockerfile: Dockerfile
+          config: .hadolint.yaml
+
+      - name: Lint workflows
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
+          ./actionlint -color
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform format
+        run: terraform fmt -check -recursive terraform
+
+      - name: Terraform validate
+        working-directory: terraform
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - uses: terraform-linters/setup-tflint@v6
+
+      - name: TFLint
+        working-directory: terraform
+        run: |
+          tflint --init
+          tflint --recursive -f compact
+
+      - uses: hashicorp/setup-packer@v3
+
+      - name: Packer validate
+        working-directory: packer
+        run: |
+          packer validate -syntax-only hcloud-fcos.json
+          packer validate -syntax-only hcloud-rhcos.json
+
+  toolbox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        run: make build
+
+      - name: Test
+        run: make test
+
+      - name: Push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USERNAME" --password-stdin "$REGISTRY_HOST"
+          docker tag quay.io/slauger/hcloud-okd4:latest "quay.io/slauger/hcloud-okd4:sha-${GITHUB_SHA::7}"
+          make push
+          make push CONTAINER_TAG="sha-${GITHUB_SHA::7}"
+
+  fetch:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        type:
+          - okd
+          - ocp
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Fetch the latest ${{ matrix.type }} release
+        run: |
+          release=$(make -s latest_version DEPLOYMENT_TYPE=${{ matrix.type }})
+          echo "latest release: ${release}"
+          make fetch DEPLOYMENT_TYPE=${{ matrix.type }} OPENSHIFT_RELEASE="${release}"
+          "downloads/${{ matrix.type }}/${release}/openshift-install" version
+          "downloads/${{ matrix.type }}/${release}/oc" version --client

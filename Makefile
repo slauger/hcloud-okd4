@@ -59,7 +59,7 @@ latest_version: latest_version_$(DEPLOYMENT_TYPE)
 
 .PHONY: latest_version_okd
 latest_version_okd:
-	@curl -s -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/okd-project/okd/releases?per_page=100" | jq -j -r '[.[] | select(.prerelease == false and .draft == false) | .tag_name | select(startswith("$(OKD_RELEASE_STREAM)"))][0]'
+	@curl -s -H "Accept: application/vnd.github.v3+json" $(if $(GITHUB_TOKEN),-H "Authorization: Bearer $(GITHUB_TOKEN)") "https://api.github.com/repos/okd-project/okd/releases?per_page=100" | jq -j -r '[.[] | select(.prerelease == false and .draft == false) | .tag_name | select(startswith("$(OKD_RELEASE_STREAM)"))][0]'
 
 .PHONY: latest_version_ocp
 latest_version_ocp:
