@@ -23,29 +23,27 @@ Need an OKD or OpenShift test cluster without reading all of this? Copy the prom
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
   user(["Users / oc"])
-  dns["Cloudflare DNS<br/>api, *.apps: LB public IP<br/>api-int, nodes: private IPs"]
-  s3[("Hetzner Object Storage<br/>bootstrap.ign")]
-  internet(("Internet"))
+  dns["DNS<br/>Cloudflare or your own"]
+  internet(["Internet"])
+  s3[("Object Storage<br/>bootstrap.ign")]
 
   subgraph hcloud["Hetzner Cloud"]
-    lb["Load Balancer<br/>6443, 22623, 80, 443"]
-    subgraph net["Private network 192.168.254.0/24"]
+    lb["Load Balancer<br/>API 6443<br/>Ingress 80/443<br/>MCS 22623"]
+    subgraph net["Private network"]
+      direction LR
       bootstrap["Bootstrap<br/>(temporary)"]
       master["Master"]
-      worker["Workers"]
+      workers["Workers"]
     end
   end
 
-  user -.-> dns
-  user -->|"API, console, routes"| lb
-  lb -->|"private IPs"| master
-  lb --> worker
-  lb -.-> bootstrap
-  master <-->|"etcd, API, overlay"| worker
+  user -.->|"resolve"| dns
+  user -->|"HTTPS"| lb
+  lb -->|"private IPs"| net
+  net -->|"egress via public interface"| internet
   bootstrap -.->|"pre-signed URL"| s3
-  master & worker -->|"egress via public interface"| internet
 ```
 
 By default, a single-node cluster is deployed with the following components:
