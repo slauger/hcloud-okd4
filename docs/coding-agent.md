@@ -1,9 +1,16 @@
 # Deploy with a Coding Agent
 
-Need an OKD test cluster? Copy the following prompt into your AI coding agent of choice and let it do the work. The agent asks for credentials, shows the expected costs and waits for your confirmation before it creates any billable infrastructure.
+Need an OKD or OpenShift test cluster? Adjust the parameters at the top of the following prompt and copy it into your AI coding agent of choice. The agent asks for credentials, shows the expected costs and waits for your confirmation before it creates any billable infrastructure.
 
 ```text
-Deploy an OKD test cluster on Hetzner Cloud using https://github.com/slauger/hcloud-okd4.
+Parameters (adjust before sending):
+- Distribution: OKD        (OKD or OCP)
+- Version:      latest     (latest stable release, or a fixed version such as
+                            4.22.0-okd-scos.9 for OKD / 4.22.15 for OCP)
+- Workers:      2          (0 = single node cluster)
+
+Deploy a test cluster with the distribution, version and number of workers given
+above on Hetzner Cloud using https://github.com/slauger/hcloud-okd4.
 
 1. Clone the repository and read the README and docs/hetzner-specifics.md
    completely. Make sure docker, git, make, curl and jq are available.
@@ -14,15 +21,20 @@ Deploy an OKD test cluster on Hetzner Cloud using https://github.com/slauger/hcl
    - Hetzner Object Storage bucket name, location and S3 access/secret key. Hetzner
      has no API for S3 credentials, so if I have none yet, tell me to create the
      bucket and the credentials in the Hetzner Console (see "Object Storage").
-   - my SSH public key and the number of worker nodes (TF_VAR_replicas_worker)
+   - my SSH public key
+   - for OCP only: the pull secret from https://console.redhat.com/openshift/install/pull-secret
    Store all secrets in a local env.sh (it is gitignored) and never commit them.
-3. Determine the latest stable OKD release with `make latest_version`, fetch the
-   binaries and build the toolbox image. Run all further make targets inside the
-   toolbox container non-interactively: docker run --rm -v "$PWD:/workspace"
-   -e <every variable from env.sh> <image> make <target>.
+3. Set DEPLOYMENT_TYPE=okd or DEPLOYMENT_TYPE=ocp and TF_VAR_replicas_worker
+   according to the parameters. For "latest", determine the version with
+   `make latest_version` (for OCP, set OCP_RELEASE_CHANNEL to the newest
+   stable-4.x channel first). Fetch the binaries and build the toolbox image. Run
+   all further make targets inside the toolbox container non-interactively:
+   docker run --rm -v "$PWD:/workspace" -e <every variable from env.sh> <image>
+   make <target>, and pass DEPLOYMENT_TYPE to every make call.
 4. Create install-config.yaml from the README example. metadata.name plus baseDomain
    must result in exactly the cluster domain (TF_VAR_dns_domain), and machineNetwork
    has to be the private node subnet (TF_VAR_subnet_cidr, default 192.168.254.0/24).
+   For OCP use the real pull secret instead of the placeholder.
 5. Generate manifests and ignition configs and build the CoreOS image with Packer.
    The ignition certificates expire after 24 hours, so the bootstrap has to be
    completed within that time, otherwise regenerate them.
