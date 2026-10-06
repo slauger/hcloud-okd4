@@ -6,7 +6,11 @@
     "image_type": "generic",
     "ignition_config": "config-3.0.0.ign",
     "first_boot_kargs": "rd.neednet=1 ip=dhcp nameserver=1.1.1.1 nameserver=1.0.0.1",
-    "architecture": "x86"
+    "architecture": "x86",
+    "rhcos_url": null,
+    "rhcos_sha256": null,
+    "rhcos_stream": "",
+    "rhcos_release": ""
   },
   "builders": [
     {
@@ -20,6 +24,7 @@
       "snapshot_labels": {
         "os": "rhcos",
         "image_type": "{{user `image_type`}}",
+        "rhcos_stream": "{{user `rhcos_stream`}}",
         "rhcos_release": "{{user `rhcos_release`}}",
         "architecture": "{{user `architecture`}}"
       }
@@ -34,6 +39,7 @@
         "mount -t tmpfs -o size=4G none /source",
         "cd /source",
         "curl -sfL {{user `rhcos_url`}} | gzip -d > rhcos-x86_64-qemu.x86_64.qcow2",
+        "echo '{{user `rhcos_sha256`}}  rhcos-x86_64-qemu.x86_64.qcow2' | sha256sum -c -",
         "qemu-img convert rhcos-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
         "mkdir /target",

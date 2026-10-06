@@ -29,6 +29,21 @@ resource "hcloud_server" "server" {
   firewall_ids = var.firewall_ids
   lifecycle {
     ignore_changes = [user_data, image, firewall_ids]
+
+    precondition {
+      condition     = var.image != null
+      error_message = "No CoreOS snapshot found, build one with make hcloud_image."
+    }
+
+    precondition {
+      condition     = var.ignition_url != ""
+      error_message = "The ignition URL is empty. For the bootstrap node it is set by make upload_ignition, use make infrastructure BOOTSTRAP=true."
+    }
+
+    precondition {
+      condition     = var.ignition_cacert != "" || !strcontains(var.ignition_url, ":22623/")
+      error_message = "The CA of the machine config server is missing, generate the ignition configs first (make generate_ignition)."
+    }
   }
 }
 

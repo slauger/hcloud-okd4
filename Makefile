@@ -1,5 +1,8 @@
 .DEFAULT_GOAL := build
 
+# the recipes rely on bash (e.g. "==" in tests), /bin/sh is dash on Debian/Ubuntu
+SHELL := /bin/bash
+
 # ocp
 OPENSHIFT_MIRROR?=https://mirror.openshift.com/pub/openshift-v4
 OCP_RELEASE_CHANNEL?=stable-4.22
@@ -58,6 +61,10 @@ CONTAINER_NAME?=ghcr.io/slauger/hcloud-okd4
 CONTAINER_TAG?=latest
 
 # coreos
+COREOS_DISK=.architectures.$(STREAM_ARCH).artifacts.qemu.formats."qcow2.gz".disk
+COREOS_RELEASE=.architectures.$(STREAM_ARCH).artifacts.qemu.release
+coreos_stream=$$($(CURDIR)/$(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '$(1)')
+
 ifeq ($(DEPLOYMENT_TYPE),ocp)
 	COREOS_IMAGE=rhcos
 else ifeq ($(DEPLOYMENT_TYPE),okd)
@@ -92,11 +99,11 @@ latest_version: latest_version_$(DEPLOYMENT_TYPE)
 
 .PHONY: latest_version_okd
 latest_version_okd:
-	@curl -s -H "Accept: application/vnd.github.v3+json" $(if $(GITHUB_TOKEN),-H "Authorization: Bearer $(GITHUB_TOKEN)") "https://api.github.com/repos/okd-project/okd/releases?per_page=100" | jq -j -r '[.[] | select(.prerelease == false and .draft == false) | .tag_name | select(startswith("$(OKD_RELEASE_STREAM)"))][0]'
+	@curl -sSf -H "Accept: application/vnd.github.v3+json" $(if $(GITHUB_TOKEN),-H "Authorization: Bearer $(GITHUB_TOKEN)") "https://api.github.com/repos/okd-project/okd/releases?per_page=100" | jq -e -j -r --arg stream "$(OKD_RELEASE_STREAM)" '[.[] | select(.prerelease == false and .draft == false) | .tag_name | select($$stream == "" or startswith($$stream + "."))][0]'
 
 .PHONY: latest_version_ocp
 latest_version_ocp:
-	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(OCP_RELEASE_CHANNEL).yaml | egrep '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
+	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(OCP_RELEASE_CHANNEL).yaml | grep -E '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
 
 # fetch the openshift binaries of a release into downloads/<type>/<version>/<toolbox arch>
 .PHONY: fetch
@@ -148,6 +155,7 @@ run:
 
 .PHONY: generate_manifests
 generate_manifests: check_release
+	@if [ -d config ]; then echo "ERROR: config/ already exists, remove it to generate new manifests"; exit 1; fi
 	mkdir config
 	cp install-config.yaml config/install-config.yaml
 	$(OPENSHIFT_INSTALL) create manifests --dir=config
@@ -161,8 +169,15 @@ generate_ignition: check_release
 .PHONY: hcloud_image
 hcloud_image: check_release
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var server_type=$(PACKER_SERVER_TYPE) -var architecture=$(HCLOUD_ARCH) -var fcos_url=$(shell $(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '.architectures.$(STREAM_ARCH).artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-fcos.json); fi
-	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var server_type=$(PACKER_SERVER_TYPE) -var architecture=$(HCLOUD_ARCH) -var rhcos_url=$(shell $(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '.architectures.$(STREAM_ARCH).artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-rhcos.json); fi
+	cd packer && packer build \
+		-var "first_boot_kargs=$(FIRST_BOOT_KARGS)" \
+		-var server_type=$(PACKER_SERVER_TYPE) \
+		-var architecture=$(HCLOUD_ARCH) \
+		-var "$(COREOS_IMAGE)_url=$(call coreos_stream,$(COREOS_DISK).location)" \
+		-var "$(COREOS_IMAGE)_sha256=$(call coreos_stream,$(COREOS_DISK)."uncompressed-sha256")" \
+		-var "$(COREOS_IMAGE)_stream=$(call coreos_stream,.stream)" \
+		-var "$(COREOS_IMAGE)_release=$(call coreos_stream,$(COREOS_RELEASE))" \
+		hcloud-$(COREOS_IMAGE).json
 
 .PHONY: sign_csr
 sign_csr: check_release
@@ -204,4 +219,5 @@ infrastructure:
 
 .PHONY: destroy
 destroy:
-	(cd terraform && terraform init && terraform destroy)
+	(cd terraform && terraform init && terraform destroy -var image=$(COREOS_IMAGE) -var architecture=$(HCLOUD_ARCH))
+	if [ -f terraform/bootstrap.auto.tfvars ]; then $(MAKE) delete_ignition; fi

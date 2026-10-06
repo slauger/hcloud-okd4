@@ -1,6 +1,8 @@
-# rendered pointer configs, kept for debugging
+# rendered pointer configs, kept for debugging. The bootstrap config contains
+# the pre-signed URL of the bootstrap ignition config, so keep it private.
 resource "local_file" "ignition_config" {
-  count = var.instance_count
+  count           = var.instance_count
+  file_permission = "0600"
 
   content = templatefile("${path.module}/templates/ignition.ign", {
     hostname         = format("%s%02d.%s", var.name, count.index + 1, var.dns_domain)
