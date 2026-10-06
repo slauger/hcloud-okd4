@@ -5,14 +5,16 @@ locals {
   lb_public_ports   = { api = 6443, http = 80, https = 443 }
   lb_internal_ports = { api = 6443, mcs = 22623 }
 
-  control_plane_server_ids = concat(module.master.server_ids, module.bootstrap.server_ids)
-  all_server_ids           = concat(module.master.server_ids, module.worker.server_ids, module.bootstrap.server_ids)
+  # Targets are keyed by server name, so scaling one role does not shift the
+  # targets of the others.
+  control_plane_servers = merge([for m in [module.bootstrap, module.master] : zipmap(m.server_names, m.server_ids)]...)
+  all_servers           = merge([for m in [module.bootstrap, module.master, module.worker] : zipmap(m.server_names, m.server_ids)]...)
 }
 
 # Public load balancer: API and ingress
 resource "hcloud_load_balancer" "lb" {
   name               = "lb.${var.dns_domain}"
-  load_balancer_type = "lb11"
+  load_balancer_type = var.load_balancer_type
   location           = var.location
 }
 
@@ -23,7 +25,7 @@ resource "hcloud_load_balancer_network" "lb_network" {
 }
 
 resource "hcloud_load_balancer_target" "nodes" {
-  for_each         = { for i, id in local.all_server_ids : tostring(i) => id }
+  for_each         = local.all_servers
   type             = "server"
   load_balancer_id = hcloud_load_balancer.lb.id
   server_id        = each.value
@@ -39,19 +41,30 @@ resource "hcloud_load_balancer_service" "public" {
   listen_port      = each.value
   destination_port = each.value
 
+  # The API is checked via /readyz, an API server that is starting or shutting
+  # down still accepts TCP connections, but must not receive requests.
   health_check {
-    protocol = "tcp"
+    protocol = each.key == "api" ? "http" : "tcp"
     port     = each.value
     interval = 10
     timeout  = 5
     retries  = 3
+
+    dynamic "http" {
+      for_each = each.key == "api" ? [1] : []
+      content {
+        path         = "/readyz"
+        tls          = true
+        status_codes = ["200"]
+      }
+    }
   }
 }
 
 # Internal load balancer: API and machine config server for the nodes (api-int)
 resource "hcloud_load_balancer" "internal" {
   name               = "lb-int.${var.dns_domain}"
-  load_balancer_type = "lb11"
+  load_balancer_type = var.load_balancer_type
   location           = var.location
 }
 
@@ -63,7 +76,7 @@ resource "hcloud_load_balancer_network" "internal" {
 }
 
 resource "hcloud_load_balancer_target" "control_plane" {
-  for_each         = { for i, id in local.control_plane_server_ids : tostring(i) => id }
+  for_each         = local.control_plane_servers
   type             = "server"
   load_balancer_id = hcloud_load_balancer.internal.id
   server_id        = each.value
@@ -79,12 +92,23 @@ resource "hcloud_load_balancer_service" "internal" {
   listen_port      = each.value
   destination_port = each.value
 
+  # The API is checked via /readyz, an API server that is starting or shutting
+  # down still accepts TCP connections, but must not receive requests.
   health_check {
-    protocol = "tcp"
+    protocol = each.key == "api" ? "http" : "tcp"
     port     = each.value
     interval = 10
     timeout  = 5
     retries  = 3
+
+    dynamic "http" {
+      for_each = each.key == "api" ? [1] : []
+      content {
+        path         = "/readyz"
+        tls          = true
+        status_codes = ["200"]
+      }
+    }
   }
 }
 

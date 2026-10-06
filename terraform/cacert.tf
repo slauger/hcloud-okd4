@@ -1,17 +1,9 @@
-data "local_file" "ignition_master_file" {
-  filename = "${path.root}/../ignition/master.ign"
-}
-
-data "local_file" "ignition_worker_file" {
-  filename = "${path.root}/../ignition/worker.ign"
-}
-
+# The ignition configs are only needed to create nodes, a missing file must not
+# break terraform destroy. Creating nodes without the CA fails in the module.
 locals {
-  ignition_master_cacert = jsondecode(data.local_file.ignition_master_file.content).ignition.security.tls.certificateAuthorities[0].source
-  ignition_worker_cacert = jsondecode(data.local_file.ignition_worker_file.content).ignition.security.tls.certificateAuthorities[0].source
-}
+  ignition_master_file = "${path.root}/../ignition/master.ign"
+  ignition_worker_file = "${path.root}/../ignition/worker.ign"
 
-#resource "local_file" "ignition_cacert" {
-#  content  = local.ignition_cacert
-#  filename = "${path.root}/ignition_ca.crt"
-#}
+  ignition_master_cacert = fileexists(local.ignition_master_file) ? jsondecode(file(local.ignition_master_file)).ignition.security.tls.certificateAuthorities[0].source : ""
+  ignition_worker_cacert = fileexists(local.ignition_worker_file) ? jsondecode(file(local.ignition_worker_file)).ignition.security.tls.certificateAuthorities[0].source : ""
+}

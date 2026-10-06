@@ -13,8 +13,8 @@ module "bootstrap" {
   dns_records      = local.cloudflare_dns
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
-  image            = data.hcloud_image.image.id
-  server_type      = local.server_type
+  image            = local.image_id
+  server_type      = coalesce(var.bootstrap_server_type, local.server_type)
   labels = {
     "cluster" = var.dns_domain
   }
@@ -35,8 +35,8 @@ module "master" {
   dns_records      = local.cloudflare_dns
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
-  image            = data.hcloud_image.image.id
-  server_type      = local.server_type
+  image            = local.image_id
+  server_type      = coalesce(var.master_server_type, local.server_type)
   labels = {
     "${var.dns_domain}/master"  = "true",
     "${var.dns_domain}/ingress" = "true"
@@ -65,8 +65,8 @@ module "worker" {
   dns_records      = local.cloudflare_dns
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
-  image            = data.hcloud_image.image.id
-  server_type      = local.server_type
+  image            = local.image_id
+  server_type      = coalesce(var.worker_server_type, local.server_type)
   labels = {
     "${var.dns_domain}/worker"  = "true"
     "${var.dns_domain}/ingress" = "true"

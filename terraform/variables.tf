@@ -37,7 +37,7 @@ variable "worker_volume_size" {
 
 variable "dns_domain" {
   type        = string
-  description = "Name of the Cloudflare domain"
+  description = "Cluster domain (metadata.name and baseDomain of install-config.yaml)"
 }
 
 variable "dns_provider" {
@@ -89,8 +89,20 @@ variable "lb_subnet_cidr" {
 
 variable "location" {
   type        = string
-  description = "Region"
+  description = "Location of the servers and load balancers"
   default     = "nbg1"
+}
+
+variable "network_zone" {
+  type        = string
+  description = "Network zone of the private network, has to contain the location (eu-central, us-east, us-west or ap-southeast)"
+  default     = "eu-central"
+}
+
+variable "load_balancer_type" {
+  type        = string
+  description = "Type of the public and the internal load balancer"
+  default     = "lb11"
 }
 
 variable "architecture" {
@@ -107,6 +119,24 @@ variable "architecture" {
 variable "server_type" {
   type        = string
   description = "Server type of all nodes (default: cpx42 for x86, cax31 for arm)"
+  default     = null
+}
+
+variable "bootstrap_server_type" {
+  type        = string
+  description = "Server type of the bootstrap node (default: server_type)"
+  default     = null
+}
+
+variable "master_server_type" {
+  type        = string
+  description = "Server type of the master nodes (default: server_type)"
+  default     = null
+}
+
+variable "worker_server_type" {
+  type        = string
+  description = "Server type of the worker nodes (default: server_type)"
   default     = null
 }
 

@@ -1,6 +1,6 @@
 variable "name" {
   type        = string
-  description = "Instance nam"
+  description = "Instance name"
 }
 
 variable "dns_domain" {
@@ -29,13 +29,11 @@ variable "instance_count" {
 variable "server_type" {
   type        = string
   description = "Hetzner Cloud instance type"
-  default     = "cx11"
 }
 
 variable "image" {
   type        = string
-  description = "Hetzner Cloud system image"
-  default     = "ubuntu-22.04"
+  description = "ID of the CoreOS snapshot"
 }
 
 variable "ssh_keys" {
