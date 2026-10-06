@@ -111,6 +111,18 @@ export TF_VAR_replicas_master=3  # 1 (default) or 3 masters
 
 The number of masters has to match `controlPlane.replicas` in `install-config.yaml`. With 3 masters the control plane survives the restarts during the installation and updates without API outages.
 
+Server and load balancer types as well as the location can be changed the same way:
+
+```bash
+export TF_VAR_server_type=cpx52          # all nodes, default: cpx42 (x86) or cax31 (arm)
+export TF_VAR_worker_server_type=ccx33   # per role, also bootstrap_server_type and master_server_type
+export TF_VAR_load_balancer_type=lb21    # default: lb11, used for both load balancers
+export TF_VAR_location=ash               # default: nbg1
+export TF_VAR_network_zone=us-east       # default: eu-central, has to contain the location
+```
+
+The CoreOS snapshot keeps the disk size of the Packer builder (cpx32 / cax31), so every server type needs at least that much disk, see [docs/hetzner-specifics.md](docs/hetzner-specifics.md).
+
 ### Additional Disks (LVM Storage / Ceph)
 
 Master and worker nodes can get an additional, unformatted Hetzner Volume for storage operators:
@@ -135,7 +147,7 @@ export DEPLOYMENT_TYPE=okd # Options: "okd" or "ocp", default is "okd"
 export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.22.0-okd-scos.9"
 ```
 
-`make latest_version` returns the most recent stable (non pre-release) OKD release. To stay on a specific minor stream, set `OKD_RELEASE_STREAM`:
+`make latest_version` returns the most recent stable (non pre-release) OKD release and fails if none is found. It queries the GitHub API, set `GITHUB_TOKEN` to avoid its rate limit for anonymous requests. To stay on a specific minor stream, set `OKD_RELEASE_STREAM`:
 
 ```bash
 export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
@@ -292,6 +304,8 @@ export TF_VAR_nameservers_ipv6='[]'
 ### Object Storage
 
 Hetzner does not offer an API to manage Object Storage credentials, so the bucket and the S3 credentials have to be created once in the Hetzner Console (*Object Storage* and *Security → S3 Credentials*). Keep the bucket private, access is granted through a pre-signed URL that expires after 24 hours (`S3_PRESIGN_EXPIRY`, matching the lifetime of the ignition certificates).
+
+Anyone who knows the pre-signed URL can download the bootstrap config including its credentials until it expires. Besides `terraform/bootstrap.auto.tfvars`, the URL ends up in the Terraform state, in the user data of the bootstrap node and in `ignition/bootstrap01.<cluster domain>.ign`, so treat these as secrets. Removing the bootstrap node (`make infrastructure`) and `make destroy` also delete the config from the bucket, which invalidates the URL.
 
 The config can also be uploaded or removed manually:
 

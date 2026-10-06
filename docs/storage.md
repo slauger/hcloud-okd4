@@ -8,7 +8,7 @@ export TF_VAR_master_volume_size=100 # GB per master, only useful if masters run
 make infrastructure
 ```
 
-Inside the node the volume shows up as `/dev/sdb`, with a stable path below `/dev/disk/by-id/scsi-0HC_Volume_<volume id>`. Example for an `LVMCluster`:
+Inside the node the volume shows up as `/dev/sdb`, with a stable path below `/dev/disk/by-id/scsi-0HC_Volume_<volume id>`. The by-id path differs per node, so the examples use `/dev/sdb`, which is stable as long as each node has only this one volume attached. Example for an `LVMCluster`:
 
 ```yaml
 spec:
