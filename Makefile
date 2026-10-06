@@ -34,7 +34,9 @@ ifeq ($(ARCH),amd64)
 else ifeq ($(ARCH),arm64)
 	STREAM_ARCH=aarch64
 	HCLOUD_ARCH=arm
-	PACKER_SERVER_TYPE?=cax31
+	# 80 GB disk, so the snapshot also fits cax21 workers (8 GB RAM is enough for
+	# the image in the tmpfs of the rescue system)
+	PACKER_SERVER_TYPE?=cax21
 else
   $(error ARCH must be amd64 or arm64)
 endif
@@ -185,13 +187,18 @@ generate_ignition: check_release
 	$(OPENSHIFT_INSTALL) create ignition-configs --dir=ignition
 
 # A snapshot of the same CoreOS release is reused, REBUILD=true builds a new one.
+# Snapshots only fit server types with at least the disk of their builder, so a
+# snapshot built on a larger server type than PACKER_SERVER_TYPE is not reused.
 .PHONY: hcloud_image
 hcloud_image: check_release
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
 	@release=$(call coreos_stream,$(COREOS_RELEASE)); \
+	disk=$$(curl -fsS -G -H "Authorization: Bearer $$HCLOUD_TOKEN" https://api.hetzner.cloud/v1/server_types \
+		--data-urlencode name=$(PACKER_SERVER_TYPE) | jq -r '.server_types[0].disk // 0'); \
 	snapshot=$$(curl -fsS -G -H "Authorization: Bearer $$HCLOUD_TOKEN" https://api.hetzner.cloud/v1/images \
 		--data-urlencode type=snapshot --data-urlencode status=available --data-urlencode architecture=$(HCLOUD_ARCH) \
-		--data-urlencode "label_selector=os=$(COREOS_IMAGE),image_type=generic,$(COREOS_IMAGE)_release=$$release" | jq -r '.images[0].id // empty'); \
+		--data-urlencode "label_selector=os=$(COREOS_IMAGE),image_type=generic,$(COREOS_IMAGE)_release=$$release" \
+		| jq -r --argjson disk "$${disk:-0}" '[.images[] | select(.disk_size <= $$disk)][0].id // empty'); \
 	if [ -n "$$snapshot" ] && [ "$(REBUILD)" != "true" ]; then \
 		echo "snapshot $$snapshot already contains $(COREOS_IMAGE) $$release ($(HCLOUD_ARCH)), set REBUILD=true to build a new one"; \
 		exit 0; \

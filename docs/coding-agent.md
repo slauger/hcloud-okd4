@@ -17,6 +17,8 @@ https://github.com/slauger/hcloud-okd4.
      third of the costs)
    - control plane: 1 master or 3 masters (highly available)
    - number of worker nodes: 0 (masters run all workloads), 2 or a custom number
+   - if there are workers: the same server type as the masters or smaller workers
+     with 8 GB RAM (cpx32, or cax21 for arm64), see "Costs" in the README
    - DNS: Cloudflare (records are managed automatically) or my own DNS (I create
      the records myself, see "DNS" in the README)
 3. Ask me for everything else you need and do not have yet:
@@ -32,8 +34,9 @@ https://github.com/slauger/hcloud-okd4.
      required for OCP, optional for OKD (it enables the Red Hat operator catalogs)
    Store all secrets in a local env.sh (it is gitignored) and never commit them.
 4. Set DEPLOYMENT_TYPE=okd or DEPLOYMENT_TYPE=ocp, TF_VAR_replicas_master,
-   TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare or none) and ARCH
-   (amd64 or arm64) according to my answers. For OCP, set OCP_RELEASE_CHANNEL to
+   TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare or none), ARCH
+   (amd64 or arm64) and for smaller workers TF_VAR_worker_server_type according
+   to my answers. For OCP, set OCP_RELEASE_CHANNEL to
    the newest stable-4.x channel before running `make latest_version`. Run `make fetch` for the chosen
    release and pull the toolbox image ghcr.io/slauger/hcloud-okd4:latest. Run all
    further make targets inside the toolbox non-interactively, in the architecture

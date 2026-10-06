@@ -82,6 +82,8 @@ Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the H
 | Default with 2 workers (3× cpx42, 2× lb11, 3× IPv4) | ~0.36 € | ~224 € |
 | ARM64 single node (1× master cax31, 2× lb11, IPv4, OCP only) | ~0.06 € | ~35 € |
 | ARM64 with 2 workers (3× cax31, 2× lb11, 3× IPv4, OCP only) | ~0.13 € | ~78 € |
+| 2 smaller workers (1× master cpx42, 2× worker cpx32, 2× lb11, 3× IPv4) | ~0.25 € | ~156 € |
+| ARM64 with 2 smaller workers (1× master cax31, 2× worker cax21, 2× lb11, 3× IPv4, OCP only) | ~0.09 € | ~57 € |
 | Bootstrap node during installation (same server type as the nodes, ~15–25 min, billed per started hour) | ~0.11 € (cpx42) / ~0.03 € (cax31) once | – |
 | Additional volumes (`TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
 | CoreOS snapshot (~1 GB) | – | ~0.01 € |
@@ -120,7 +122,16 @@ export TF_VAR_location=ash               # default: nbg1
 export TF_VAR_network_zone=us-east       # default: eu-central, has to contain the location
 ```
 
-The CoreOS snapshot keeps the disk size of the Packer builder (cpx32 / cax31), so every server type needs at least that much disk, see [docs/hetzner-specifics.md](docs/hetzner-specifics.md).
+Masters need 16 GB RAM (cpx42 / cax31). Workers get by with 8 GB, which saves about a third with two workers (see *Costs*):
+
+```bash
+export TF_VAR_worker_server_type=cpx32   # x86: 4 vCPU, 8 GB RAM, 160 GB disk
+export TF_VAR_worker_server_type=cax21   # arm64: 4 vCPU, 8 GB RAM, 80 GB disk
+```
+
+cax21 has less disk than the 100 GB Red Hat lists as minimum per node. That is fine for test clusters, but watch out for disk pressure with many or large images.
+
+The CoreOS snapshot keeps the disk size of the Packer builder (cpx32 with 160 GB / cax21 with 80 GB), so every server type needs at least that much disk, see [docs/hetzner-specifics.md](docs/hetzner-specifics.md). Snapshots built on cax31 before do not fit cax21, `make hcloud_image` builds a new one in that case.
 
 ### Additional Disks (LVM Storage / Ceph)
 
@@ -172,7 +183,7 @@ OCP clusters can run on Hetzner's Ampere based CAX servers, which cost about a t
 
 ```bash
 export DEPLOYMENT_TYPE=ocp
-export ARCH=arm64 # builds the RHCOS aarch64 image on cax31 and uses cax31 nodes
+export ARCH=arm64 # builds the RHCOS aarch64 image on cax21 and uses cax31 nodes
 ```
 
 Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.yaml`. The aarch64 release payload is selected automatically.
