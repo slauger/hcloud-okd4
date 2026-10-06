@@ -6,6 +6,7 @@
 Deploy OKD (and Red Hat OpenShift) clusters on Hetzner Cloud using Packer and Terraform – a cheap and fast way to get a real OpenShift cluster for testing, development and learning.
 
 - OKD and OCP 4.x, single node or with additional workers
+- arm64 clusters on Hetzner CAX servers (OCP only), from ~0.06 € per hour
 - User provisioned infrastructure (`platform: none`), no cloud integration required
 - Cluster traffic over a Hetzner private network, nodes are not exposed to the internet
 - Bootstrap ignition config served from Hetzner Object Storage, no helper VMs
@@ -86,7 +87,7 @@ Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the H
 | Additional volumes (`TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
 | CoreOS snapshot (~1 GB) | – | ~0.01 € |
 
-Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page.
+Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page. These are infrastructure costs only, OCP additionally requires a Red Hat subscription (or runs as a 60 day evaluation).
 
 ### Duration
 
