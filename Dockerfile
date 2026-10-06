@@ -2,7 +2,10 @@ FROM docker.io/hashicorp/terraform:1.16.5@sha256:c7926feace05d0f7e73542842bf3945
 FROM docker.io/hashicorp/packer:1.16.1@sha256:9fd66d5a4ea0598036e6b50ac6f8c0e72c27746648a5abe480463119e9486ea7 AS packer
 FROM docker.io/alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 
-LABEL maintainer="simon@lauger.name"
+LABEL maintainer="simon@lauger.name" \
+      org.opencontainers.image.source="https://github.com/slauger/hcloud-okd4" \
+      org.opencontainers.image.description="Toolbox to deploy OKD and OpenShift on Hetzner Cloud" \
+      org.opencontainers.image.licenses="MIT"
 
 # Version independent toolbox, the openshift binaries are downloaded per
 # release into downloads/<type>/<version> of the workspace (make fetch).
