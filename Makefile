@@ -128,7 +128,7 @@ check_release:
 
 .PHONY: build
 build:
-	docker build -t $(CONTAINER_NAME):$(CONTAINER_TAG) .
+	docker build --platform linux/$(TOOLBOX_ARCH) -t $(CONTAINER_NAME):$(CONTAINER_TAG) .
 
 .PHONY: test
 test:
