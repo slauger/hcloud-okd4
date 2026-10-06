@@ -1,3 +1,8 @@
+locals {
+  # The image is built on cpx32 / cax31 (160 GB disk), smaller server types do not fit
+  server_type = coalesce(var.server_type, var.architecture == "arm" ? "cax31" : "cpx42")
+}
+
 module "bootstrap" {
   source           = "./modules/hcloud_coreos"
   instance_count   = var.bootstrap == true ? 1 : 0
@@ -9,7 +14,7 @@ module "bootstrap" {
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
   image            = data.hcloud_image.image.id
-  server_type      = "cpx42"
+  server_type      = local.server_type
   labels = {
     "cluster" = var.dns_domain
   }
@@ -31,7 +36,7 @@ module "master" {
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
   image            = data.hcloud_image.image.id
-  server_type      = "cpx42"
+  server_type      = local.server_type
   labels = {
     "${var.dns_domain}/master"  = "true",
     "${var.dns_domain}/ingress" = "true"
@@ -61,7 +66,7 @@ module "worker" {
   nameservers_ipv4 = var.nameservers_ipv4
   nameservers_ipv6 = var.nameservers_ipv6
   image            = data.hcloud_image.image.id
-  server_type      = "cpx42"
+  server_type      = local.server_type
   labels = {
     "${var.dns_domain}/worker"  = "true"
     "${var.dns_domain}/ingress" = "true"

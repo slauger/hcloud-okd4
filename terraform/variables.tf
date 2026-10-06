@@ -93,6 +93,23 @@ variable "location" {
   default     = "nbg1"
 }
 
+variable "architecture" {
+  type        = string
+  description = "CPU architecture of the nodes: x86 or arm (Hetzner CAX servers)"
+  default     = "x86"
+
+  validation {
+    condition     = contains(["x86", "arm"], var.architecture)
+    error_message = "architecture must be either x86 or arm."
+  }
+}
+
+variable "server_type" {
+  type        = string
+  description = "Server type of all nodes (default: cpx42 for x86, cax31 for arm)"
+  default     = null
+}
+
 variable "image" {
   type        = string
   description = "Image selector (either fcos or rhcos)"

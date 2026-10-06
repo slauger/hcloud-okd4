@@ -12,11 +12,29 @@ OKD_RELEASE_STREAM?=
 # either okd or ocp
 DEPLOYMENT_TYPE?=okd
 
+# cluster architecture: amd64 or arm64 (Hetzner CAX servers). The toolbox runs
+# with the same architecture, because openshift-install installs clusters of
+# its own architecture.
+ARCH?=amd64
+ifeq ($(ARCH),amd64)
+	ARCH_SUFFIX=
+	STREAM_ARCH=x86_64
+	HCLOUD_ARCH=x86
+	PACKER_SERVER_TYPE?=cpx32
+else ifeq ($(ARCH),arm64)
+	ARCH_SUFFIX=-arm64
+	STREAM_ARCH=aarch64
+	HCLOUD_ARCH=arm
+	PACKER_SERVER_TYPE?=cax31
+else
+	$(error ARCH must be amd64 or arm64)
+endif
+
 # release version, required for fetch and all targets using the openshift binaries
 OPENSHIFT_RELEASE?=
 
 # openshift binaries of the selected release, downloaded by make fetch
-BIN_DIR=downloads/$(DEPLOYMENT_TYPE)/$(OPENSHIFT_RELEASE)
+BIN_DIR=downloads/$(DEPLOYMENT_TYPE)/$(OPENSHIFT_RELEASE)/$(ARCH)
 OPENSHIFT_INSTALL=$(BIN_DIR)/openshift-install
 OC=$(BIN_DIR)/oc
 
@@ -65,7 +83,7 @@ latest_version_okd:
 latest_version_ocp:
 	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(OCP_RELEASE_CHANNEL).yaml | egrep '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
 
-# fetch the openshift binaries of a release into downloads/<type>/<version>
+# fetch the openshift binaries of a release into downloads/<type>/<version>/<arch>
 .PHONY: fetch
 fetch: fetch_$(DEPLOYMENT_TYPE)
 
@@ -79,10 +97,10 @@ fetch_okd fetch_ocp:
 		echo "$(BIN_DIR) already contains the binaries"; \
 	else \
 		mkdir -p $(BIN_DIR) && \
-		echo "downloading openshift-install $(OPENSHIFT_RELEASE)" && \
-		curl -fsSL $(RELEASE_URL)/openshift-install-linux-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) openshift-install && \
-		echo "downloading openshift-client $(OPENSHIFT_RELEASE)" && \
-		curl -fsSL $(RELEASE_URL)/openshift-client-linux-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) oc kubectl; \
+		echo "downloading openshift-install $(OPENSHIFT_RELEASE) ($(ARCH))" && \
+		curl -fsSL $(RELEASE_URL)/openshift-install-linux$(ARCH_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) openshift-install && \
+		echo "downloading openshift-client $(OPENSHIFT_RELEASE) ($(ARCH))" && \
+		curl -fsSL $(RELEASE_URL)/openshift-client-linux$(ARCH_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) oc kubectl; \
 	fi
 
 # fail early if the binaries of the selected release are missing
@@ -108,7 +126,8 @@ run:
 	docker run -it --hostname openshift-toolbox \
 		--mount type=bind,source="$(shell pwd)",target=/workspace \
 		--mount type=bind,source="$(HOME)/.ssh,target=/root/.ssh" \
-		-e DEPLOYMENT_TYPE=$(DEPLOYMENT_TYPE) -e OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) \
+		--platform linux/$(ARCH) \
+		-e DEPLOYMENT_TYPE=$(DEPLOYMENT_TYPE) -e OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) -e ARCH=$(ARCH) \
 		-e PATH=/workspace/$(BIN_DIR):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 		$(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
 
@@ -127,8 +146,8 @@ generate_ignition: check_release
 .PHONY: hcloud_image
 hcloud_image: check_release
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
-	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var fcos_url=$(shell $(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-fcos.json); fi
-	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var rhcos_url=$(shell $(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-rhcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "okd" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var server_type=$(PACKER_SERVER_TYPE) -var architecture=$(HCLOUD_ARCH) -var fcos_url=$(shell $(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '.architectures.$(STREAM_ARCH).artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-fcos.json); fi
+	if [ "$(DEPLOYMENT_TYPE)" == "ocp" ]; then (cd packer && packer build -var "first_boot_kargs=$(FIRST_BOOT_KARGS)" -var server_type=$(PACKER_SERVER_TYPE) -var architecture=$(HCLOUD_ARCH) -var rhcos_url=$(shell $(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '.architectures.$(STREAM_ARCH).artifacts.qemu.formats."qcow2.gz".disk.location') hcloud-rhcos.json); fi
 
 .PHONY: sign_csr
 sign_csr: check_release
@@ -165,7 +184,7 @@ infrastructure:
 	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
 	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
 	if [ "$(BOOTSTRAP)" == "true" ] && [ "$(MODE)" == "apply" ]; then $(MAKE) upload_ignition; fi
-	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var bootstrap=$(BOOTSTRAP))
+	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var architecture=$(HCLOUD_ARCH) -var bootstrap=$(BOOTSTRAP))
 	if [ "$(BOOTSTRAP)" == "false" ] && [ "$(MODE)" == "apply" ] && [ -f terraform/bootstrap.auto.tfvars ]; then $(MAKE) delete_ignition; fi
 
 .PHONY: destroy
