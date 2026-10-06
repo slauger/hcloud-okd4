@@ -22,9 +22,7 @@ RUN apk add --no-cache \
       jq \
       libc6-compat \
       apache2-utils \
-      python3 \
-      py3-pip \
-      libvirt-client
+      python3
 
 # External tools
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform
