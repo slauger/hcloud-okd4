@@ -24,6 +24,6 @@ spec:
           overprovisionRatio: 10
 ```
 
-For Rook-Ceph, set `useAllDevices: false` and select the volume with `deviceFilter: ^sdb$`. Hetzner Volumes are network attached block storage, which is fine for test clusters but not for performance testing.
+For Rook-Ceph, set `useAllDevices: false` and select the volume with `deviceFilter: ^sdb$`. Hetzner Volumes are network attached, Ceph based block storage. They have higher latency and lower IOPS than the local NVMe disks of the servers, and Rook-Ceph on top of them replicates the data twice. This is fine for functional tests, but does not reflect the performance of local disks.
 
 See the [README](../README.md) for the overall architecture and the deployment steps.
