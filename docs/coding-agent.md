@@ -13,6 +13,8 @@ https://github.com/slauger/hcloud-okd4.
    - distribution: OKD or OCP (Red Hat OpenShift)
    - version: the latest stable release (determine it with `make latest_version`)
      or a specific version
+   - for OCP only: architecture amd64 (CPX servers) or arm64 (CAX servers, about a
+     third of the costs)
    - control plane: 1 master or 3 masters (highly available)
    - number of worker nodes: 0 (masters run all workloads), 2 or a custom number
    - DNS: Cloudflare (records are managed automatically) or my own DNS (I create
@@ -30,17 +32,19 @@ https://github.com/slauger/hcloud-okd4.
      required for OCP, optional for OKD (it enables the Red Hat operator catalogs)
    Store all secrets in a local env.sh (it is gitignored) and never commit them.
 4. Set DEPLOYMENT_TYPE=okd or DEPLOYMENT_TYPE=ocp, TF_VAR_replicas_master,
-   TF_VAR_replicas_worker and
-   TF_VAR_dns_provider (cloudflare or none) according to my answers. For OCP, set
-   OCP_RELEASE_CHANNEL to the newest stable-4.x channel before running
-   `make latest_version`. Fetch the binaries and build the toolbox image. Run
-   all further make targets inside the toolbox container non-interactively:
-   docker run --rm -v "$PWD:/workspace" -e <every variable from env.sh> <image>
-   make <target>, and pass DEPLOYMENT_TYPE to every make call.
+   TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare or none) and ARCH
+   (amd64 or arm64) according to my answers. For OCP, set OCP_RELEASE_CHANNEL to
+   the newest stable-4.x channel before running `make latest_version`. Run `make fetch` for the chosen
+   release and pull the toolbox image ghcr.io/slauger/hcloud-okd4:latest. Run all
+   further make targets inside the toolbox non-interactively, in the architecture
+   of this machine: docker run --rm --platform linux/<arch of this machine>
+   -v "$PWD:/workspace" -e <every variable from env.sh> <image> make <target>,
+   and pass DEPLOYMENT_TYPE, OPENSHIFT_RELEASE and ARCH to every make call.
 5. Create install-config.yaml from the README example. metadata.name plus baseDomain
    must result in exactly the cluster domain (TF_VAR_dns_domain), and machineNetwork
    has to be the private node subnet (TF_VAR_subnet_cidr, default 192.168.254.0/24),
-   and controlPlane.replicas has to match TF_VAR_replicas_master.
+   controlPlane.replicas has to match TF_VAR_replicas_master, and for arm64 set
+   architecture: arm64 for controlPlane and compute.
    Use my pull secret if I provided one, otherwise (OKD only) the placeholder.
 6. Generate manifests and ignition configs and build the CoreOS image with Packer.
    The ignition certificates expire after 24 hours, so the bootstrap has to be

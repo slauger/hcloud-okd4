@@ -69,21 +69,6 @@ variable "dns_zone_id" {
   default     = null
 }
 
-variable "ip_loadbalancer_api" {
-  description = "IP of an external loadbalancer for api (optional)"
-  default     = null
-}
-
-variable "ip_loadbalancer_api_int" {
-  description = "IP of an external loadbalancer for api-int (optional)"
-  default     = null
-}
-
-variable "ip_loadbalancer_apps" {
-  description = "IP of an external loadbalancer for apps (optional)"
-  default     = null
-}
-
 variable "network_cidr" {
   type        = string
   description = "CIDR for the network"
@@ -106,6 +91,23 @@ variable "location" {
   type        = string
   description = "Region"
   default     = "nbg1"
+}
+
+variable "architecture" {
+  type        = string
+  description = "CPU architecture of the nodes: x86 or arm (Hetzner CAX servers)"
+  default     = "x86"
+
+  validation {
+    condition     = contains(["x86", "arm"], var.architecture)
+    error_message = "architecture must be either x86 or arm."
+  }
+}
+
+variable "server_type" {
+  type        = string
+  description = "Server type of all nodes (default: cpx42 for x86, cax31 for arm)"
+  default     = null
 }
 
 variable "image" {

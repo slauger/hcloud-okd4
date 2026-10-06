@@ -1,5 +1,4 @@
-[![OKD Build](https://github.com/slauger/hcloud-okd4/actions/workflows/okd-master.yml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/okd-master.yml)
-[![OCP Build](https://github.com/slauger/hcloud-okd4/actions/workflows/ocp-master.yml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/ocp-master.yml)
+[![CI](https://github.com/slauger/hcloud-okd4/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/ci.yaml)
 [![License: MIT](https://img.shields.io/github/license/slauger/hcloud-okd4)](LICENSE)
 
 # hcloud-okd4
@@ -7,6 +6,7 @@
 Deploy OKD (and Red Hat OpenShift) clusters on Hetzner Cloud using Packer and Terraform – a cheap and fast way to get a real OpenShift cluster for testing, development and learning.
 
 - OKD and OCP 4.x, single node or with additional workers
+- arm64 clusters on Hetzner CAX servers (OCP only), from ~0.06 € per hour
 - User provisioned infrastructure (`platform: none`), no cloud integration required
 - Cluster traffic over a Hetzner private network, nodes are not exposed to the internet
 - Bootstrap ignition config served from Hetzner Object Storage, no helper VMs
@@ -81,11 +81,13 @@ Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the H
 |---|---|---|
 | Single node (1× master cpx42, 2× lb11, IPv4) | ~0.13 € | ~84 € |
 | Default with 2 workers (3× cpx42, 2× lb11, 3× IPv4) | ~0.36 € | ~224 € |
-| Bootstrap node during installation (cpx42, billed as one hour) | ~0.11 € once | – |
+| ARM64 single node (1× master cax31, 2× lb11, IPv4, OCP only) | ~0.06 € | ~35 € |
+| ARM64 with 2 workers (3× cax31, 2× lb11, 3× IPv4, OCP only) | ~0.13 € | ~78 € |
+| Bootstrap node during installation (same server type as the nodes, ~15–25 min, billed per started hour) | ~0.11 € (cpx42) / ~0.03 € (cax31) once | – |
 | Additional volumes (`TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
 | CoreOS snapshot (~1 GB) | – | ~0.01 € |
 
-Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page.
+Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page. These are infrastructure costs only, OCP additionally requires a Red Hat subscription (or runs as a 60 day evaluation).
 
 ### Duration
 
@@ -93,7 +95,7 @@ Measured with OKD 4.22 and OCP 4.22, 1 master and 2 workers:
 
 | Step | Duration |
 |---|---|
-| Toolbox image (`make fetch build`) | ~5 min |
+| OpenShift binaries (`make fetch`) | ~1 min |
 | CoreOS image (`make hcloud_image`) | ~10 min |
 | Infrastructure (`make infrastructure BOOTSTRAP=true`) | ~3 min |
 | Bootstrap (`make wait_bootstrap`) | ~12 min |
@@ -139,16 +141,38 @@ export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.22.
 export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
 ```
 
-For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from cloud.redhat.com.
+For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret).
+
+### Toolbox
+
+All steps run inside a toolbox container with Terraform, Packer, the AWS CLI and the other required tools. The image is version independent and available for amd64 and arm64, it always runs natively in the architecture of your machine (`TOOLBOX_ARCH`, detected automatically). The OpenShift binaries (`openshift-install`, `oc`, `kubectl`) are downloaded per release into `downloads/<okd|ocp>/<version>/<toolbox arch>/` of the repository, which is mounted into the toolbox. Several versions can live side by side.
+
+```bash
+docker pull ghcr.io/slauger/hcloud-okd4:latest # or build it locally: make build
+make fetch                                     # downloads the binaries of OPENSHIFT_RELEASE
+make run                                       # starts the toolbox, oc and openshift-install are in the PATH
+```
+
+When running make targets in the toolbox yourself, pass `--platform linux/<toolbox arch>` to `docker run` if `DOCKER_DEFAULT_PLATFORM` points to another architecture.
+
+### ARM64 Clusters (OCP)
+
+OCP clusters can run on Hetzner's Ampere based CAX servers, which cost about a third of the corresponding CPX servers. OKD does not publish arm64 release payloads, so this is only available for OCP.
+
+```bash
+export DEPLOYMENT_TYPE=ocp
+export ARCH=arm64 # builds the RHCOS aarch64 image on cax31 and uses cax31 nodes
+```
+
+Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.yaml`. The aarch64 release payload is selected automatically.
 
 ---
 
 ## Quick Start
 
-1. Build and start the toolbox
+1. Fetch the OpenShift binaries and start the toolbox (see *Toolbox*)
    ```bash
    make fetch
-   make build
    make run
    ```
 2. Create `install-config.yaml` (see example in *Configuration*)
@@ -293,7 +317,7 @@ To deploy OCP instead of OKD:
 ```bash
 export DEPLOYMENT_TYPE=ocp
 export OPENSHIFT_RELEASE=4.22.15 # example version
-make fetch build run
+make fetch run
 ```
 
 You can also choose the latest version from a specific channel:
@@ -301,7 +325,7 @@ You can also choose the latest version from a specific channel:
 ```bash
 export OCP_RELEASE_CHANNEL=stable-4.22
 export OPENSHIFT_RELEASE=$(make latest_version)
-make fetch build run
+make fetch run
 ```
 
 ---

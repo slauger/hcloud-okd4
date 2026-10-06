@@ -1,0 +1,4 @@
+# The base image is pinned by digest. Pinning every apk package would break the
+# build on each Alpine update without adding value for a toolbox image.
+ignored:
+  - DL3018

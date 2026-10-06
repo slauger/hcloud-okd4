@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    # weekly check that the latest releases can still be fetched
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    uses: ./.github/workflows/_lint.yaml
+
+  toolbox:
+    needs: lint
+    uses: ./.github/workflows/_container-build.yaml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      image_name: hcloud-okd4
+      structure_test: tests/image.tests.yaml
+      push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      latest: true
+
+  fetch:
+    strategy:
+      fail-fast: false
+      matrix:
+        deployment_type: [okd, ocp]
+        arch: [amd64, arm64]
+    uses: ./.github/workflows/_fetch.yaml
+    with:
+      deployment_type: ${{ matrix.deployment_type }}
+      arch: ${{ matrix.arch }}

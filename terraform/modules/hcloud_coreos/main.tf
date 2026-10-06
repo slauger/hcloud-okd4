@@ -34,14 +34,14 @@ resource "hcloud_server" "server" {
 
 resource "hcloud_rdns" "dns-ptr-ipv4" {
   count      = var.instance_count
-  server_id  = element(hcloud_server.server.*.id, count.index)
-  ip_address = element(hcloud_server.server.*.ipv4_address, count.index)
-  dns_ptr    = element(hcloud_server.server.*.name, count.index)
+  server_id  = element(hcloud_server.server[*].id, count.index)
+  ip_address = element(hcloud_server.server[*].ipv4_address, count.index)
+  dns_ptr    = element(hcloud_server.server[*].name, count.index)
 }
 
 resource "hcloud_rdns" "dns-ptr-ipv6" {
   count      = var.instance_count
-  server_id  = element(hcloud_server.server.*.id, count.index)
+  server_id  = element(hcloud_server.server[*].id, count.index)
   ip_address = local.public_ipv6_addresses[count.index]
-  dns_ptr    = element(hcloud_server.server.*.name, count.index)
+  dns_ptr    = element(hcloud_server.server[*].name, count.index)
 }

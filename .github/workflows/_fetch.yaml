@@ -1,0 +1,32 @@
+name: Fetch
+
+on:
+  workflow_call:
+    inputs:
+      deployment_type:
+        description: 'okd or ocp'
+        required: true
+        type: string
+      arch:
+        description: 'amd64 or arm64'
+        required: true
+        type: string
+
+jobs:
+  fetch:
+    runs-on: ${{ inputs.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      DEPLOYMENT_TYPE: ${{ inputs.deployment_type }}
+      TOOLBOX_ARCH: ${{ inputs.arch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Fetch the latest release
+        run: |
+          release=$(make -s latest_version)
+          echo "latest ${DEPLOYMENT_TYPE} release: ${release}"
+          make fetch OPENSHIFT_RELEASE="${release}"
+          "downloads/${DEPLOYMENT_TYPE}/${release}/${TOOLBOX_ARCH}/openshift-install" version
+          "downloads/${DEPLOYMENT_TYPE}/${release}/${TOOLBOX_ARCH}/oc" version --client

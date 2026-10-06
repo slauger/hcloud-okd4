@@ -17,6 +17,7 @@ Hetzner Cloud is not a supported OpenShift platform (`platform: none`), and seve
 | No cloud-init on CoreOS, user data is served by the metadata service | CoreOS does not read it on its own | The image embeds an ignition config that merges `http://169.254.169.254/hetzner/v1/userdata` | `packer/config-3.0.0.ign` |
 | Network interfaces are named `enp1s0` (public) and `enp7s0` (private network) | Network profiles match on interface names | Configurable via `public_interface` / `private_interface` | `terraform/modules/hcloud_coreos/variables.tf` |
 | Images built on a server keep its disk size | The snapshot (cpx32, 160 GB) only fits on server types with at least that disk | Use cpx32 or larger for all nodes | `packer/*.json` |
+| OKD publishes amd64 release payloads only, its arm64 binaries just run the installer on arm64 hosts | arm64 (CAX) clusters are not possible with OKD | `ARCH=arm64` is OCP only and uses the `aarch64` release payload | `Makefile` |
 | First generation CPX types are no longer orderable in the EU | Old configurations fail | cpx22 / cpx32 / cpx42 | `terraform/main.tf`, `packer/*.json` |
 
 See the [README](../README.md) for the overall architecture and the deployment steps.

@@ -5,7 +5,8 @@
     "snapshot_prefix": "rhcos",
     "image_type": "generic",
     "ignition_config": "config-3.0.0.ign",
-    "first_boot_kargs": "rd.neednet=1 ip=dhcp nameserver=1.1.1.1 nameserver=1.0.0.1"
+    "first_boot_kargs": "rd.neednet=1 ip=dhcp nameserver=1.1.1.1 nameserver=1.0.0.1",
+    "architecture": "x86"
   },
   "builders": [
     {
@@ -19,7 +20,8 @@
       "snapshot_labels": {
         "os": "rhcos",
         "image_type": "{{user `image_type`}}",
-        "rhcos_release": "{{user `rhcos_release`}}"
+        "rhcos_release": "{{user `rhcos_release`}}",
+        "architecture": "{{user `architecture`}}"
       }
     }
   ],
@@ -35,7 +37,8 @@
         "qemu-img convert rhcos-x86_64-qemu.x86_64.qcow2 -O raw /dev/sda",
         "partprobe /dev/sda",
         "mkdir /target",
-        "mount /dev/sda3 /target",
+        "udevadm settle",
+        "mount \"$(blkid -L boot)\" /target",
         "mkdir /target/ignition"
       ]
     },
