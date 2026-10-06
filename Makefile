@@ -56,6 +56,9 @@ BIN_DIR=downloads/$(DEPLOYMENT_TYPE)/$(OPENSHIFT_RELEASE)/$(TOOLBOX_ARCH)
 OPENSHIFT_INSTALL=$(BIN_DIR)/openshift-install
 OC=$(BIN_DIR)/oc
 
+# sha256sum is not available on all macOS versions, shasum reads the same format
+SHA256SUM:=$(shell command -v sha256sum >/dev/null 2>&1 && echo sha256sum || echo "shasum -a 256")
+
 # toolbox image (version independent)
 CONTAINER_NAME?=ghcr.io/slauger/hcloud-okd4
 CONTAINER_TAG?=latest
@@ -112,17 +115,30 @@ fetch: fetch_$(DEPLOYMENT_TYPE)
 fetch_okd: RELEASE_URL=$(OKD_MIRROR)/$(OPENSHIFT_RELEASE)
 fetch_ocp: RELEASE_URL=$(OPENSHIFT_MIRROR)/clients/ocp/$(OPENSHIFT_RELEASE)
 
+# The tarballs are verified against the sha256sum.txt of the release before
+# anything is extracted, both mirrors publish one.
+FETCH_INSTALL_TGZ=openshift-install-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz
+FETCH_CLIENT_TGZ=openshift-client-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz
+FETCH_TMP=$(BIN_DIR)/.download
+
 .PHONY: fetch_okd fetch_ocp
 fetch_okd fetch_ocp:
 	@if [ -z "$(OPENSHIFT_RELEASE)" ]; then echo "ERROR: OPENSHIFT_RELEASE is not set"; exit 1; fi
-	@if [ -x "$(OPENSHIFT_INSTALL)" ] && [ -x "$(OC)" ]; then \
+	@if [ -x "$(OPENSHIFT_INSTALL)" ] && [ -x "$(OC)" ] && [ -x "$(BIN_DIR)/kubectl" ]; then \
 		echo "$(BIN_DIR) already contains the binaries"; \
 	else \
-		mkdir -p $(BIN_DIR) && \
-		echo "downloading openshift-install $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))" && \
-		curl -fsSL $(RELEASE_URL)/openshift-install-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) openshift-install && \
-		echo "downloading openshift-client $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))" && \
-		curl -fsSL $(RELEASE_URL)/openshift-client-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) oc kubectl; \
+		set -e; \
+		rm -rf $(FETCH_TMP) && mkdir -p $(FETCH_TMP); \
+		echo "downloading openshift-install and openshift-client $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))"; \
+		curl -fsSL -o $(FETCH_TMP)/sha256sum.txt $(RELEASE_URL)/sha256sum.txt; \
+		curl -fsSL -o $(FETCH_TMP)/$(FETCH_INSTALL_TGZ) $(RELEASE_URL)/$(FETCH_INSTALL_TGZ); \
+		curl -fsSL -o $(FETCH_TMP)/$(FETCH_CLIENT_TGZ) $(RELEASE_URL)/$(FETCH_CLIENT_TGZ); \
+		awk -v a=$(FETCH_INSTALL_TGZ) -v b=$(FETCH_CLIENT_TGZ) '$$2 == a || $$2 == b' $(FETCH_TMP)/sha256sum.txt > $(FETCH_TMP)/checksums; \
+		if [ "$$(wc -l < $(FETCH_TMP)/checksums)" -ne 2 ]; then echo "ERROR: checksums of the tarballs not found in sha256sum.txt"; exit 1; fi; \
+		(cd $(FETCH_TMP) && $(SHA256SUM) -c checksums); \
+		tar -xzf $(FETCH_TMP)/$(FETCH_INSTALL_TGZ) -C $(BIN_DIR) openshift-install; \
+		tar -xzf $(FETCH_TMP)/$(FETCH_CLIENT_TGZ) -C $(BIN_DIR) oc kubectl; \
+		rm -rf $(FETCH_TMP); \
 	fi
 
 # fail early if the binaries of the selected release are missing
