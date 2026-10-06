@@ -39,12 +39,10 @@ ifeq ($(DEPLOYMENT_TYPE)-$(ARCH),okd-arm64)
   $(error OKD does not publish arm64 release payloads, ARCH=arm64 requires DEPLOYMENT_TYPE=ocp)
 endif
 
-# openshift-install defaults to the release payload of its own architecture.
-# For OCP, use the payload of the cluster architecture if they differ.
-ifeq ($(DEPLOYMENT_TYPE),ocp)
-ifneq ($(ARCH),$(TOOLBOX_ARCH))
+# The openshift binaries of both architectures install amd64 clusters, so arm64
+# clusters (OCP) use the aarch64 release payload explicitly.
+ifeq ($(ARCH),arm64)
 export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE?=quay.io/openshift-release-dev/ocp-release:$(OPENSHIFT_RELEASE)-$(STREAM_ARCH)
-endif
 endif
 
 # release version, required for fetch and all targets using the openshift binaries
