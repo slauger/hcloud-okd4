@@ -145,3 +145,9 @@ variable "image" {
   description = "Image selector (either fcos or rhcos)"
   default     = "fcos"
 }
+
+variable "image_release" {
+  type        = string
+  description = "CoreOS release of the snapshot (label <image>_release), empty for the most recent snapshot. Set by make infrastructure from the installer of OPENSHIFT_RELEASE."
+  default     = ""
+}

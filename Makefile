@@ -67,6 +67,8 @@ CONTAINER_TAG?=latest
 COREOS_DISK=.architectures.$(STREAM_ARCH).artifacts.qemu.formats."qcow2.gz".disk
 COREOS_RELEASE=.architectures.$(STREAM_ARCH).artifacts.qemu.release
 coreos_stream=$$($(CURDIR)/$(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '$(1)')
+# CoreOS release of OPENSHIFT_RELEASE, empty if its binaries are not downloaded
+coreos_image_release=$$(if [ -x "$(CURDIR)/$(OPENSHIFT_INSTALL)" ]; then $(CURDIR)/$(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '$(COREOS_RELEASE)'; fi)
 
 ifeq ($(DEPLOYMENT_TYPE),ocp)
 	COREOS_IMAGE=rhcos
@@ -182,9 +184,19 @@ generate_ignition: check_release
 	rsync -av config/ ignition
 	$(OPENSHIFT_INSTALL) create ignition-configs --dir=ignition
 
+# A snapshot of the same CoreOS release is reused, REBUILD=true builds a new one.
 .PHONY: hcloud_image
 hcloud_image: check_release
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
+	@release=$(call coreos_stream,$(COREOS_RELEASE)); \
+	snapshot=$$(curl -fsS -G -H "Authorization: Bearer $$HCLOUD_TOKEN" https://api.hetzner.cloud/v1/images \
+		--data-urlencode type=snapshot --data-urlencode status=available --data-urlencode architecture=$(HCLOUD_ARCH) \
+		--data-urlencode "label_selector=os=$(COREOS_IMAGE),image_type=generic,$(COREOS_IMAGE)_release=$$release" | jq -r '.images[0].id // empty'); \
+	if [ -n "$$snapshot" ] && [ "$(REBUILD)" != "true" ]; then \
+		echo "snapshot $$snapshot already contains $(COREOS_IMAGE) $$release ($(HCLOUD_ARCH)), set REBUILD=true to build a new one"; \
+		exit 0; \
+	fi; \
+	echo "building $(COREOS_IMAGE) $$release ($(HCLOUD_ARCH)) snapshot"; \
 	cd packer && packer build \
 		-var "first_boot_kargs=$(FIRST_BOOT_KARGS)" \
 		-var server_type=$(PACKER_SERVER_TYPE) \
@@ -192,7 +204,7 @@ hcloud_image: check_release
 		-var "$(COREOS_IMAGE)_url=$(call coreos_stream,$(COREOS_DISK).location)" \
 		-var "$(COREOS_IMAGE)_sha256=$(call coreos_stream,$(COREOS_DISK)."uncompressed-sha256")" \
 		-var "$(COREOS_IMAGE)_stream=$(call coreos_stream,.stream)" \
-		-var "$(COREOS_IMAGE)_release=$(call coreos_stream,$(COREOS_RELEASE))" \
+		-var "$(COREOS_IMAGE)_release=$$release" \
 		hcloud-$(COREOS_IMAGE).json
 
 .PHONY: sign_csr
@@ -230,7 +242,7 @@ infrastructure:
 	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
 	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
 	if [ "$(BOOTSTRAP)" == "true" ] && [ "$(MODE)" == "apply" ]; then $(MAKE) upload_ignition; fi
-	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var architecture=$(HCLOUD_ARCH) -var bootstrap=$(BOOTSTRAP))
+	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var "image_release=$(coreos_image_release)" -var architecture=$(HCLOUD_ARCH) -var bootstrap=$(BOOTSTRAP))
 	if [ "$(BOOTSTRAP)" == "false" ] && [ "$(MODE)" == "apply" ] && [ -f terraform/bootstrap.auto.tfvars ]; then $(MAKE) delete_ignition; fi
 
 .PHONY: destroy

@@ -160,7 +160,7 @@ All steps run inside a toolbox container with Terraform, Packer, the AWS CLI and
 
 ```bash
 docker pull ghcr.io/slauger/hcloud-okd4:latest # or build it locally: make build
-make fetch                                     # downloads the binaries of OPENSHIFT_RELEASE
+make fetch                                     # downloads and verifies the binaries of OPENSHIFT_RELEASE
 make run                                       # starts the toolbox, oc and openshift-install are in the PATH
 ```
 
@@ -200,6 +200,7 @@ Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.ya
    ```bash
    make hcloud_image
    ```
+   The snapshot is labeled with its CoreOS release. If a snapshot of the same release already exists, it is reused (`REBUILD=true` builds a new one), and Terraform picks the snapshot that matches `OPENSHIFT_RELEASE`. Without a matching one it falls back to the most recent snapshot and prints a warning.
 7. Deploy infrastructure with Terraform (uploads the bootstrap ignition config to Object Storage and creates the bootstrap node)
    ```bash
    make infrastructure BOOTSTRAP=true
