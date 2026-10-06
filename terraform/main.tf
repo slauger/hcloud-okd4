@@ -1,5 +1,6 @@
 locals {
-  # The image is built on cpx32 / cax31 (160 GB disk), smaller server types do not fit
+  # Masters need 16 GB RAM. The image is built on cpx32 (160 GB disk) / cax21
+  # (80 GB disk), server types with a smaller disk do not fit.
   server_type = coalesce(var.server_type, var.architecture == "arm" ? "cax31" : "cpx42")
 }
 

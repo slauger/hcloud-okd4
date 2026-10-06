@@ -34,7 +34,9 @@ ifeq ($(ARCH),amd64)
 else ifeq ($(ARCH),arm64)
 	STREAM_ARCH=aarch64
 	HCLOUD_ARCH=arm
-	PACKER_SERVER_TYPE?=cax31
+	# 80 GB disk, so the snapshot also fits cax21 workers (8 GB RAM is enough for
+	# the image in the tmpfs of the rescue system)
+	PACKER_SERVER_TYPE?=cax21
 else
   $(error ARCH must be amd64 or arm64)
 endif
@@ -56,6 +58,9 @@ BIN_DIR=downloads/$(DEPLOYMENT_TYPE)/$(OPENSHIFT_RELEASE)/$(TOOLBOX_ARCH)
 OPENSHIFT_INSTALL=$(BIN_DIR)/openshift-install
 OC=$(BIN_DIR)/oc
 
+# sha256sum is not available on all macOS versions, shasum reads the same format
+SHA256SUM:=$(shell command -v sha256sum >/dev/null 2>&1 && echo sha256sum || echo "shasum -a 256")
+
 # toolbox image (version independent)
 CONTAINER_NAME?=ghcr.io/slauger/hcloud-okd4
 CONTAINER_TAG?=latest
@@ -64,6 +69,8 @@ CONTAINER_TAG?=latest
 COREOS_DISK=.architectures.$(STREAM_ARCH).artifacts.qemu.formats."qcow2.gz".disk
 COREOS_RELEASE=.architectures.$(STREAM_ARCH).artifacts.qemu.release
 coreos_stream=$$($(CURDIR)/$(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '$(1)')
+# CoreOS release of OPENSHIFT_RELEASE, empty if its binaries are not downloaded
+coreos_image_release=$$(if [ -x "$(CURDIR)/$(OPENSHIFT_INSTALL)" ]; then $(CURDIR)/$(OPENSHIFT_INSTALL) coreos print-stream-json | jq -r '$(COREOS_RELEASE)'; fi)
 
 ifeq ($(DEPLOYMENT_TYPE),ocp)
 	COREOS_IMAGE=rhcos
@@ -112,17 +119,30 @@ fetch: fetch_$(DEPLOYMENT_TYPE)
 fetch_okd: RELEASE_URL=$(OKD_MIRROR)/$(OPENSHIFT_RELEASE)
 fetch_ocp: RELEASE_URL=$(OPENSHIFT_MIRROR)/clients/ocp/$(OPENSHIFT_RELEASE)
 
+# The tarballs are verified against the sha256sum.txt of the release before
+# anything is extracted, both mirrors publish one.
+FETCH_INSTALL_TGZ=openshift-install-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz
+FETCH_CLIENT_TGZ=openshift-client-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz
+FETCH_TMP=$(BIN_DIR)/.download
+
 .PHONY: fetch_okd fetch_ocp
 fetch_okd fetch_ocp:
 	@if [ -z "$(OPENSHIFT_RELEASE)" ]; then echo "ERROR: OPENSHIFT_RELEASE is not set"; exit 1; fi
-	@if [ -x "$(OPENSHIFT_INSTALL)" ] && [ -x "$(OC)" ]; then \
+	@if [ -x "$(OPENSHIFT_INSTALL)" ] && [ -x "$(OC)" ] && [ -x "$(BIN_DIR)/kubectl" ]; then \
 		echo "$(BIN_DIR) already contains the binaries"; \
 	else \
-		mkdir -p $(BIN_DIR) && \
-		echo "downloading openshift-install $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))" && \
-		curl -fsSL $(RELEASE_URL)/openshift-install-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) openshift-install && \
-		echo "downloading openshift-client $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))" && \
-		curl -fsSL $(RELEASE_URL)/openshift-client-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) oc kubectl; \
+		set -e; \
+		rm -rf $(FETCH_TMP) && mkdir -p $(FETCH_TMP); \
+		echo "downloading openshift-install and openshift-client $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))"; \
+		curl -fsSL -o $(FETCH_TMP)/sha256sum.txt $(RELEASE_URL)/sha256sum.txt; \
+		curl -fsSL -o $(FETCH_TMP)/$(FETCH_INSTALL_TGZ) $(RELEASE_URL)/$(FETCH_INSTALL_TGZ); \
+		curl -fsSL -o $(FETCH_TMP)/$(FETCH_CLIENT_TGZ) $(RELEASE_URL)/$(FETCH_CLIENT_TGZ); \
+		awk -v a=$(FETCH_INSTALL_TGZ) -v b=$(FETCH_CLIENT_TGZ) '$$2 == a || $$2 == b' $(FETCH_TMP)/sha256sum.txt > $(FETCH_TMP)/checksums; \
+		if [ "$$(wc -l < $(FETCH_TMP)/checksums)" -ne 2 ]; then echo "ERROR: checksums of the tarballs not found in sha256sum.txt"; exit 1; fi; \
+		(cd $(FETCH_TMP) && $(SHA256SUM) -c checksums); \
+		tar -xzf $(FETCH_TMP)/$(FETCH_INSTALL_TGZ) -C $(BIN_DIR) openshift-install; \
+		tar -xzf $(FETCH_TMP)/$(FETCH_CLIENT_TGZ) -C $(BIN_DIR) oc kubectl; \
+		rm -rf $(FETCH_TMP); \
 	fi
 
 # fail early if the binaries of the selected release are missing
@@ -166,9 +186,24 @@ generate_ignition: check_release
 	rsync -av config/ ignition
 	$(OPENSHIFT_INSTALL) create ignition-configs --dir=ignition
 
+# A snapshot of the same CoreOS release is reused, REBUILD=true builds a new one.
+# Snapshots only fit server types with at least the disk of their builder, so a
+# snapshot built on a larger server type than PACKER_SERVER_TYPE is not reused.
 .PHONY: hcloud_image
 hcloud_image: check_release
 	@if [ -z "$(HCLOUD_TOKEN)" ]; then echo "ERROR: HCLOUD_TOKEN is not set"; exit 1; fi
+	@release=$(call coreos_stream,$(COREOS_RELEASE)); \
+	disk=$$(curl -fsS -G -H "Authorization: Bearer $$HCLOUD_TOKEN" https://api.hetzner.cloud/v1/server_types \
+		--data-urlencode name=$(PACKER_SERVER_TYPE) | jq -r '.server_types[0].disk // 0'); \
+	snapshot=$$(curl -fsS -G -H "Authorization: Bearer $$HCLOUD_TOKEN" https://api.hetzner.cloud/v1/images \
+		--data-urlencode type=snapshot --data-urlencode status=available --data-urlencode architecture=$(HCLOUD_ARCH) \
+		--data-urlencode "label_selector=os=$(COREOS_IMAGE),image_type=generic,$(COREOS_IMAGE)_release=$$release" \
+		| jq -r --argjson disk "$${disk:-0}" '[.images[] | select(.disk_size <= $$disk)][0].id // empty'); \
+	if [ -n "$$snapshot" ] && [ "$(REBUILD)" != "true" ]; then \
+		echo "snapshot $$snapshot already contains $(COREOS_IMAGE) $$release ($(HCLOUD_ARCH)), set REBUILD=true to build a new one"; \
+		exit 0; \
+	fi; \
+	echo "building $(COREOS_IMAGE) $$release ($(HCLOUD_ARCH)) snapshot"; \
 	cd packer && packer build \
 		-var "first_boot_kargs=$(FIRST_BOOT_KARGS)" \
 		-var server_type=$(PACKER_SERVER_TYPE) \
@@ -176,7 +211,7 @@ hcloud_image: check_release
 		-var "$(COREOS_IMAGE)_url=$(call coreos_stream,$(COREOS_DISK).location)" \
 		-var "$(COREOS_IMAGE)_sha256=$(call coreos_stream,$(COREOS_DISK)."uncompressed-sha256")" \
 		-var "$(COREOS_IMAGE)_stream=$(call coreos_stream,.stream)" \
-		-var "$(COREOS_IMAGE)_release=$(call coreos_stream,$(COREOS_RELEASE))" \
+		-var "$(COREOS_IMAGE)_release=$$release" \
 		hcloud-$(COREOS_IMAGE).json
 
 .PHONY: sign_csr
@@ -214,7 +249,7 @@ infrastructure:
 	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(TF_VAR_dns_zone_id)" ]; then echo "ERROR: TF_VAR_dns_zone_id is not set"; exit 1; fi
 	@if [ "$(TF_VAR_dns_provider)" == "cloudflare" ] && [ -z "$(CLOUDFLARE_EMAIL)" ]; then echo "ERROR: CLOUDFLARE_EMAIL is not set"; exit 1; fi
 	if [ "$(BOOTSTRAP)" == "true" ] && [ "$(MODE)" == "apply" ]; then $(MAKE) upload_ignition; fi
-	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var architecture=$(HCLOUD_ARCH) -var bootstrap=$(BOOTSTRAP))
+	(cd terraform && terraform init && terraform $(MODE) -var image=$(COREOS_IMAGE) -var "image_release=$(coreos_image_release)" -var architecture=$(HCLOUD_ARCH) -var bootstrap=$(BOOTSTRAP))
 	if [ "$(BOOTSTRAP)" == "false" ] && [ "$(MODE)" == "apply" ] && [ -f terraform/bootstrap.auto.tfvars ]; then $(MAKE) delete_ignition; fi
 
 .PHONY: destroy
