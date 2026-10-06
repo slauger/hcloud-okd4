@@ -12,29 +12,46 @@ OKD_RELEASE_STREAM?=
 # either okd or ocp
 DEPLOYMENT_TYPE?=okd
 
-# cluster architecture: amd64 or arm64 (Hetzner CAX servers). The toolbox runs
-# with the same architecture, because openshift-install installs clusters of
-# its own architecture.
+# architecture of the toolbox and the openshift binaries, defaults to the host
+HOST_ARCH:=$(shell uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')
+TOOLBOX_ARCH?=$(HOST_ARCH)
+ifeq ($(TOOLBOX_ARCH),arm64)
+	BIN_SUFFIX=-arm64
+else
+	BIN_SUFFIX=
+endif
+
+# cluster architecture: amd64, or arm64 on Hetzner CAX servers (OCP only, OKD
+# does not publish arm64 release payloads)
 ARCH?=amd64
 ifeq ($(ARCH),amd64)
-	ARCH_SUFFIX=
 	STREAM_ARCH=x86_64
 	HCLOUD_ARCH=x86
 	PACKER_SERVER_TYPE?=cpx32
 else ifeq ($(ARCH),arm64)
-	ARCH_SUFFIX=-arm64
 	STREAM_ARCH=aarch64
 	HCLOUD_ARCH=arm
 	PACKER_SERVER_TYPE?=cax31
 else
-	$(error ARCH must be amd64 or arm64)
+  $(error ARCH must be amd64 or arm64)
+endif
+ifeq ($(DEPLOYMENT_TYPE)-$(ARCH),okd-arm64)
+  $(error OKD does not publish arm64 release payloads, ARCH=arm64 requires DEPLOYMENT_TYPE=ocp)
+endif
+
+# openshift-install defaults to the release payload of its own architecture.
+# For OCP, use the payload of the cluster architecture if they differ.
+ifeq ($(DEPLOYMENT_TYPE),ocp)
+ifneq ($(ARCH),$(TOOLBOX_ARCH))
+export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE?=quay.io/openshift-release-dev/ocp-release:$(OPENSHIFT_RELEASE)-$(STREAM_ARCH)
+endif
 endif
 
 # release version, required for fetch and all targets using the openshift binaries
 OPENSHIFT_RELEASE?=
 
 # openshift binaries of the selected release, downloaded by make fetch
-BIN_DIR=downloads/$(DEPLOYMENT_TYPE)/$(OPENSHIFT_RELEASE)/$(ARCH)
+BIN_DIR=downloads/$(DEPLOYMENT_TYPE)/$(OPENSHIFT_RELEASE)/$(TOOLBOX_ARCH)
 OPENSHIFT_INSTALL=$(BIN_DIR)/openshift-install
 OC=$(BIN_DIR)/oc
 
@@ -83,7 +100,7 @@ latest_version_okd:
 latest_version_ocp:
 	@curl -s https://raw.githubusercontent.com/openshift/cincinnati-graph-data/master/channels/$(OCP_RELEASE_CHANNEL).yaml | egrep '(4\.[0-9]+\.[0-9]+)' | tail -n1 | cut -d" " -f2
 
-# fetch the openshift binaries of a release into downloads/<type>/<version>/<arch>
+# fetch the openshift binaries of a release into downloads/<type>/<version>/<toolbox arch>
 .PHONY: fetch
 fetch: fetch_$(DEPLOYMENT_TYPE)
 
@@ -97,10 +114,10 @@ fetch_okd fetch_ocp:
 		echo "$(BIN_DIR) already contains the binaries"; \
 	else \
 		mkdir -p $(BIN_DIR) && \
-		echo "downloading openshift-install $(OPENSHIFT_RELEASE) ($(ARCH))" && \
-		curl -fsSL $(RELEASE_URL)/openshift-install-linux$(ARCH_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) openshift-install && \
-		echo "downloading openshift-client $(OPENSHIFT_RELEASE) ($(ARCH))" && \
-		curl -fsSL $(RELEASE_URL)/openshift-client-linux$(ARCH_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) oc kubectl; \
+		echo "downloading openshift-install $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))" && \
+		curl -fsSL $(RELEASE_URL)/openshift-install-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) openshift-install && \
+		echo "downloading openshift-client $(OPENSHIFT_RELEASE) ($(TOOLBOX_ARCH))" && \
+		curl -fsSL $(RELEASE_URL)/openshift-client-linux$(BIN_SUFFIX)-$(OPENSHIFT_RELEASE).tar.gz | tar -xz -C $(BIN_DIR) oc kubectl; \
 	fi
 
 # fail early if the binaries of the selected release are missing
@@ -126,7 +143,7 @@ run:
 	docker run -it --hostname openshift-toolbox \
 		--mount type=bind,source="$(shell pwd)",target=/workspace \
 		--mount type=bind,source="$(HOME)/.ssh,target=/root/.ssh" \
-		--platform linux/$(ARCH) \
+		--platform linux/$(TOOLBOX_ARCH) \
 		-e DEPLOYMENT_TYPE=$(DEPLOYMENT_TYPE) -e OPENSHIFT_RELEASE=$(OPENSHIFT_RELEASE) -e ARCH=$(ARCH) \
 		-e PATH=/workspace/$(BIN_DIR):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 		$(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash

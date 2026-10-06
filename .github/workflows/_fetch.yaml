@@ -18,7 +18,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ github.token }}
       DEPLOYMENT_TYPE: ${{ inputs.deployment_type }}
-      ARCH: ${{ inputs.arch }}
+      TOOLBOX_ARCH: ${{ inputs.arch }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -28,5 +28,5 @@ jobs:
           release=$(make -s latest_version)
           echo "latest ${DEPLOYMENT_TYPE} release: ${release}"
           make fetch OPENSHIFT_RELEASE="${release}"
-          "downloads/${DEPLOYMENT_TYPE}/${release}/${ARCH}/openshift-install" version
-          "downloads/${DEPLOYMENT_TYPE}/${release}/${ARCH}/oc" version --client
+          "downloads/${DEPLOYMENT_TYPE}/${release}/${TOOLBOX_ARCH}/openshift-install" version
+          "downloads/${DEPLOYMENT_TYPE}/${release}/${TOOLBOX_ARCH}/oc" version --client
