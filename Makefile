@@ -39,7 +39,7 @@ OPENSHIFT_INSTALL=$(BIN_DIR)/openshift-install
 OC=$(BIN_DIR)/oc
 
 # toolbox image (version independent)
-CONTAINER_NAME?=quay.io/slauger/hcloud-okd4
+CONTAINER_NAME?=ghcr.io/slauger/hcloud-okd4
 CONTAINER_TAG?=latest
 
 # coreos

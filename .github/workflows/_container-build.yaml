@@ -1,0 +1,219 @@
+name: Container Build
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        description: 'Image name (without registry prefix)'
+        required: true
+        type: string
+      dockerfile:
+        description: 'Path to the Dockerfile'
+        required: false
+        type: string
+        default: 'Dockerfile'
+      context:
+        description: 'Build context path'
+        required: false
+        type: string
+        default: '.'
+      platforms:
+        description: 'Target platforms (comma-separated)'
+        required: false
+        type: string
+        default: 'linux/amd64,linux/arm64'
+      structure_test:
+        description: 'container-structure-test config, empty to skip the test'
+        required: false
+        type: string
+        default: ''
+      push:
+        description: 'Push the images'
+        required: false
+        type: boolean
+        default: false
+      image_tag:
+        description: 'Image tag (default: short git SHA)'
+        required: false
+        type: string
+        default: ''
+      latest:
+        description: 'Also tag the image as :latest'
+        required: false
+        type: boolean
+        default: false
+      sign:
+        description: 'Sign the image with cosign keyless signing'
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      image:
+        description: 'Full image reference'
+        value: ${{ jobs.manifest.outputs.image }}
+      digest:
+        description: 'Image manifest digest'
+        value: ${{ jobs.manifest.outputs.digest }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Determine version
+        id: version
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          if [[ -n "${IMAGE_TAG}" ]]; then
+            echo "version=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build platform matrix
+        id: matrix
+        env:
+          PLATFORMS: ${{ inputs.platforms }}
+        run: |
+          MATRIX='{"include":['
+          FIRST=true
+          for PLATFORM in ${PLATFORMS//,/ }; do
+            if [ "$FIRST" = true ]; then FIRST=false; else MATRIX="${MATRIX},"; fi
+            case "${PLATFORM}" in
+              linux/arm64) RUNNER="ubuntu-24.04-arm"; ARCH="arm64" ;;
+              *)           RUNNER="ubuntu-latest";    ARCH="amd64" ;;
+            esac
+            MATRIX="${MATRIX}{\"platform\":\"${PLATFORM}\",\"runner\":\"${RUNNER}\",\"arch\":\"${ARCH}\"}"
+          done
+          echo "matrix=${MATRIX}]}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build for testing
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          load: true
+          tags: ${{ env.IMAGE }}:test
+          cache-from: type=gha,scope=${{ inputs.image_name }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.image_name }}-${{ matrix.arch }}
+
+      - name: Run container structure test
+        if: inputs.structure_test != ''
+        env:
+          CST_VERSION: v1.22.1
+          CONFIG: ${{ inputs.structure_test }}
+        run: |
+          curl -fsSL -o container-structure-test "https://github.com/GoogleContainerTools/container-structure-test/releases/download/${CST_VERSION}/container-structure-test-linux-${{ matrix.arch }}"
+          chmod +x container-structure-test
+          ./container-structure-test test --image "${IMAGE}:test" --config "${CONFIG}"
+
+      - name: Login to ghcr.io
+        if: inputs.push
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Push
+        if: inputs.push
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          provenance: true
+          sbom: true
+          tags: ${{ env.IMAGE }}:${{ needs.prepare.outputs.version }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=${{ inputs.image_name }}-${{ matrix.arch }}
+
+  manifest:
+    if: inputs.push
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.result.outputs.image }}
+      digest: ${{ steps.result.outputs.digest }}
+    permissions:
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      PLATFORMS: ${{ inputs.platforms }}
+    steps:
+      - name: Login to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Install cosign
+        if: inputs.sign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Create and push manifest
+        env:
+          LATEST: ${{ inputs.latest }}
+        run: |
+          SOURCES=""
+          for PLATFORM in ${PLATFORMS//,/ }; do
+            SOURCES="${SOURCES} ${IMAGE}:${VERSION}-${PLATFORM#linux/}"
+          done
+          # shellcheck disable=SC2086
+          docker buildx imagetools create -t "${IMAGE}:${VERSION}" ${SOURCES}
+          if [[ "${LATEST}" == "true" ]]; then
+            # shellcheck disable=SC2086
+            docker buildx imagetools create -t "${IMAGE}:latest" ${SOURCES}
+          fi
+
+      - name: Get manifest digest
+        id: digest
+        run: |
+          DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" --format '{{json .Manifest}}' | jq -r '.digest')
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Sign image with cosign (keyless)
+        if: inputs.sign
+        run: cosign sign --yes "${IMAGE}@${{ steps.digest.outputs.digest }}"
+
+      - name: Attest manifest index
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+
+      - name: Set output
+        id: result
+        run: |
+          echo "image=${IMAGE}:${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "digest=${{ steps.digest.outputs.digest }}" >> "$GITHUB_OUTPUT"
