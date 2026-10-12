@@ -7,7 +7,52 @@ variable "replicas_master" {
 variable "replicas_worker" {
   type        = number
   default     = 0
-  description = "Count of worker replicas"
+  description = "Count of worker replicas (only without node_pools)"
+}
+
+variable "node_pools" {
+  type = map(object({
+    count       = number
+    ip_offset   = number
+    server_type = optional(string)
+    volumes     = optional(list(number), [])
+    ingress     = optional(bool, false)
+    labels      = optional(map(string), {})
+    taints = optional(list(object({
+      key    = string
+      value  = optional(string, "")
+      effect = string
+    })), [])
+  }))
+  description = "Worker node pools, keyed by pool name. Without node_pools, replicas_worker, worker_server_type and worker_volume_size form a single pool worker."
+  default     = null
+
+  validation {
+    condition     = var.node_pools == null || alltrue([for name, p in var.node_pools : can(regex("^[a-z][a-z0-9-]{0,19}$", name)) && !contains(["bootstrap", "master"], name)])
+    error_message = "Pool names must start with a lowercase letter, contain only lowercase letters, digits and dashes (max. 20 characters), and must not be bootstrap or master."
+  }
+
+  validation {
+    condition     = var.node_pools == null || alltrue([for p in values(var.node_pools) : p.count >= 0 && p.ip_offset >= 10 + var.replicas_master])
+    error_message = "The count of a pool must not be negative, and its ip_offset has to be above the masters (10 + replicas_master), e.g. 50."
+  }
+
+  validation {
+    condition = var.node_pools == null || alltrue([for a, pa in var.node_pools : alltrue([
+      for b, pb in var.node_pools : a == b || pa.ip_offset + pa.count <= pb.ip_offset || pb.ip_offset + pb.count <= pa.ip_offset
+    ])])
+    error_message = "The address ranges of the pools (ip_offset to ip_offset + count - 1) must not overlap."
+  }
+
+  validation {
+    condition     = var.node_pools == null || alltrue([for p in values(var.node_pools) : length(p.volumes) <= 16 && alltrue([for v in p.volumes : v >= 10 && v <= 10240])])
+    error_message = "Hetzner supports at most 16 volumes per server with 10 to 10240 GB each."
+  }
+
+  validation {
+    condition     = var.node_pools == null || alltrue(flatten([for p in values(var.node_pools) : [for t in p.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], t.effect)]]))
+    error_message = "The effect of a taint must be NoSchedule, PreferNoSchedule or NoExecute."
+  }
 }
 
 variable "bootstrap" {
@@ -23,15 +68,26 @@ variable "bootstrap_ignition_url" {
   sensitive   = true
 }
 
+variable "master_volumes" {
+  type        = list(number)
+  description = "Sizes in GB of additional raw data volumes per master node"
+  default     = []
+
+  validation {
+    condition     = length(var.master_volumes) <= 16 && alltrue([for v in var.master_volumes : v >= 10 && v <= 10240])
+    error_message = "Hetzner supports at most 16 volumes per server with 10 to 10240 GB each."
+  }
+}
+
 variable "master_volume_size" {
   type        = number
-  description = "Size in GB of an additional raw data volume per master node (0 = none)"
+  description = "Size in GB of one additional raw data volume per master node (0 = none), master_volumes takes precedence"
   default     = 0
 }
 
 variable "worker_volume_size" {
   type        = number
-  description = "Size in GB of an additional raw data volume per worker node (0 = none)"
+  description = "Size in GB of one additional raw data volume per worker node (0 = none, only without node_pools)"
   default     = 0
 }
 
@@ -142,7 +198,7 @@ variable "master_server_type" {
 
 variable "worker_server_type" {
   type        = string
-  description = "Server type of the worker nodes (default: server_type)"
+  description = "Server type of the worker nodes, default of all node pools (default: server_type)"
   default     = null
 }
 

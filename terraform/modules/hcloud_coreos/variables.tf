@@ -60,10 +60,10 @@ variable "firewall_ids" {
   default     = []
 }
 
-variable "volume_size" {
-  type        = number
-  description = "Size in GB of an additional raw data volume per instance (0 = none)"
-  default     = 0
+variable "volumes" {
+  type        = list(number)
+  description = "Sizes in GB of additional raw data volumes per instance"
+  default     = []
 }
 
 variable "ignition_url" {

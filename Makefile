@@ -220,6 +220,22 @@ sign_csr: check_release
 	@if [ ! -f "ignition/auth/kubeconfig" ]; then echo "ERROR: ignition/auth/kubeconfig not found"; exit 1; fi
 	bash -c "export KUBECONFIG=$(shell pwd)/ignition/auth/kubeconfig; $(OC) get csr -o name | xargs $(OC) adm certificate approve || true"
 
+# Applies the role, labels and taints of the node pools (terraform output
+# node_config). Nodes that have not joined yet are skipped, run it again once
+# they are Ready. Labels and taints removed from a pool are not removed.
+.PHONY: label_nodes
+label_nodes: check_release
+	@if [ ! -f "ignition/auth/kubeconfig" ]; then echo "ERROR: ignition/auth/kubeconfig not found"; exit 1; fi
+	@export KUBECONFIG=$(CURDIR)/ignition/auth/kubeconfig; \
+	config=$$(terraform -chdir=terraform output -json node_config) || exit 1; \
+	for node in $$(echo "$$config" | jq -r 'keys[]'); do \
+		if ! $(OC) get node "$$node" >/dev/null 2>&1; then echo "$$node has not joined yet, skipping"; continue; fi; \
+		$(OC) label node "$$node" --overwrite $$(echo "$$config" | jq -r --arg n "$$node" '.[$$n].labels | to_entries[] | "\(.key)=\(.value)"') || exit 1; \
+		for taint in $$(echo "$$config" | jq -r --arg n "$$node" '.[$$n].taints[] | "\(.key)\(if .value != "" then "=" + .value else "" end):\(.effect)"'); do \
+			$(OC) adm taint node "$$node" "$$taint" --overwrite || exit 1; \
+		done; \
+	done
+
 .PHONY: wait_bootstrap
 wait_bootstrap: check_release
 	$(OPENSHIFT_INSTALL) --dir=ignition/ wait-for bootstrap-complete --log-level=debug
