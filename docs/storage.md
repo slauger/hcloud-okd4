@@ -1,14 +1,20 @@
 # Additional Disks (LVM Storage / Ceph)
 
-Every master and worker node can get an additional, unformatted Hetzner Volume, e.g. for the LVM Storage operator or Rook-Ceph. Volumes can also be added to a running cluster:
+Masters and the nodes of a pool can get additional, unformatted Hetzner Volumes, e.g. for the LVM Storage operator or Rook-Ceph. Volumes can also be added to a running cluster:
 
 ```bash
-export TF_VAR_worker_volume_size=100 # GB per worker, 0 (default) = no volume
-export TF_VAR_master_volume_size=100 # GB per master, only useful if masters run workloads
+export TF_VAR_master_volumes='[100]' # GB per volume and master, only useful if masters run workloads
+export TF_VAR_node_pools='{
+  storage = { count = 3, ip_offset = 70, volumes = [500, 500] } # two volumes per node
+}'
 make infrastructure
 ```
 
-Inside the node the volume shows up as `/dev/sdb`, with a stable path below `/dev/disk/by-id/scsi-0HC_Volume_<volume id>`. The by-id path differs per node, so the examples use `/dev/sdb`, which is stable as long as each node has only this one volume attached. Example for an `LVMCluster`:
+Without `node_pools`, `TF_VAR_worker_volume_size` adds one volume per worker (and `TF_VAR_master_volume_size` one per master).
+
+The volumes are named `<node>-data<n>` and are attached to their node by a separate resource. When a node is rebuilt, e.g. with `terraform apply -replace='module.pool["storage"].hcloud_server.server[1]'`, the volumes keep their data and are attached to the new server, which has the same name. Rook-Ceph and LVM Storage find their existing data there. Reducing the `count` of a pool or removing volumes from the list deletes the volumes of the removed nodes or positions.
+
+Inside the node the volumes show up as `/dev/sdb`, `/dev/sdc`, ... in the order they were attached, with a stable path below `/dev/disk/by-id/scsi-0HC_Volume_<volume id>`. The Terraform output `data_volumes` lists the stable paths per node. With a single volume per node, `/dev/sdb` is fine. With several volumes, use the by-id paths, the order of the `sdX` names is not guaranteed after a reattach. Example for an `LVMCluster`:
 
 ```yaml
 spec:
@@ -24,6 +30,6 @@ spec:
           overprovisionRatio: 10
 ```
 
-For Rook-Ceph, set `useAllDevices: false` and select the volume with `deviceFilter: ^sdb$`. Hetzner Volumes are network attached, Ceph based block storage. They have higher latency and lower IOPS than the local NVMe disks of the servers, and Rook-Ceph on top of them replicates the data twice. This is fine for functional tests, but does not reflect the performance of local disks.
+For Rook-Ceph, set `useAllDevices: false` and select the volumes with `deviceFilter: ^sd[b-z]$`, or list the by-id paths per node from `data_volumes` under `storage.nodes`. Restrict the OSDs to a storage pool with a node affinity on `node-role.kubernetes.io/storage` in `placement`. Hetzner Volumes are network attached, Ceph based block storage. They have higher latency and lower IOPS than the local NVMe disks of the servers, and Rook-Ceph on top of them replicates the data twice. This is fine for functional tests, but does not reflect the performance of local disks.
 
 See the [README](../README.md) for the overall architecture and the deployment steps.

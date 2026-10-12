@@ -19,6 +19,9 @@ https://github.com/slauger/hcloud-okd4.
    - number of worker nodes: 0 (masters run all workloads), 2 or a custom number
    - if there are workers: the same server type as the masters or smaller workers
      with 8 GB RAM (cpx32, or cax21 for arm64), see "Costs" in the README
+   - if there are workers: identical workers or node pools with different roles
+     (e.g. infra, storage with additional volumes for Rook-Ceph or LVM Storage),
+     see docs/node-pools.md and docs/storage.md
    - DNS: Cloudflare or Hetzner DNS (records are managed automatically) or my own
      DNS (I create the records myself), see "DNS" in the README
 3. Ask me for everything else you need and do not have yet:
@@ -41,7 +44,8 @@ https://github.com/slauger/hcloud-okd4.
    TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare, hetzner or none),
    TF_VAR_dns_zone (Hetzner DNS only, if needed), ARCH
    (amd64 or arm64) and for smaller workers TF_VAR_worker_server_type according
-   to my answers. For OCP, set OCP_RELEASE_CHANNEL to
+   to my answers. For node pools, set TF_VAR_node_pools instead of
+   TF_VAR_replicas_worker, with non-overlapping ip_offset ranges above the masters. For OCP, set OCP_RELEASE_CHANNEL to
    the newest stable-4.x channel before running `make latest_version`. Run `make fetch` for the chosen
    release and pull the toolbox image ghcr.io/slauger/hcloud-okd4:latest. Run all
    further make targets inside the toolbox non-interactively, in the architecture
@@ -65,7 +69,8 @@ https://github.com/slauger/hcloud-okd4.
    the expected costs (see "Costs"), and wait for my confirmation.
 9. Follow the Quick Start: deploy with BOOTSTRAP=true, wait for the bootstrap to
    complete, remove the bootstrap node, approve CSRs until all nodes are Ready and
-   wait for the installation to complete. See "Duration" for the expected timing.
+   wait for the installation to complete. With node pools, run `make label_nodes`
+   once all nodes are Ready. See "Duration" for the expected timing.
    Run the wait targets in the background, they take longer than most command
    timeouts. If one of them times out, simply start it again, that is harmless.
    Meanwhile, check progress with oc (nodes, csr, clusteroperators).
