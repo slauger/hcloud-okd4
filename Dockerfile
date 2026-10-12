@@ -28,7 +28,8 @@ RUN apk add --no-cache \
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform
 COPY --from=packer /bin/packer /usr/local/bin/packer
 
-# Install Packer Plugin
-RUN packer plugins install github.com/hashicorp/hcloud
+# Install the Packer plugins pinned in packer/plugins.pkr.hcl
+COPY packer/plugins.pkr.hcl /tmp/packer/plugins.pkr.hcl
+RUN packer init /tmp/packer && rm -rf /tmp/packer
 
 WORKDIR /workspace

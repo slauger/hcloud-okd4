@@ -47,8 +47,21 @@ jobs:
       - name: Set up Packer
         uses: hashicorp/setup-packer@v3
 
+      - name: Packer format
+        run: packer fmt -check -recursive packer
+
       - name: Packer validate
         working-directory: packer
+        env:
+          PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # the hcloud builder requires a token, validate does not use it
+          HCLOUD_TOKEN: dummy
         run: |
-          packer validate -syntax-only hcloud-fcos.json
-          packer validate -syntax-only hcloud-rhcos.json
+          packer init .
+          sha256=$(printf '0%.0s' {1..64})
+          for os in fcos rhcos; do
+            for arch in x86 arm; do
+              packer validate -var os=$os -var architecture=$arch \
+                -var url=https://example.com/$os.qcow2.gz -var sha256="$sha256" .
+            done
+          done

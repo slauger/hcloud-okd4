@@ -204,15 +204,16 @@ hcloud_image: check_release
 		exit 0; \
 	fi; \
 	echo "building $(COREOS_IMAGE) $$release ($(HCLOUD_ARCH)) snapshot"; \
-	cd packer && packer build \
+	cd packer && packer init . && packer build \
+		-var os=$(COREOS_IMAGE) \
 		-var "first_boot_kargs=$(FIRST_BOOT_KARGS)" \
 		-var server_type=$(PACKER_SERVER_TYPE) \
 		-var architecture=$(HCLOUD_ARCH) \
-		-var "$(COREOS_IMAGE)_url=$(call coreos_stream,$(COREOS_DISK).location)" \
-		-var "$(COREOS_IMAGE)_sha256=$(call coreos_stream,$(COREOS_DISK)."uncompressed-sha256")" \
-		-var "$(COREOS_IMAGE)_stream=$(call coreos_stream,.stream)" \
-		-var "$(COREOS_IMAGE)_release=$$release" \
-		hcloud-$(COREOS_IMAGE).json
+		-var "url=$(call coreos_stream,$(COREOS_DISK).location)" \
+		-var "sha256=$(call coreos_stream,$(COREOS_DISK)."uncompressed-sha256")" \
+		-var "stream=$(call coreos_stream,.stream)" \
+		-var "release=$$release" \
+		.
 
 .PHONY: sign_csr
 sign_csr: check_release
