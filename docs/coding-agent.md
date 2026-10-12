@@ -19,13 +19,17 @@ https://github.com/slauger/hcloud-okd4.
    - number of worker nodes: 0 (masters run all workloads), 2 or a custom number
    - if there are workers: the same server type as the masters or smaller workers
      with 8 GB RAM (cpx32, or cax21 for arm64), see "Costs" in the README
-   - DNS: Cloudflare (records are managed automatically) or my own DNS (I create
-     the records myself, see "DNS" in the README)
+   - DNS: Cloudflare or Hetzner DNS (records are managed automatically) or my own
+     DNS (I create the records myself), see "DNS" in the README
 3. Ask me for everything else you need and do not have yet:
    - Hetzner Cloud API token of the project to deploy into
    - the cluster domain (e.g. okd4.example.com)
    - for Cloudflare DNS: e-mail, API key and the zone ID of an existing zone that
      hosts the cluster domain
+   - for Hetzner DNS: the name of an existing zone in the same Hetzner project
+     that hosts the cluster domain (only if it is not the baseDomain). Check with
+     the Hetzner API (GET /v1/zones) that the zone exists and is delegated to the
+     Hetzner nameservers.
    - Hetzner Object Storage bucket name, location and S3 access/secret key. Hetzner
      has no API for S3 credentials, so if I have none yet, tell me to create the
      bucket and the credentials in the Hetzner Console (see "Object Storage").
@@ -34,7 +38,8 @@ https://github.com/slauger/hcloud-okd4.
      required for OCP, optional for OKD (it enables the Red Hat operator catalogs)
    Store all secrets in a local env.sh (it is gitignored) and never commit them.
 4. Set DEPLOYMENT_TYPE=okd or DEPLOYMENT_TYPE=ocp, TF_VAR_replicas_master,
-   TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare or none), ARCH
+   TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare, hetzner or none),
+   TF_VAR_dns_zone (Hetzner DNS only, if needed), ARCH
    (amd64 or arm64) and for smaller workers TF_VAR_worker_server_type according
    to my answers. For OCP, set OCP_RELEASE_CHANNEL to
    the newest stable-4.x channel before running `make latest_version`. Run `make fetch` for the chosen

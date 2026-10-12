@@ -8,18 +8,6 @@ variable "dns_domain" {
   description = "DNS domain"
 }
 
-variable "dns_zone_id" {
-  type        = string
-  description = "Zone ID"
-  default     = null
-}
-
-variable "dns_records" {
-  type        = bool
-  description = "Create a DNS record for each instance in Cloudflare"
-  default     = true
-}
-
 variable "instance_count" {
   type        = number
   description = "Number of instances to deploy"

@@ -1,60 +1,50 @@
 locals {
-  cloudflare_dns = var.dns_provider == "cloudflare"
-
   # Records the cluster needs. With dns_provider = "none" they have to be
   # created manually, api-int and the node records before the nodes boot.
-  dns_records = concat(
-    [
-      { name = "api.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 },
-      { name = "api-int.${var.dns_domain}", type = "A", value = hcloud_load_balancer_network.internal.ip },
-      { name = "apps.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 },
-      { name = "*.apps.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 },
-    ],
-    [for m in [module.bootstrap, module.master, module.worker] : [
-      for i, name in m.server_names : { name = name, type = "A", value = m.internal_ipv4_addresses[i] }
-    ]]...
+  dns_records = merge(
+    {
+      api             = { name = "api.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 }
+      "api-int"       = { name = "api-int.${var.dns_domain}", type = "A", value = hcloud_load_balancer_network.internal.ip }
+      apps            = { name = "apps.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 }
+      "apps-wildcard" = { name = "*.apps.${var.dns_domain}", type = "A", value = hcloud_load_balancer.lb.ipv4 }
+    },
+    [for role, n in local.nodes : {
+      for i in range(n.count) : format("%s%02d", role, i + 1) => {
+        name  = format("%s%02d.%s", role, i + 1, var.dns_domain)
+        type  = "A"
+        value = cidrhost(var.subnet_cidr, n.ip_offset + i)
+      }
+    }]...
   )
+
+  # baseDomain of install-config.yaml, the cluster domain without metadata.name
+  base_domain = join(".", slice(split(".", var.dns_domain), 1, length(split(".", var.dns_domain))))
 }
 
-resource "cloudflare_dns_record" "dns_a_api" {
-  count   = local.cloudflare_dns ? 1 : 0
-  zone_id = var.dns_zone_id
-  name    = "api.${var.dns_domain}"
-  content = hcloud_load_balancer.lb.ipv4
-  type    = "A"
-  ttl     = 120
+module "dns" {
+  source             = "./modules/dns"
+  provider_name      = var.dns_provider
+  records            = local.dns_records
+  cloudflare_zone_id = var.dns_zone_id
+  hetzner_zone       = coalesce(var.dns_zone, local.base_domain)
 }
 
-resource "cloudflare_dns_record" "dns_a_api_int" {
-  count   = local.cloudflare_dns ? 1 : 0
-  zone_id = var.dns_zone_id
-  name    = "api-int.${var.dns_domain}"
-  content = hcloud_load_balancer_network.internal.ip
-  type    = "A"
-  ttl     = 120
-
-  lifecycle {
-    precondition {
-      condition     = var.dns_zone_id != null
-      error_message = "dns_zone_id is required for dns_provider = cloudflare."
-    }
-  }
+moved {
+  from = cloudflare_dns_record.dns_a_api[0]
+  to   = module.dns.cloudflare_dns_record.record["api"]
 }
 
-resource "cloudflare_dns_record" "dns_a_apps" {
-  count   = local.cloudflare_dns ? 1 : 0
-  zone_id = var.dns_zone_id
-  name    = "apps.${var.dns_domain}"
-  content = hcloud_load_balancer.lb.ipv4
-  type    = "A"
-  ttl     = 120
+moved {
+  from = cloudflare_dns_record.dns_a_api_int[0]
+  to   = module.dns.cloudflare_dns_record.record["api-int"]
 }
 
-resource "cloudflare_dns_record" "dns_a_apps_wc" {
-  count   = local.cloudflare_dns ? 1 : 0
-  zone_id = var.dns_zone_id
-  name    = "*.apps.${var.dns_domain}"
-  content = hcloud_load_balancer.lb.ipv4
-  type    = "A"
-  ttl     = 120
+moved {
+  from = cloudflare_dns_record.dns_a_apps[0]
+  to   = module.dns.cloudflare_dns_record.record["apps"]
+}
+
+moved {
+  from = cloudflare_dns_record.dns_a_apps_wc[0]
+  to   = module.dns.cloudflare_dns_record.record["apps-wildcard"]
 }
