@@ -92,7 +92,7 @@ AWS_CLI=aws --endpoint-url $(S3_ENDPOINT) --region $(S3_LOCATION)
 NAMESERVERS?=1.1.1.1 1.0.0.1
 FIRST_BOOT_KARGS=rd.neednet=1 ip=dhcp $(foreach ns,$(NAMESERVERS),nameserver=$(ns))
 
-# dns provider: cloudflare or none (bring your own DNS)
+# dns provider: cloudflare, hetzner (Hetzner DNS, uses HCLOUD_TOKEN) or none (bring your own DNS)
 TF_VAR_dns_provider?=cloudflare
 export TF_VAR_dns_provider
 

@@ -42,13 +42,19 @@ variable "dns_domain" {
 
 variable "dns_provider" {
   type        = string
-  description = "Provider that manages the DNS records: cloudflare or none (bring your own DNS)"
+  description = "Provider that manages the DNS records: cloudflare, hetzner or none (bring your own DNS)"
   default     = "cloudflare"
 
   validation {
-    condition     = contains(["cloudflare", "none"], var.dns_provider)
-    error_message = "dns_provider must be either cloudflare or none."
+    condition     = contains(["cloudflare", "hetzner", "none"], var.dns_provider)
+    error_message = "dns_provider must be cloudflare, hetzner or none."
   }
+}
+
+variable "dns_zone" {
+  type        = string
+  description = "Name of the Hetzner DNS zone (only for dns_provider = hetzner), defaults to the cluster domain without its first label (baseDomain)"
+  default     = null
 }
 
 variable "nameservers_ipv4" {
