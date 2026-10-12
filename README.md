@@ -24,7 +24,7 @@ Need an OKD or OpenShift test cluster without reading all of this? Copy the prom
 ```mermaid
 flowchart TB
   user(["Users / oc"])
-  dns["DNS<br/>Cloudflare or your own"]
+  dns["DNS<br/>Cloudflare, Hetzner DNS or your own"]
 
   subgraph hcloud["Hetzner Cloud"]
     subgraph lbs["Load Balancers"]
@@ -275,8 +275,9 @@ sshKey: ssh-rsa AAAA…<your ssh key here>
 ```bash
 # Terraform / DNS
 export TF_VAR_dns_domain=okd4.example.com
-export TF_VAR_dns_provider=cloudflare # or "none", see DNS
+export TF_VAR_dns_provider=cloudflare # or "hetzner" / "none", see DNS
 export TF_VAR_dns_zone_id=YOUR_ZONE_ID # only for cloudflare
+export TF_VAR_dns_zone=example.com # optional, only for hetzner (default: baseDomain)
 
 # Hetzner Cloud credentials
 export HCLOUD_TOKEN=YOUR_HCLOUD_TOKEN
@@ -294,7 +295,13 @@ export AWS_SECRET_ACCESS_KEY=YOUR_S3_SECRET_KEY
 
 ### DNS
 
-By default, all DNS records are managed in Cloudflare. With `TF_VAR_dns_provider=none` Terraform does not create any records (bring your own DNS) and prints the required records as output `dns_records`:
+`TF_VAR_dns_provider` selects who manages the DNS records:
+
+- `cloudflare` (default): the records are created in the Cloudflare zone `TF_VAR_dns_zone_id`, which needs `CLOUDFLARE_EMAIL` and `CLOUDFLARE_API_KEY`.
+- `hetzner`: the records are created in an existing [Hetzner DNS](https://docs.hetzner.com/networking/dns/) zone of the same project, using `HCLOUD_TOKEN`. No other account is needed. The zone defaults to the `baseDomain` (the cluster domain without its first label), set `TF_VAR_dns_zone` if the cluster domain lives in a zone further up, e.g. `example.com` for `okd4.lab.example.com`. The zone has to be delegated to the Hetzner nameservers.
+- `none`: Terraform does not create any records (bring your own DNS).
+
+With `cloudflare` and `hetzner`, all records are created before the servers. In every case Terraform prints the required records as output `dns_records`:
 
 | Record | Value | Needed |
 |---|---|---|
