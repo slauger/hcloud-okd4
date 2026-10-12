@@ -2,6 +2,18 @@
   "extends": [
     "github>slauger/renovate-config"
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)[^/]+\\.pkr\\.hcl$/"
+      ],
+      "matchStrings": [
+        "#[ \\t]+renovate:[ \\t]+datasource=(?<datasource>.*?)[ \\t]+depName=(?<depName>.*?)\\s+version[ \\t]+=[ \\t]+\"(?<currentValue>[^\"]*)\"\\s"
+      ],
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": [
