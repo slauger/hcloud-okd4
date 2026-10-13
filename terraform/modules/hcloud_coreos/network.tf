@@ -40,10 +40,13 @@ locals {
   private_ipv4_addresses = [for i in range(var.instance_count) : cidrhost(var.subnet_cidr, var.ip_offset + i)]
 
   # hcloud hands out private addresses as /32 and only routes via the network
-  # gateway. nodeip-configuration needs an address whose prefix contains the
-  # hint, so add the address with the subnet prefix, but keep routing all
-  # private traffic via the gateway. The low priority default route is
-  # required by OVN-Kubernetes once br-ex is attached to this interface.
+  # gateway, there is no layer 2 between the nodes. Keep the /32: the gateway
+  # router of OVN-Kubernetes derives its connected network from the address
+  # of br-ex and would resolve other nodes via ARP instead of the gateway.
+  # nodeip-configuration cannot match a hint with a /32, so the node IP is
+  # set by the ignition config (templates/ignition.ign). The low priority
+  # default route is required by OVN-Kubernetes once br-ex is attached to
+  # this interface.
   private_nmconnection = [for ip in local.private_ipv4_addresses : <<-EOT
     [connection]
     id=private
@@ -53,11 +56,8 @@ locals {
 
     [ipv4]
     method=auto
-    address1=${ip}/${split("/", var.subnet_cidr)[1]}
-    route1=${var.subnet_cidr},${var.network_gateway},10
+    route1=0.0.0.0/0,${var.network_gateway},1000
     route1_options=onlink=true
-    route2=0.0.0.0/0,${var.network_gateway},1000
-    route2_options=onlink=true
     ignore-auto-dns=true
 
     [ipv6]

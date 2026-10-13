@@ -11,7 +11,7 @@ resource "hcloud_server" "server" {
     ignition_url     = var.ignition_url
     ignition_version = var.ignition_version
     ignition_cacert  = var.ignition_cacert
-    nodeip_hint      = cidrhost(var.subnet_cidr, 0)
+    node_ip          = local.private_ipv4_addresses[count.index]
     private_nm_b64   = base64encode(local.private_nmconnection[count.index])
     public_nm_b64    = base64encode(local.public_nmconnection[count.index])
   })

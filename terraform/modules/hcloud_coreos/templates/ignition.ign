@@ -37,10 +37,21 @@
       {
         "group": {},
         "overwrite": true,
-        "path": "/etc/default/nodeip-configuration",
+        "path": "/etc/systemd/system/kubelet.service.d/20-nodenet.conf",
         "user": {},
         "contents": {
-          "source": "data:text/plain;charset=utf-8;base64,${base64encode("KUBELET_NODEIP_HINT=${nodeip_hint}\n")}",
+          "source": "data:text/plain;charset=utf-8;base64,${base64encode("[Service]\nEnvironment=\"KUBELET_NODE_IP=${node_ip}\" \"KUBELET_NODE_IPS=${node_ip}\"\n")}",
+          "verification": {}
+        },
+        "mode": 420
+      },
+      {
+        "group": {},
+        "overwrite": true,
+        "path": "/etc/systemd/system/crio.service.d/20-nodenet.conf",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,${base64encode("[Service]\nEnvironment=\"CONTAINER_STREAM_ADDRESS=${node_ip}\"\n")}",
           "verification": {}
         },
         "mode": 420
@@ -71,6 +82,11 @@
   },
   "systemd": {
     "units": [
+      {
+        "contents": "[Unit]\nDescription=Use the private address as node IP\nBefore=nodeip-configuration.service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/bin/bash -c 'mkdir -p /run/nodeip-configuration; echo -n ${node_ip} > /run/nodeip-configuration/primary-ip; echo -n ${node_ip} > /run/nodeip-configuration/ipv4'\n[Install]\nWantedBy=multi-user.target nodeip-configuration.service\n",
+        "enabled": true,
+        "name": "hcloud-nodeip.service"
+      },
       {
         "contents": "[Unit]\nConditionFirstBoot=yes\n[Service]\nType=idle\nExecStart=/usr/bin/hostnamectl set-hostname ${hostname}\n[Install]\nWantedBy=multi-user.target\n",
         "enabled": true,
