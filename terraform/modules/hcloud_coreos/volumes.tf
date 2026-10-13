@@ -21,9 +21,10 @@ resource "hcloud_volume" "data" {
   labels   = var.labels
 }
 
+# automount is not set, the API does not mount by default, and an imported
+# attachment has no automount in its state, which would replace it.
 resource "hcloud_volume_attachment" "data" {
   for_each  = local.data_volumes
   volume_id = hcloud_volume.data[each.key].id
   server_id = hcloud_server.server[each.value.instance].id
-  automount = false
 }
