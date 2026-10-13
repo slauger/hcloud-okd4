@@ -1,6 +1,12 @@
 # Node Pools
 
-`TF_VAR_node_pools` replaces the identical workers of `replicas_worker` with pools of differently configured nodes. Each pool is a map entry, the key is the pool name:
+`node_pools` replaces the identical workers of `replicas_worker` with pools of differently configured nodes. Configure it in `terraform/node_pools.auto.tfvars`, which Terraform reads automatically and git ignores. Start from the commented example:
+
+```bash
+cp terraform/node_pools.auto.tfvars.example terraform/node_pools.auto.tfvars
+```
+
+Each pool is a map entry, the key is the pool name:
 
 | Option | Required | Default | Description |
 |---|---|---|---|
@@ -12,15 +18,26 @@
 | `labels` | no | `{}` | Additional Kubernetes labels |
 | `taints` | no | `[]` | Kubernetes taints, `{ key, value (optional), effect }` |
 
-```bash
-export TF_VAR_node_pools='{
-  infra   = { count = 3, ip_offset = 50, server_type = "cpx32", ingress = true,
-              taints = [{ key = "node-role.kubernetes.io/infra", effect = "NoSchedule" }] }
-  storage = { count = 3, ip_offset = 70, volumes = [500, 500],
-              labels = { "cluster.ocs.openshift.io/openshift-storage" = "" } }
-  app     = { count = 2, ip_offset = 90 }
-}'
+```hcl
+node_pools = {
+  infra = {
+    count       = 3
+    ip_offset   = 50
+    server_type = "cpx32"
+    ingress     = true
+    taints      = [{ key = "node-role.kubernetes.io/infra", effect = "NoSchedule" }]
+  }
+  storage = {
+    count     = 3
+    ip_offset = 70
+    volumes   = [500, 500]
+    labels    = { "cluster.ocs.openshift.io/openshift-storage" = "" }
+  }
+  app = { count = 2, ip_offset = 90 }
+}
 ```
+
+A `.auto.tfvars` file takes precedence over `TF_VAR_*` environment variables. `TF_VAR_node_pools` works as well, but is hard to read for more than one pool.
 
 ## Addresses and names
 

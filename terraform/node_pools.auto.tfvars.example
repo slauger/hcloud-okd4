@@ -1,0 +1,37 @@
+# Worker node pools, see docs/node-pools.md and docs/storage.md.
+#
+#   cp terraform/node_pools.auto.tfvars.example terraform/node_pools.auto.tfvars
+#
+# Terraform reads *.auto.tfvars automatically (they are gitignored). Without
+# node_pools, replicas_worker, worker_server_type and worker_volume_size form a
+# single pool "worker".
+node_pools = {
+  # Router, registry and monitoring. Only pools with ingress = true are targets
+  # of the public load balancer.
+  infra = {
+    count       = 3
+    ip_offset   = 50 # first host number in the node subnet, never change it later
+    server_type = "cpx32"
+    ingress     = true
+    taints = [
+      { key = "node-role.kubernetes.io/infra", effect = "NoSchedule" },
+    ]
+  }
+
+  # Rook-Ceph or LVM Storage: two unformatted volumes (GB) per node
+  storage = {
+    count     = 3
+    ip_offset = 70
+    volumes   = [500, 500]
+  }
+
+  # Applications
+  app = {
+    count     = 2
+    ip_offset = 90
+    labels    = { "example.com/tier" = "app" }
+  }
+}
+
+# Data volumes of the masters (GB per volume), only useful if masters run workloads
+# master_volumes = [100]

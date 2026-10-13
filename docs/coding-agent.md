@@ -44,8 +44,9 @@ https://github.com/slauger/hcloud-okd4.
    TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare, hetzner or none),
    TF_VAR_dns_zone (Hetzner DNS only, if needed), ARCH
    (amd64 or arm64) and for smaller workers TF_VAR_worker_server_type according
-   to my answers. For node pools, set TF_VAR_node_pools instead of
-   TF_VAR_replicas_worker, with non-overlapping ip_offset ranges above the masters. For OCP, set OCP_RELEASE_CHANNEL to
+   to my answers. For node pools, create terraform/node_pools.auto.tfvars
+   from the example next to it instead of setting TF_VAR_replicas_worker, with
+   non-overlapping ip_offset ranges above the masters. For OCP, set OCP_RELEASE_CHANNEL to
    the newest stable-4.x channel before running `make latest_version`. Run `make fetch` for the chosen
    release and pull the toolbox image ghcr.io/slauger/hcloud-okd4:latest. Run all
    further make targets inside the toolbox non-interactively, in the architecture

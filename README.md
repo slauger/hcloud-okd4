@@ -135,15 +135,25 @@ The CoreOS snapshot keeps the disk size of the Packer builder (cpx32 with 160 GB
 
 ### Node Pools
 
-Instead of identical workers, `TF_VAR_node_pools` defines pools with their own server type, data volumes, Kubernetes labels and taints, e.g. infra nodes for the router, storage nodes for Rook-Ceph and app nodes:
+Instead of identical workers, `node_pools` defines pools with their own server type, data volumes, Kubernetes labels and taints, e.g. infra nodes for the router, storage nodes for Rook-Ceph and app nodes. Configure them in a tfvars file, which Terraform reads automatically (it is gitignored):
 
 ```bash
-export TF_VAR_node_pools='{
-  infra   = { count = 3, ip_offset = 50, server_type = "cpx32", ingress = true,
-              taints = [{ key = "node-role.kubernetes.io/infra", effect = "NoSchedule" }] }
+cp terraform/node_pools.auto.tfvars.example terraform/node_pools.auto.tfvars
+vi terraform/node_pools.auto.tfvars
+```
+
+```hcl
+node_pools = {
+  infra = {
+    count       = 3
+    ip_offset   = 50
+    server_type = "cpx32"
+    ingress     = true
+    taints      = [{ key = "node-role.kubernetes.io/infra", effect = "NoSchedule" }]
+  }
   storage = { count = 3, ip_offset = 70, volumes = [500, 500] }
   app     = { count = 2, ip_offset = 90 }
-}'
+}
 ```
 
 The nodes are named after their pool (`infra01`, `storage01`, ...). `ip_offset` is the first host number of the pool in the node subnet, it has to stay the same for the lifetime of the pool. Only pools with `ingress = true` (and the masters) are targets of the public load balancer. After the nodes joined, `make label_nodes` sets their role (`node-role.kubernetes.io/<pool>`), labels and taints. Without `node_pools`, `replicas_worker`, `worker_server_type` and `worker_volume_size` form a single pool `worker`. See [docs/node-pools.md](docs/node-pools.md) for all options and how to move the router, registry and monitoring to infra nodes.
@@ -153,10 +163,11 @@ The nodes are named after their pool (`infra01`, `storage01`, ...). `ip_offset` 
 Masters and the nodes of a pool can get additional, unformatted Hetzner Volumes for storage operators:
 
 ```bash
-export TF_VAR_master_volumes='[100]'  # GB per volume and master, only useful if masters run workloads
-export TF_VAR_worker_volume_size=100  # one volume per worker without node_pools, see "volumes" of node_pools
+export TF_VAR_worker_volume_size=100  # one volume per worker without node_pools
 make infrastructure
 ```
+
+With node pools, set `volumes` per pool (and `master_volumes` for the masters) in `terraform/node_pools.auto.tfvars`.
 
 The volumes are attached separately, so a node can be rebuilt and gets its volumes back. Details and examples for the LVM Storage operator and Rook-Ceph are in [docs/storage.md](docs/storage.md).
 

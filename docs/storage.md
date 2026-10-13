@@ -2,11 +2,15 @@
 
 Masters and the nodes of a pool can get additional, unformatted Hetzner Volumes, e.g. for the LVM Storage operator or Rook-Ceph. Volumes can also be added to a running cluster:
 
-```bash
-export TF_VAR_master_volumes='[100]' # GB per volume and master, only useful if masters run workloads
-export TF_VAR_node_pools='{
+```hcl
+# terraform/node_pools.auto.tfvars, see docs/node-pools.md
+node_pools = {
   storage = { count = 3, ip_offset = 70, volumes = [500, 500] } # two volumes per node
-}'
+}
+master_volumes = [100] # GB per volume and master, only useful if masters run workloads
+```
+
+```bash
 make infrastructure
 ```
 
