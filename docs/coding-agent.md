@@ -74,7 +74,9 @@ https://github.com/slauger/hcloud-okd4.
 9. Follow the Quick Start: deploy with BOOTSTRAP=true, wait for the bootstrap to
    complete, remove the bootstrap node, approve CSRs until all nodes are Ready and
    wait for the installation to complete. With node pools, run `make label_nodes`
-   once all nodes are Ready. See "Duration" for the expected timing.
+   once all nodes are Ready (it fails until all have joined), and if a pool has
+   ingress = false, pin the routers to the ingress pools as described in
+   docs/node-pools.md ("Router placement"). See "Duration" for the expected timing.
    Run the wait targets in the background, they take longer than most command
    timeouts. If one of them times out, simply start it again, that is harmless.
    Meanwhile, check progress with oc (nodes, csr, clusteroperators).

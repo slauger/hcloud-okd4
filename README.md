@@ -85,7 +85,7 @@ Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the H
 | 2 smaller workers (1× master cpx42, 2× worker cpx32, 2× lb11, 3× IPv4) | ~0.25 € | ~156 € |
 | ARM64 with 2 smaller workers (1× master cax31, 2× worker cax21, 2× lb11, 3× IPv4, OCP only) | ~0.09 € | ~57 € |
 | Bootstrap node during installation (same server type as the nodes, ~15–25 min, billed per started hour) | ~0.11 € (cpx42) / ~0.03 € (cax31) once | – |
-| Additional volumes (`TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
+| Additional volumes (`volumes` of node pools, `master_volumes`, `TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
 | CoreOS snapshot (~1 GB) | – | ~0.01 € |
 
 Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page. These are infrastructure costs only, OCP additionally requires a Red Hat subscription (or runs as a 60 day evaluation).
@@ -156,7 +156,7 @@ node_pools = {
 }
 ```
 
-The nodes are named after their pool (`infra01`, `storage01`, ...). `ip_offset` is the first host number of the pool in the node subnet, it has to stay the same for the lifetime of the pool. Only pools with `ingress = true` (and the masters) are targets of the public load balancer. After the nodes joined, `make label_nodes` sets their role (`node-role.kubernetes.io/<pool>`), labels and taints. Without `node_pools`, `replicas_worker`, `worker_server_type` and `worker_volume_size` form a single pool `worker`. See [docs/node-pools.md](docs/node-pools.md) for all options and how to move the router, registry and monitoring to infra nodes.
+The nodes are named after their pool (`infra01`, `storage01`, ...). `ip_offset` is the first host number of the pool in the node subnet, it has to stay the same for the lifetime of the pool. Only pools with `ingress = true` (and the masters) are targets of the public load balancer, so the routers have to be pinned to them once a pool has `ingress = false`. After the nodes joined, `make label_nodes` sets their role (`node-role.kubernetes.io/<pool>`), labels and taints. Without `node_pools`, `replicas_worker`, `worker_server_type` and `worker_volume_size` form a single pool `worker`. See [docs/node-pools.md](docs/node-pools.md) for all options and how to move the router, registry and monitoring to infra nodes.
 
 ### Additional Disks (LVM Storage / Ceph)
 
@@ -261,7 +261,7 @@ Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.ya
     sleep 60
     make sign_csr
     ```
-12. Apply the roles, labels and taints of the node pools (if `node_pools` are used)
+12. Apply the roles, labels and taints of the node pools (if `node_pools` are used), and pin the routers to the ingress pools if a pool has `ingress = false` (see [docs/node-pools.md](docs/node-pools.md#router-placement))
     ```bash
     make label_nodes
     ```
