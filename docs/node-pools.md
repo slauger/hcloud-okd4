@@ -53,7 +53,7 @@ lb_subnet_cidr = "192.168.251.0/24" # load balancers, must not overlap with subn
 
 Both subnets have to be part of `network_cidr`, and `machineNetwork` in `install-config.yaml` has to match `subnet_cidr`. None of them may overlap with the `clusterNetwork` (default `10.128.0.0/14`), the `serviceNetwork` (`172.30.0.0/16`) or the internal ranges of OVN-Kubernetes (`100.64.0.0/16`, `100.88.0.0/16`). The subnets cannot be changed on an installed cluster.
 
-Pool names may contain lowercase letters, digits and dashes and must not be `bootstrap` or `master`. Without `node_pools`, the worker variables form the pool `worker` with `ip_offset = 50` and `ingress = true`, so existing workers keep their names and addresses.
+Pool names may contain lowercase letters, digits and dashes and must not be `bootstrap` or `master`. Without `node_pools`, the worker variables form the pool `worker` with `ip_offset = 50` and `ingress = true`, so existing workers keep their names and addresses. When switching an existing cluster to `node_pools`, keep a pool `worker` with `ip_offset = 50` and `ingress = true`, otherwise Terraform deletes the existing workers.
 
 ## Load balancer
 
