@@ -7,7 +7,9 @@
 # single pool "worker".
 node_pools = {
   # Router, registry and monitoring. Only pools with ingress = true are targets
-  # of the public load balancer.
+  # of the public load balancer: as the other pools have ingress = false, pin
+  # the routers to this pool after make label_nodes (docs/node-pools.md, "Router
+  # placement").
   infra = {
     count       = 3
     ip_offset   = 50 # first host number in the node subnet, never change it later
@@ -18,7 +20,8 @@ node_pools = {
     ]
   }
 
-  # Rook-Ceph or LVM Storage: two unformatted volumes (GB) per node
+  # Rook-Ceph or LVM Storage: two unformatted volumes (GB) per node, only
+  # append to the list later
   storage = {
     count     = 3
     ip_offset = 70

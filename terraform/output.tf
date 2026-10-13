@@ -18,7 +18,12 @@ output "node_config" {
   description = "Kubernetes role, labels and taints per worker node"
   value = merge([for name, pool in local.node_pools : {
     for node in module.pool[name].server_names : node => {
-      labels = merge({ "node-role.kubernetes.io/${name}" = "" }, pool.labels)
+      labels = merge(
+        { "node-role.kubernetes.io/${name}" = "" },
+        # nodePlacement of the IngressController, see docs/node-pools.md
+        pool.ingress ? { "${var.dns_domain}/ingress" = "true" } : {},
+        pool.labels
+      )
       taints = pool.taints
     }
   }]...)

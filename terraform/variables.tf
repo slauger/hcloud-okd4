@@ -27,35 +27,36 @@ variable "node_pools" {
   description = "Worker node pools, keyed by pool name. Without node_pools, replicas_worker, worker_server_type and worker_volume_size form a single pool worker."
   default     = null
 
+  # coalesce, || does not short-circuit before Terraform 1.12
   validation {
-    condition     = var.node_pools == null || alltrue([for name, p in var.node_pools : can(regex("^[a-z][a-z0-9-]{0,19}$", name)) && !contains(["bootstrap", "master"], name)])
-    error_message = "Pool names must start with a lowercase letter, contain only lowercase letters, digits and dashes (max. 20 characters), and must not be bootstrap or master."
+    condition     = alltrue([for name, p in coalesce(var.node_pools, {}) : can(regex("^[a-z]([a-z0-9-]{0,18}[a-z])?$", name)) && !contains(["bootstrap", "master", "control-plane"], name)])
+    error_message = "Pool names must start and end with a lowercase letter, contain only lowercase letters, digits and dashes (max. 20 characters), and must not be bootstrap, master or control-plane."
   }
 
   validation {
-    condition     = var.node_pools == null || alltrue([for p in values(var.node_pools) : p.count >= 0 && p.ip_offset >= 10 + var.replicas_master])
-    error_message = "The count of a pool must not be negative, and its ip_offset has to be above the masters (10 + replicas_master), e.g. 50."
+    condition     = alltrue([for p in values(coalesce(var.node_pools, {})) : p.count >= 0 && floor(p.count) == p.count && floor(p.ip_offset) == p.ip_offset && p.ip_offset >= 10 + var.replicas_master])
+    error_message = "count and ip_offset of a pool must be whole numbers, count must not be negative, and ip_offset has to be above the masters (10 + replicas_master), e.g. 50."
   }
 
   validation {
-    condition = var.node_pools == null || alltrue([for a, pa in var.node_pools : alltrue([
-      for b, pb in var.node_pools : a == b || pa.ip_offset + pa.count <= pb.ip_offset || pb.ip_offset + pb.count <= pa.ip_offset
+    condition = alltrue([for a, pa in coalesce(var.node_pools, {}) : alltrue([
+      for b, pb in coalesce(var.node_pools, {}) : a == b || pa.count == 0 || pb.count == 0 || pa.ip_offset + pa.count <= pb.ip_offset || pb.ip_offset + pb.count <= pa.ip_offset
     ])])
     error_message = "The address ranges of the pools (ip_offset to ip_offset + count - 1) must not overlap."
   }
 
   validation {
-    condition     = var.node_pools == null || alltrue([for p in values(var.node_pools) : p.ip_offset + p.count <= pow(2, 32 - tonumber(split("/", var.subnet_cidr)[1])) - 1])
+    condition     = alltrue([for p in values(coalesce(var.node_pools, {})) : p.ip_offset + p.count <= pow(2, 32 - try(tonumber(split("/", var.subnet_cidr)[1]), 32)) - 1])
     error_message = "The address range of a pool (ip_offset to ip_offset + count - 1) has to fit into subnet_cidr, use a larger subnet_cidr for more nodes."
   }
 
   validation {
-    condition     = var.node_pools == null || alltrue([for p in values(var.node_pools) : length(p.volumes) <= 16 && alltrue([for v in p.volumes : v >= 10 && v <= 10240])])
+    condition     = alltrue([for p in values(coalesce(var.node_pools, {})) : length(p.volumes) <= 16 && alltrue([for v in p.volumes : v >= 10 && v <= 10240])])
     error_message = "Hetzner supports at most 16 volumes per server with 10 to 10240 GB each."
   }
 
   validation {
-    condition     = var.node_pools == null || alltrue(flatten([for p in values(var.node_pools) : [for t in p.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], t.effect)]]))
+    condition     = alltrue(flatten([for p in values(coalesce(var.node_pools, {})) : [for t in p.taints : contains(["NoSchedule", "PreferNoSchedule", "NoExecute"], t.effect)]]))
     error_message = "The effect of a taint must be NoSchedule, PreferNoSchedule or NoExecute."
   }
 }
@@ -146,6 +147,11 @@ variable "subnet_cidr" {
   type        = string
   description = "CIDR for the subnet"
   default     = "192.168.254.0/24"
+
+  validation {
+    condition     = can(cidrhost(var.subnet_cidr, 0)) && strcontains(var.subnet_cidr, "/")
+    error_message = "subnet_cidr must be an IPv4 CIDR, e.g. 192.168.254.0/24."
+  }
 }
 
 variable "lb_subnet_cidr" {
