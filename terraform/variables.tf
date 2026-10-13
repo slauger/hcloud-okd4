@@ -45,6 +45,11 @@ variable "node_pools" {
   }
 
   validation {
+    condition     = var.node_pools == null || alltrue([for p in values(var.node_pools) : p.ip_offset + p.count <= pow(2, 32 - tonumber(split("/", var.subnet_cidr)[1])) - 1])
+    error_message = "The address range of a pool (ip_offset to ip_offset + count - 1) has to fit into subnet_cidr, use a larger subnet_cidr for more nodes."
+  }
+
+  validation {
     condition     = var.node_pools == null || alltrue([for p in values(var.node_pools) : length(p.volumes) <= 16 && alltrue([for v in p.volumes : v >= 10 && v <= 10240])])
     error_message = "Hetzner supports at most 16 volumes per server with 10 to 10240 GB each."
   }

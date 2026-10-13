@@ -43,6 +43,16 @@ A `.auto.tfvars` file takes precedence over `TF_VAR_*` environment variables. `T
 
 The nodes are named `<pool><number>.<cluster domain>` and get the private addresses `ip_offset`, `ip_offset + 1`, ... of the node subnet. Names and addresses are fixed, so the DNS records can be created before the servers. Changing `ip_offset` of an existing pool replaces its servers. Pick the ranges with some room for growth, e.g. steps of 20 starting at 50.
 
+The default node subnet `192.168.254.0/24` has room for about 240 nodes in pools. For more, choose a larger subnet before the installation:
+
+```hcl
+network_cidr   = "192.168.0.0/16"   # Hetzner network, default
+subnet_cidr    = "192.168.252.0/22" # nodes, ip_offset counts from here
+lb_subnet_cidr = "192.168.251.0/24" # load balancers, must not overlap with subnet_cidr
+```
+
+Both subnets have to be part of `network_cidr`, and `machineNetwork` in `install-config.yaml` has to match `subnet_cidr`. None of them may overlap with the `clusterNetwork` (default `10.128.0.0/14`), the `serviceNetwork` (`172.30.0.0/16`) or the internal ranges of OVN-Kubernetes (`100.64.0.0/16`, `100.88.0.0/16`). The subnets cannot be changed on an installed cluster.
+
 Pool names may contain lowercase letters, digits and dashes and must not be `bootstrap` or `master`. Without `node_pools`, the worker variables form the pool `worker` with `ip_offset = 50` and `ingress = true`, so existing workers keep their names and addresses.
 
 ## Load balancer
