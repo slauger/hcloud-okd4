@@ -1,12 +1,13 @@
 # hcloud does not offer SLAAC or DHCPv6, so the IPv6 address has to be
 # configured statically. Allocating it upfront makes it known before the
-# server (and its user data) is created.
+# server (and its user data) is created. Terraform deletes it, auto_delete
+# would remove it together with a replaced server (terraform apply -replace).
 resource "hcloud_primary_ip" "ipv6" {
   count       = var.instance_count
   name        = "${format("${var.name}%02d", count.index + 1)}.${var.dns_domain}-ipv6"
   type        = "ipv6"
   location    = var.location
-  auto_delete = true
+  auto_delete = false
   labels      = var.labels
 }
 
