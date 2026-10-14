@@ -12,6 +12,15 @@
         "#[ \\t]+renovate:[ \\t]+datasource=(?<datasource>.*?)[ \\t]+depName=(?<depName>.*?)\\s+version[ \\t]+=[ \\t]+\"(?<currentValue>[^\"]*)\"\\s"
       ],
       "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "#[ \\t]+renovate:[ \\t]+datasource=(?<datasource>\\S+)[ \\t]+depName=(?<depName>\\S+)([ \\t]+extractVersion=(?<extractVersion>\\S+))?\\s*\\n[ \\t]*[A-Za-z_]+:[ \\t]*\"?(?<currentValue>[^\"\\s]+)\"?"
+      ]
     }
   ],
   "packageRules": [
@@ -19,7 +28,7 @@
       "matchManagers": [
         "dockerfile"
       ],
-      "updateTypes": [
+      "matchUpdateTypes": [
         "minor",
         "patch",
         "pin",
@@ -33,6 +42,14 @@
       ],
       "groupName": "all terraform dependencies",
       "groupSlug": "terraform-all"
+    },
+    {
+      "description": "Toolbox image and CI use the same Terraform and Packer versions",
+      "matchPackageNames": [
+        "docker.io/hashicorp/terraform",
+        "docker.io/hashicorp/packer"
+      ],
+      "groupName": "terraform and packer cli"
     }
   ]
 }
