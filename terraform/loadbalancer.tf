@@ -6,9 +6,12 @@ locals {
   lb_internal_ports = { api = 6443, mcs = 22623 }
 
   # Targets are keyed by server name, so scaling one role does not shift the
-  # targets of the others.
+  # targets of the others. The public load balancer only targets the control
+  # plane and the pools with ingress = true. Its health checks are per service,
+  # so nodes without API server or router do not receive that traffic.
   control_plane_servers = merge([for m in [module.bootstrap, module.master] : zipmap(m.server_names, m.server_ids)]...)
-  all_servers           = merge([for m in [module.bootstrap, module.master, module.worker] : zipmap(m.server_names, m.server_ids)]...)
+  ingress_servers       = merge([for name, m in module.pool : zipmap(m.server_names, m.server_ids) if local.node_pools[name].ingress]...)
+  public_servers        = merge(local.control_plane_servers, local.ingress_servers)
 }
 
 # Public load balancer: API and ingress
@@ -25,7 +28,7 @@ resource "hcloud_load_balancer_network" "lb_network" {
 }
 
 resource "hcloud_load_balancer_target" "nodes" {
-  for_each         = local.all_servers
+  for_each         = local.public_servers
   type             = "server"
   load_balancer_id = hcloud_load_balancer.lb.id
   server_id        = each.value

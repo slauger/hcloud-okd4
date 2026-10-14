@@ -85,7 +85,7 @@ Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the H
 | 2 smaller workers (1× master cpx42, 2× worker cpx32, 2× lb11, 3× IPv4) | ~0.25 € | ~156 € |
 | ARM64 with 2 smaller workers (1× master cax31, 2× worker cax21, 2× lb11, 3× IPv4, OCP only) | ~0.09 € | ~57 € |
 | Bootstrap node during installation (same server type as the nodes, ~15–25 min, billed per started hour) | ~0.11 € (cpx42) / ~0.03 € (cax31) once | – |
-| Additional volumes (`TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
+| Additional volumes (`volumes` of node pools, `master_volumes`, `TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
 | CoreOS snapshot (~1 GB) | – | ~0.01 € |
 
 Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page. These are infrastructure costs only, OCP additionally requires a Red Hat subscription (or runs as a 60 day evaluation).
@@ -133,16 +133,43 @@ cax21 has less disk than the 100 GB Red Hat lists as minimum per node. That is f
 
 The CoreOS snapshot keeps the disk size of the Packer builder (cpx32 with 160 GB / cax21 with 80 GB), so every server type needs at least that much disk, see [docs/hetzner-specifics.md](docs/hetzner-specifics.md). Snapshots built on cax31 before do not fit cax21, `make hcloud_image` builds a new one in that case.
 
-### Additional Disks (LVM Storage / Ceph)
+### Node Pools
 
-Master and worker nodes can get an additional, unformatted Hetzner Volume for storage operators:
+Instead of identical workers, `node_pools` defines pools with their own server type, data volumes, Kubernetes labels and taints, e.g. infra nodes for the router, storage nodes for Rook-Ceph and app nodes. Configure them in a tfvars file, which Terraform reads automatically (it is gitignored):
 
 ```bash
-export TF_VAR_worker_volume_size=100 # GB per worker, 0 (default) = no volume
+cp terraform/node_pools.auto.tfvars.example terraform/node_pools.auto.tfvars
+vi terraform/node_pools.auto.tfvars
+```
+
+```hcl
+node_pools = {
+  infra = {
+    count       = 3
+    ip_offset   = 50
+    server_type = "cpx32"
+    ingress     = true
+    taints      = [{ key = "node-role.kubernetes.io/infra", effect = "NoSchedule" }]
+  }
+  storage = { count = 3, ip_offset = 70, volumes = [500, 500] }
+  app     = { count = 2, ip_offset = 90 }
+}
+```
+
+The nodes are named after their pool (`infra01`, `storage01`, ...). `ip_offset` is the first host number of the pool in the node subnet, it has to stay the same for the lifetime of the pool. Only pools with `ingress = true` (and the masters) are targets of the public load balancer, so the routers have to be pinned to them once a pool has `ingress = false`. After the nodes joined, `make label_nodes` sets their role (`node-role.kubernetes.io/<pool>`), labels and taints. Without `node_pools`, `replicas_worker`, `worker_server_type` and `worker_volume_size` form a single pool `worker`. See [docs/node-pools.md](docs/node-pools.md) for all options and how to move the router, registry and monitoring to infra nodes.
+
+### Additional Disks (LVM Storage / Ceph)
+
+Masters and the nodes of a pool can get additional, unformatted Hetzner Volumes for storage operators:
+
+```bash
+export TF_VAR_worker_volume_size=100  # one volume per worker without node_pools
 make infrastructure
 ```
 
-Details and examples for the LVM Storage operator and Rook-Ceph are in [docs/storage.md](docs/storage.md).
+With node pools, set `volumes` per pool (and `master_volumes` for the masters) in `terraform/node_pools.auto.tfvars`.
+
+The volumes are attached separately, so a node can be rebuilt and gets its volumes back. Details and examples for the LVM Storage operator and Rook-Ceph are in [docs/storage.md](docs/storage.md).
 
 ---
 
@@ -234,6 +261,10 @@ Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.ya
     sleep 60
     make sign_csr
     ```
+12. Apply the roles, labels and taints of the node pools (if `node_pools` are used), and pin the routers to the ingress pools if a pool has `ingress = false` (see [docs/node-pools.md](docs/node-pools.md#router-placement))
+    ```bash
+    make label_nodes
+    ```
 ---
 
 ## Configuration
@@ -306,7 +337,7 @@ With `cloudflare` and `hetzner`, all records are created before the servers. In 
 | Record | Value | Needed |
 |---|---|---|
 | `api-int.<cluster domain>` | IP of the internal load balancer (`192.168.253.254` by default) | **before** `make infrastructure BOOTSTRAP=true` |
-| `<node>.<cluster domain>` | private node IP (bootstrap `.5`, masters `.10+`, workers `.50+` of the node subnet) | **before** `make infrastructure BOOTSTRAP=true` |
+| `<node>.<cluster domain>` | private node IP (bootstrap `.5`, masters `.10+`, workers `.50+` or the `ip_offset` of their pool) | **before** `make infrastructure BOOTSTRAP=true` |
 | `api.<cluster domain>`, `apps.<cluster domain>`, `*.apps.<cluster domain>` | public load balancer IP | after the infrastructure has been created |
 
 `api-int` and the node records have to exist before the nodes boot, otherwise resolvers cache the negative answer and the nodes cannot fetch their configuration. Their addresses are fixed, so they can be created upfront.

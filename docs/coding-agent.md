@@ -19,6 +19,10 @@ https://github.com/slauger/hcloud-okd4.
    - number of worker nodes: 0 (masters run all workloads), 2 or a custom number
    - if there are workers: the same server type as the masters or smaller workers
      with 8 GB RAM (cpx32, or cax21 for arm64), see "Costs" in the README
+   - if there are workers: identical workers or node pools with different roles
+     (e.g. infra, storage with additional volumes for Rook-Ceph or LVM Storage),
+     see docs/node-pools.md and docs/storage.md. For node pools, ask for the
+     pools, their size, server type, volumes and which pool runs the router.
    - DNS: Cloudflare or Hetzner DNS (records are managed automatically) or my own
      DNS (I create the records myself), see "DNS" in the README
 3. Ask me for everything else you need and do not have yet:
@@ -41,7 +45,10 @@ https://github.com/slauger/hcloud-okd4.
    TF_VAR_replicas_worker, TF_VAR_dns_provider (cloudflare, hetzner or none),
    TF_VAR_dns_zone (Hetzner DNS only, if needed), ARCH
    (amd64 or arm64) and for smaller workers TF_VAR_worker_server_type according
-   to my answers. For OCP, set OCP_RELEASE_CHANNEL to
+   to my answers. For node pools, create terraform/node_pools.auto.tfvars from
+   the example next to it instead of setting TF_VAR_replicas_worker, with
+   non-overlapping ip_offset ranges above the masters and ingress = true for the
+   pool that runs the router. For OCP, set OCP_RELEASE_CHANNEL to
    the newest stable-4.x channel before running `make latest_version`. Run `make fetch` for the chosen
    release and pull the toolbox image ghcr.io/slauger/hcloud-okd4:latest. Run all
    further make targets inside the toolbox non-interactively, in the architecture
@@ -62,10 +69,14 @@ https://github.com/slauger/hcloud-okd4.
    resolve. After the infrastructure is created, tell me the remaining records
    from the Terraform output dns_records.
 8. Before creating any billable infrastructure, show me what will be created and
-   the expected costs (see "Costs"), and wait for my confirmation.
+   the expected costs (see "Costs", plus Hetzner Volumes per GB if there are data
+   volumes), and wait for my confirmation.
 9. Follow the Quick Start: deploy with BOOTSTRAP=true, wait for the bootstrap to
    complete, remove the bootstrap node, approve CSRs until all nodes are Ready and
-   wait for the installation to complete. See "Duration" for the expected timing.
+   wait for the installation to complete. With node pools, run `make label_nodes`
+   once all nodes are Ready (it fails until all have joined), and if a pool has
+   ingress = false, pin the routers to the ingress pools as described in
+   docs/node-pools.md ("Router placement"). See "Duration" for the expected timing.
    Run the wait targets in the background, they take longer than most command
    timeouts. If one of them times out, simply start it again, that is harmless.
    Meanwhile, check progress with oc (nodes, csr, clusteroperators).
@@ -76,7 +87,9 @@ https://github.com/slauger/hcloud-okd4.
    accept SSH from the internet: use oc adm node-logs / oc debug node, or add a
    temporary hcloud firewall rule for my IP only and remove it afterwards.
 11. Verify the result: all nodes Ready with their private IPs, all cluster operators
-   Available and not Degraded, the console answers with HTTP 200.
+   Available and not Degraded, the console answers with HTTP 200. With node pools,
+   every node shows the role of its pool and the data volumes are visible on the
+   storage nodes (oc debug node, lsblk).
 12. When finished, give me the console URL, the paths to the kubeconfig and the
     kubeadmin password, the hourly costs, and remind me that `make destroy`
     removes the cluster. Never run `make destroy` without asking me first.

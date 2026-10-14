@@ -1,11 +1,30 @@
-# Optional raw data volume per instance, e.g. for the LVM Storage operator or
-# Rook-Ceph. It is left unformatted on purpose, storage operators refuse
+# Optional raw data volumes per instance, e.g. for the LVM Storage operator or
+# Rook-Ceph. They are left unformatted on purpose, storage operators refuse
 # devices that already carry a filesystem.
-resource "hcloud_volume" "volumes" {
-  count     = var.volume_size > 0 ? var.instance_count : 0
-  name      = "${hcloud_server.server[count.index].name}-data"
-  size      = var.volume_size
-  automount = false
-  server_id = hcloud_server.server[count.index].id
-  labels    = var.labels
+locals {
+  data_volumes = merge([for i in range(var.instance_count) : {
+    for j, size in var.volumes : format("%s%02d-data%d", var.name, i + 1, j + 1) => {
+      instance = i
+      name     = format("%s%02d.%s-data%d", var.name, i + 1, var.dns_domain, j + 1)
+      size     = size
+    }
+  }]...)
+}
+
+# The volumes do not refer to the servers, so a server can be replaced
+# (terraform apply -replace) and gets the same volumes attached again.
+resource "hcloud_volume" "data" {
+  for_each = local.data_volumes
+  name     = each.value.name
+  size     = each.value.size
+  location = var.location
+  labels   = var.labels
+}
+
+# automount is not set, the API does not mount by default, and an imported
+# attachment has no automount in its state, which would replace it.
+resource "hcloud_volume_attachment" "data" {
+  for_each  = local.data_volumes
+  volume_id = hcloud_volume.data[each.key].id
+  server_id = hcloud_server.server[each.value.instance].id
 }
