@@ -122,10 +122,11 @@ jobs:
       - name: Run container structure test
         if: inputs.structure_test != ''
         env:
-          CST_VERSION: v1.22.1
+          # renovate: datasource=github-releases depName=GoogleContainerTools/container-structure-test extractVersion=^v(?<version>.*)$
+          CST_VERSION: 1.22.1
           CONFIG: ${{ inputs.structure_test }}
         run: |
-          curl -fsSL -o container-structure-test "https://github.com/GoogleContainerTools/container-structure-test/releases/download/${CST_VERSION}/container-structure-test-linux-${{ matrix.arch }}"
+          curl -fsSL -o container-structure-test "https://github.com/GoogleContainerTools/container-structure-test/releases/download/v${CST_VERSION}/container-structure-test-linux-${{ matrix.arch }}"
           chmod +x container-structure-test
           ./container-structure-test test --image "${IMAGE}:test" --config "${CONFIG}"
 

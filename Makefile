@@ -155,9 +155,20 @@ check_release:
 build:
 	docker build --platform linux/$(TOOLBOX_ARCH) -t $(CONTAINER_NAME):$(CONTAINER_TAG) .
 
+# container-structure-test, the image on gcr.io is no longer updated
+# renovate: datasource=github-releases depName=GoogleContainerTools/container-structure-test extractVersion=^v(?<version>.*)$
+CST_VERSION=1.22.1
+CST=downloads/container-structure-test-$(CST_VERSION)
+
+$(CST):
+	mkdir -p downloads
+	curl -fsSL -o $@.tmp "https://github.com/GoogleContainerTools/container-structure-test/releases/download/v$(CST_VERSION)/container-structure-test-$(shell uname -s | tr '[:upper:]' '[:lower:]')-$(HOST_ARCH)"
+	chmod +x $@.tmp
+	mv $@.tmp $@
+
 .PHONY: test
-test:
-	docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(shell pwd):/src:ro gcr.io/gcp-runtimes/container-structure-test:latest test --image $(CONTAINER_NAME):$(CONTAINER_TAG) --config /src/tests/image.tests.yaml
+test: $(CST)
+	$(CST) test --image $(CONTAINER_NAME):$(CONTAINER_TAG) --config tests/image.tests.yaml
 
 .PHONY: push
 push:

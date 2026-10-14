@@ -17,13 +17,19 @@ jobs:
           config: .hadolint.yaml
 
       - name: Lint workflows
+        env:
+          # renovate: datasource=github-releases depName=rhysd/actionlint extractVersion=^v(?<version>.*)$
+          ACTIONLINT_VERSION: 1.7.12
         run: |
-          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
+          bash <(curl -fsSL "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") "${ACTIONLINT_VERSION}"
           ./actionlint -color
 
+      # Same versions as the toolbox image (Dockerfile)
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v4
         with:
+          # renovate: datasource=docker depName=docker.io/hashicorp/terraform
+          terraform_version: 1.16.5
           terraform_wrapper: false
 
       - name: Terraform format
@@ -37,6 +43,9 @@ jobs:
 
       - name: Set up TFLint
         uses: terraform-linters/setup-tflint@v6
+        with:
+          # renovate: datasource=github-releases depName=terraform-linters/tflint
+          tflint_version: v0.64.0
 
       - name: TFLint
         working-directory: terraform
@@ -46,6 +55,9 @@ jobs:
 
       - name: Set up Packer
         uses: hashicorp/setup-packer@v3
+        with:
+          # renovate: datasource=docker depName=docker.io/hashicorp/packer
+          version: 1.16.1
 
       - name: Packer format
         run: packer fmt -check -recursive packer
