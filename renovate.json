@@ -26,7 +26,8 @@
   "packageRules": [
     {
       "matchManagers": [
-        "dockerfile"
+        "dockerfile",
+        "custom.regex"
       ],
       "matchUpdateTypes": [
         "minor",
