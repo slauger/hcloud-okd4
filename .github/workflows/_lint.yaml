@@ -57,7 +57,7 @@ jobs:
         uses: hashicorp/setup-packer@v3
         with:
           # renovate: datasource=docker depName=docker.io/hashicorp/packer
-          version: 1.16.1
+          version: 1.16.2
 
       - name: Packer format
         run: packer fmt -check -recursive packer
