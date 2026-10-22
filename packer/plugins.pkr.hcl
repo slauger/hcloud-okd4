@@ -4,7 +4,7 @@ packer {
   required_plugins {
     hcloud = {
       # renovate: datasource=github-releases depName=hashicorp/packer-plugin-hcloud
-      version = "1.8.1"
+      version = "1.8.2"
       source  = "github.com/hashicorp/hcloud"
     }
   }
