@@ -45,7 +45,7 @@ jobs:
         uses: terraform-linters/setup-tflint@v6
         with:
           # renovate: datasource=github-releases depName=terraform-linters/tflint
-          tflint_version: v0.64.0
+          tflint_version: v0.65.0
 
       - name: TFLint
         working-directory: terraform
