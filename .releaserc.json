@@ -4,7 +4,8 @@
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     ["@semantic-release/github", {
-      "successComment": false
+      "successComment": false,
+      "releasedLabels": false
     }]
   ]
 }
