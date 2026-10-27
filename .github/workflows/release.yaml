@@ -1,0 +1,86 @@
+name: Release
+
+# Every push to master releases if it contains feat/fix commits;
+# workflow_dispatch re-runs a release by hand.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Merges in quick succession release one after another, not in parallel.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      new-release-published: ${{ steps.semantic.outputs.new_release_published }}
+      new-release-version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # No v0.0.0 baseline tag on purpose: without any tag the first
+      # release is 1.0.0, with a baseline tag it would be 0.1.0.
+      - name: Run semantic-release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v8.1.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  toolbox:
+    needs: semantic-release
+    if: needs.semantic-release.outputs.new-release-published == 'true'
+    uses: ./.github/workflows/_container-build.yaml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      image_name: hcloud-okd4
+      structure_test: tests/image.tests.yaml
+      push: true
+      latest: true
+      sign: true
+      image_tag: ${{ needs.semantic-release.outputs.new-release-version }}
+
+  # The SBOM artifact is uploaded by the toolbox job of this run.
+  release-assets:
+    needs: [semantic-release, toolbox]
+    if: needs.semantic-release.outputs.new-release-published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download SBOM artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: sbom-*
+          path: sbom
+          merge-multiple: true
+
+      - name: Upload assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.semantic-release.outputs.new-release-version }}
+        run: gh release upload "v${VERSION}" sbom/*.json

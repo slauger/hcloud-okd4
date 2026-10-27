@@ -204,6 +204,23 @@ make run                                       # starts the toolbox, oc and open
 
 When running make targets in the toolbox yourself, pass `--platform linux/<toolbox arch>` to `docker run` if `DOCKER_DEFAULT_PLATFORM` points to another architecture.
 
+The image is signed with cosign (keyless) and carries a SLSA provenance attestation. Every platform image also has a signed CycloneDX SBOM attestation, created with [syft](https://github.com/anchore/syft). Releases are tagged with their version (`ghcr.io/slauger/hcloud-okd4:<version>`) and carry the SBOMs as release assets (`hcloud-okd4-<version>-linux-<amd64|arm64>.cdx.json` / `.spdx.json`).
+
+```bash
+IMAGE=ghcr.io/slauger/hcloud-okd4:latest
+IDENTITY=(--certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github\.com/slauger/hcloud-okd4/')
+
+cosign verify "$IMAGE" "${IDENTITY[@]}"
+cosign verify-attestation "$IMAGE" --type slsaprovenance1 "${IDENTITY[@]}"
+
+# The SBOM describes one platform image, verify it against the platform digest.
+# A digest can carry more than one attestation, all describe the same image.
+DIGEST=$(crane digest --platform linux/amd64 "$IMAGE")
+cosign verify-attestation "${IMAGE%:*}@$DIGEST" --type cyclonedx "${IDENTITY[@]}" \
+  | jq -rs '.[0].payload' | base64 -d | jq '.predicate' > sbom.cdx.json
+```
+
 ### ARM64 Clusters (OCP)
 
 OCP clusters can run on Hetzner's Ampere based CAX servers, which cost about a third of the corresponding CPX servers. OKD does not publish arm64 release payloads, so this is only available for OCP.
