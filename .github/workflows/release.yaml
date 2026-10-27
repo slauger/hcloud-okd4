@@ -54,3 +54,25 @@ jobs:
       latest: true
       sign: true
       image_tag: ${{ needs.semantic-release.outputs.new-release-version }}
+
+  # The SBOM artifact is uploaded by the toolbox job of this run.
+  release-assets:
+    needs: [semantic-release, toolbox]
+    if: needs.semantic-release.outputs.new-release-published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download SBOM artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: sbom-*
+          path: sbom
+          merge-multiple: true
+
+      - name: Upload assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.semantic-release.outputs.new-release-version }}
+        run: gh release upload "v${VERSION}" sbom/*.json
