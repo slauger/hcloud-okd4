@@ -204,7 +204,7 @@ make run                                       # starts the toolbox, oc and open
 
 When running make targets in the toolbox yourself, pass `--platform linux/<toolbox arch>` to `docker run` if `DOCKER_DEFAULT_PLATFORM` points to another architecture.
 
-The image is signed with cosign (keyless) and carries a SLSA provenance attestation. Every platform image also has a signed CycloneDX SBOM attestation, generated with [syft](https://github.com/anchore/syft). Releases are tagged with their version (`ghcr.io/slauger/hcloud-okd4:<version>`) and carry the SBOMs as release assets (`hcloud-okd4-<version>-linux-<amd64|arm64>.cdx.json` / `.spdx.json`).
+The image is signed with cosign (keyless) and carries a SLSA provenance attestation. Every platform image also has a signed CycloneDX SBOM attestation, created with [syft](https://github.com/anchore/syft). Releases are tagged with their version (`ghcr.io/slauger/hcloud-okd4:<version>`) and carry the SBOMs as release assets (`hcloud-okd4-<version>-linux-<amd64|arm64>.cdx.json` / `.spdx.json`).
 
 ```bash
 IMAGE=ghcr.io/slauger/hcloud-okd4:latest
