@@ -1,8 +1,16 @@
 name: Release
 
-# Releases are only created on demand, merging to master does not release.
+# Every push to master releases if it contains feat/fix commits;
+# workflow_dispatch re-runs a release by hand.
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
+
+# Merges in quick succession release one after another, not in parallel.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: read
