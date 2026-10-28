@@ -29,7 +29,7 @@ jobs:
         uses: hashicorp/setup-terraform@v4
         with:
           # renovate: datasource=docker depName=docker.io/hashicorp/terraform
-          terraform_version: 1.17.0
+          terraform_version: v1.17.1
           terraform_wrapper: false
 
       - name: Terraform format
