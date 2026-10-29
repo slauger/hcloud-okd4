@@ -36,7 +36,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
 
       # No v0.0.0 baseline tag on purpose: without any tag the first
       # release is 1.0.0, with a baseline tag it would be 0.1.0.
