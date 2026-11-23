@@ -214,7 +214,7 @@ jobs:
           push-to-registry: true
 
       - name: Install syft
-        uses: anchore/sbom-action/download-syft@v0.24.3
+        uses: anchore/sbom-action/download-syft@v0.24.4
 
       # BuildKit already attaches an SPDX SBOM to every platform image, but it
       # is unsigned and CycloneDX-only consumers such as Dependency-Track cannot
