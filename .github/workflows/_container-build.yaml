@@ -125,8 +125,9 @@ jobs:
           # renovate: datasource=github-releases depName=GoogleContainerTools/container-structure-test extractVersion=^v(?<version>.*)$
           CST_VERSION: 1.22.1
           CONFIG: ${{ inputs.structure_test }}
+          ARCH: ${{ matrix.arch }}
         run: |
-          curl -fsSL -o container-structure-test "https://github.com/GoogleContainerTools/container-structure-test/releases/download/v${CST_VERSION}/container-structure-test-linux-${{ matrix.arch }}"
+          curl -fsSL -o container-structure-test "https://github.com/GoogleContainerTools/container-structure-test/releases/download/v${CST_VERSION}/container-structure-test-linux-${ARCH}"
           chmod +x container-structure-test
           ./container-structure-test test --image "${IMAGE}:test" --config "${CONFIG}"
 
@@ -204,7 +205,9 @@ jobs:
 
       - name: Sign image with cosign (keyless)
         if: inputs.sign
-        run: cosign sign --yes "${IMAGE}@${{ steps.digest.outputs.digest }}"
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
 
       - name: Attest manifest index
         uses: actions/attest-build-provenance@v4
@@ -261,6 +264,8 @@ jobs:
 
       - name: Set output
         id: result
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
         run: |
           echo "image=${IMAGE}:${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "digest=${{ steps.digest.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
