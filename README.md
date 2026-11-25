@@ -1,23 +1,22 @@
-[![CI](https://github.com/slauger/hcloud-okd4/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/ci.yaml)
-[![License: MIT](https://img.shields.io/github/license/slauger/hcloud-okd4)](LICENSE)
-
 # hcloud-okd4
+
+[![CI](https://github.com/slauger/hcloud-okd4/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/slauger/hcloud-okd4/actions/workflows/ci.yaml)
+[![Release](https://img.shields.io/github/v/release/slauger/hcloud-okd4)](https://github.com/slauger/hcloud-okd4/releases)
+[![License: MIT](https://img.shields.io/github/license/slauger/hcloud-okd4)](LICENSE)
 
 Deploy OKD (and Red Hat OpenShift) clusters on Hetzner Cloud using Packer and Terraform – a cheap and fast way to get a real OpenShift cluster for testing, development and learning.
 
-- OKD and OCP 4.x, single node or with additional workers
-- User provisioned infrastructure (`platform: none`), no cloud integration required
-- Cluster traffic over a Hetzner private network, nodes are not exposed to the internet
-- Bootstrap ignition config served from Hetzner Object Storage, no helper VMs
-- About 45 minutes from zero to a running cluster
-
----
+- 🚀 **OKD and OCP** - single node, three masters or additional workers and node pools, amd64 and (OCP) arm64
+- 🧩 **User provisioned infrastructure** - `platform: none`, no cloud integration required
+- 🔒 **Private cluster network** - cluster traffic over a Hetzner private network, nodes are not exposed to the internet
+- 🪣 **No helper VMs** - the bootstrap ignition config is served from Hetzner Object Storage
+- 🌐 **DNS included** - records in Cloudflare or Hetzner DNS, or bring your own DNS
+- 🧰 **Signed toolbox image** - Terraform, Packer and all tools in one container, signed with cosign and shipped with SBOMs
+- ⏱️ **Fast** - about 45 minutes from zero to a running cluster
 
 ## Deploy with a Coding Agent
 
 Need an OKD or OpenShift test cluster without reading all of this? Copy the prompt from [docs/coding-agent.md](docs/coding-agent.md) into your AI coding agent of choice.
-
----
 
 ## Architecture
 
@@ -72,172 +71,36 @@ Hetzner Cloud offers neither SLAAC nor DHCPv6, so each node gets a pre-allocated
 
 Hetzner Cloud is not a supported OpenShift platform and several of its properties (DNS caching, `/32` private addresses, no IPv6 autoconfiguration, user data limits, ...) need special handling. They are explained in [docs/hetzner-specifics.md](docs/hetzner-specifics.md), read it before changing the network setup or when debugging an installation.
 
-### Costs
+## Requirements
 
-Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the Hetzner Cloud pricing API). Prices change over time, check the current [Hetzner Cloud pricing](https://www.hetzner.com/cloud/) before deploying. Hetzner bills hourly, capped at the monthly price.
+### Prerequisites
 
-| Setup | Per hour | Per month |
-|---|---|---|
-| Single node (1× master cpx42, 2× lb11, IPv4) | ~0.13 € | ~84 € |
-| Default with 2 workers (3× cpx42, 2× lb11, 3× IPv4) | ~0.36 € | ~224 € |
-| ARM64 single node (1× master cax31, 2× lb11, IPv4, OCP only) | ~0.06 € | ~35 € |
-| ARM64 with 2 workers (3× cax31, 2× lb11, 3× IPv4, OCP only) | ~0.13 € | ~78 € |
-| 2 smaller workers (1× master cpx42, 2× worker cpx32, 2× lb11, 3× IPv4) | ~0.25 € | ~156 € |
-| ARM64 with 2 smaller workers (1× master cax31, 2× worker cax21, 2× lb11, 3× IPv4, OCP only) | ~0.09 € | ~57 € |
-| Bootstrap node during installation (same server type as the nodes, ~15–25 min, billed per started hour) | ~0.11 € (cpx42) / ~0.03 € (cax31) once | – |
-| Additional volumes (`volumes` of node pools, `master_volumes`, `TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
-| CoreOS snapshot (~1 GB) | – | ~0.01 € |
+- A Hetzner Cloud project and an API token with read and write access (`HCLOUD_TOKEN`)
+- A private Hetzner Object Storage bucket and S3 credentials for the bootstrap ignition config (see *Object Storage*)
+- A domain for the cluster, managed in Cloudflare, in Hetzner DNS, or in your own DNS (see *DNS*)
+- For OCP: a pull secret from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret)
+- On your machine: Docker (for the toolbox), `make`, `git`, `curl`, `jq` and `tar` (`make latest_version` and `make fetch` run on the host)
 
-Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page. These are infrastructure costs only, OCP additionally requires a Red Hat subscription (or runs as a 60 day evaluation).
+Terraform, Packer, the AWS CLI and the OpenShift binaries do not have to be installed locally, they run in the toolbox container (see *Toolbox*).
 
-### Duration
+### Supported Versions
 
-Measured with OKD 4.22 and OCP 4.22, 1 master and 2 workers:
-
-| Step | Duration |
+| Component | Version |
 |---|---|
-| OpenShift binaries (`make fetch`) | ~1 min |
-| CoreOS image (`make hcloud_image`) | ~10 min |
-| Infrastructure (`make infrastructure BOOTSTRAP=true`) | ~3 min |
-| Bootstrap (`make wait_bootstrap`) | ~12 min |
-| Installation (`make wait_completion`) | ~15–25 min |
-| **Total** | **~45–55 min**, ~30–40 min with an existing image |
+| OKD | 4.22, tested (`make latest_version OKD_RELEASE_STREAM=4.22`) |
+| OCP | 4.22, tested (`OCP_RELEASE_CHANNEL=stable-4.22`, the default) |
+| Terraform | `>= 1.9` (`required_version`), the toolbox image and CI use 1.17 |
+| Packer | the toolbox image and CI use 1.16 with the [hcloud plugin](https://github.com/hashicorp/packer-plugin-hcloud) 1.8 (`packer/plugins.pkr.hcl`) |
+| Terraform providers | [hetznercloud/hcloud](https://registry.terraform.io/providers/hetznercloud/hcloud) 1.x, [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) 5.x, [hashicorp/local](https://registry.terraform.io/providers/hashicorp/local) 2.x, pinned to exact versions in `terraform/versions.tf` |
 
-Additional worker nodes and a highly available control plane can be configured by setting environment variables **before** running Terraform:
-
-```bash
-export TF_VAR_replicas_worker=3  # Example: 3 worker nodes
-export TF_VAR_replicas_master=3  # 1 (default) or 3 masters
-```
-
-The number of masters has to match `controlPlane.replicas` in `install-config.yaml`. With 3 masters the control plane survives the restarts during the installation and updates without API outages.
-
-Server and load balancer types as well as the location can be changed the same way:
-
-```bash
-export TF_VAR_server_type=cpx52          # all nodes, default: cpx42 (x86) or cax31 (arm)
-export TF_VAR_worker_server_type=ccx33   # per role, also bootstrap_server_type and master_server_type
-export TF_VAR_load_balancer_type=lb21    # default: lb11, used for both load balancers
-export TF_VAR_location=ash               # default: nbg1
-export TF_VAR_network_zone=us-east       # default: eu-central, has to contain the location
-```
-
-Masters need 16 GB RAM (cpx42 / cax31). Workers get by with 8 GB, which saves about a third with two workers (see *Costs*):
-
-```bash
-export TF_VAR_worker_server_type=cpx32   # x86: 4 vCPU, 8 GB RAM, 160 GB disk
-export TF_VAR_worker_server_type=cax21   # arm64: 4 vCPU, 8 GB RAM, 80 GB disk
-```
-
-cax21 has less disk than the 100 GB Red Hat lists as minimum per node. That is fine for test clusters, but watch out for disk pressure with many or large images.
-
-The CoreOS snapshot keeps the disk size of the Packer builder (cpx32 with 160 GB / cax21 with 80 GB), so every server type needs at least that much disk, see [docs/hetzner-specifics.md](docs/hetzner-specifics.md). Snapshots built on cax31 before do not fit cax21, `make hcloud_image` builds a new one in that case.
-
-### Node Pools
-
-Instead of identical workers, `node_pools` defines pools with their own server type, data volumes, Kubernetes labels and taints, e.g. infra nodes for the router, storage nodes for Rook-Ceph and app nodes. Configure them in a tfvars file, which Terraform reads automatically (it is gitignored):
-
-```bash
-cp terraform/node_pools.auto.tfvars.example terraform/node_pools.auto.tfvars
-vi terraform/node_pools.auto.tfvars
-```
-
-```hcl
-node_pools = {
-  infra = {
-    count       = 3
-    ip_offset   = 50
-    server_type = "cpx32"
-    ingress     = true
-    taints      = [{ key = "node-role.kubernetes.io/infra", effect = "NoSchedule" }]
-  }
-  storage = { count = 3, ip_offset = 70, volumes = [500, 500] }
-  app     = { count = 2, ip_offset = 90 }
-}
-```
-
-The nodes are named after their pool (`infra01`, `storage01`, ...). `ip_offset` is the first host number of the pool in the node subnet, it has to stay the same for the lifetime of the pool. Only pools with `ingress = true` (and the masters) are targets of the public load balancer, so the routers have to be pinned to them once a pool has `ingress = false`. After the nodes joined, `make label_nodes` sets their role (`node-role.kubernetes.io/<pool>`), labels and taints. Without `node_pools`, `replicas_worker`, `worker_server_type` and `worker_volume_size` form a single pool `worker`. See [docs/node-pools.md](docs/node-pools.md) for all options and how to move the router, registry and monitoring to infra nodes.
-
-### Additional Disks (LVM Storage / Ceph)
-
-Masters and the nodes of a pool can get additional, unformatted Hetzner Volumes for storage operators:
-
-```bash
-export TF_VAR_worker_volume_size=100  # one volume per worker without node_pools
-make infrastructure
-```
-
-With node pools, set `volumes` per pool (and `master_volumes` for the masters) in `terraform/node_pools.auto.tfvars`.
-
-The volumes are attached separately, so a node can be rebuilt and gets its volumes back. Details and examples for the LVM Storage operator and Rook-Ceph are in [docs/storage.md](docs/storage.md).
-
----
-
-## Version & Deployment Options
-
-You can set the desired release version with the `OPENSHIFT_RELEASE` environment variable.
-
-Example:
-
-```bash
-export DEPLOYMENT_TYPE=okd # Options: "okd" or "ocp", default is "okd"
-export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.22.0-okd-scos.9"
-```
-
-`make latest_version` returns the most recent stable (non pre-release) OKD release and fails if none is found. It queries the GitHub API, set `GITHUB_TOKEN` to avoid its rate limit for anonymous requests. To stay on a specific minor stream, set `OKD_RELEASE_STREAM`:
-
-```bash
-export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
-```
-
-For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret).
-
-### Toolbox
-
-All steps run inside a toolbox container with Terraform, Packer, the AWS CLI and the other required tools. The image is version independent and available for amd64 and arm64, it always runs natively in the architecture of your machine (`TOOLBOX_ARCH`, detected automatically). The OpenShift binaries (`openshift-install`, `oc`, `kubectl`) are downloaded per release into `downloads/<okd|ocp>/<version>/<toolbox arch>/` of the repository, which is mounted into the toolbox. Several versions can live side by side.
-
-```bash
-docker pull ghcr.io/slauger/hcloud-okd4:latest # or build it locally: make build
-make fetch                                     # downloads and verifies the binaries of OPENSHIFT_RELEASE
-make run                                       # starts the toolbox, oc and openshift-install are in the PATH
-```
-
-When running make targets in the toolbox yourself, pass `--platform linux/<toolbox arch>` to `docker run` if `DOCKER_DEFAULT_PLATFORM` points to another architecture.
-
-The image is signed with cosign (keyless) and carries a SLSA provenance attestation. Every platform image also has a signed CycloneDX SBOM attestation, created with [syft](https://github.com/anchore/syft). Releases are tagged with their version (`ghcr.io/slauger/hcloud-okd4:<version>`) and carry the SBOMs as release assets (`hcloud-okd4-<version>-linux-<amd64|arm64>.cdx.json` / `.spdx.json`).
-
-```bash
-IMAGE=ghcr.io/slauger/hcloud-okd4:latest
-IDENTITY=(--certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github\.com/slauger/hcloud-okd4/')
-
-cosign verify "$IMAGE" "${IDENTITY[@]}"
-cosign verify-attestation "$IMAGE" --type slsaprovenance1 "${IDENTITY[@]}"
-
-# The SBOM describes one platform image, verify it against the platform digest.
-# A digest can carry more than one attestation, all describe the same image.
-DIGEST=$(crane digest --platform linux/amd64 "$IMAGE")
-cosign verify-attestation "${IMAGE%:*}@$DIGEST" --type cyclonedx "${IDENTITY[@]}" \
-  | jq -rs '.[0].payload' | base64 -d | jq '.predicate' > sbom.cdx.json
-```
-
-### ARM64 Clusters (OCP)
-
-OCP clusters can run on Hetzner's Ampere based CAX servers, which cost about a third of the corresponding CPX servers. OKD does not publish arm64 release payloads, so this is only available for OCP.
-
-```bash
-export DEPLOYMENT_TYPE=ocp
-export ARCH=arm64 # builds the RHCOS aarch64 image on cax21 and uses cax31 nodes
-```
-
-Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.yaml`. The aarch64 release payload is selected automatically.
-
----
+OKD 5.0 has been released, so `make latest_version` without `OKD_RELEASE_STREAM` now returns a 5.0 release. The deployment has not been verified with 5.0 yet, set `OKD_RELEASE_STREAM=4.22` to stay on the tested version. Dependencies are kept up to date by Renovate, the exact versions are in the `Dockerfile`, `terraform/versions.tf` and `packer/plugins.pkr.hcl`.
 
 ## Quick Start
 
-1. Fetch the OpenShift binaries and start the toolbox (see *Toolbox*)
+1. Select the release, fetch the OpenShift binaries and start the toolbox (see *Version & Deployment Options* and *Toolbox*)
    ```bash
+   export DEPLOYMENT_TYPE=okd # or ocp
+   export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
    make fetch
    make run
    ```
@@ -282,7 +145,6 @@ Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.ya
     ```bash
     make label_nodes
     ```
----
 
 ## Configuration
 
@@ -380,17 +242,66 @@ make upload_ignition
 make delete_ignition
 ```
 
----
+## Version & Deployment Options
 
-## Firewall & Access
+You can set the desired release version with the `OPENSHIFT_RELEASE` environment variable.
 
-- Nodes are **not directly exposed to the internet**: the hcloud firewall only allows ICMP on their public interfaces. Hetzner firewalls do not apply to private networks, so cluster traffic is not affected.
-- Only the public load balancer is reachable from the internet (API on 6443, ingress on 80/443). The machine config server (22623) is only served by the internal load balancer, which has no public interface.
-- SSH access to nodes is only possible with additional firewall configuration.
+Example:
 
----
+```bash
+export DEPLOYMENT_TYPE=okd # Options: "okd" or "ocp", default is "okd"
+export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.22.0-okd-scos.9"
+```
 
-## Deploying OCP (Red Hat OpenShift)
+`make latest_version` returns the most recent stable (non pre-release) OKD release and fails if none is found. It queries the GitHub API, set `GITHUB_TOKEN` to avoid its rate limit for anonymous requests. To stay on a specific minor stream, set `OKD_RELEASE_STREAM`:
+
+```bash
+export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
+```
+
+For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret).
+
+### Toolbox
+
+All steps run inside a toolbox container with Terraform, Packer, the AWS CLI and the other required tools. The image is version independent and available for amd64 and arm64, it always runs natively in the architecture of your machine (`TOOLBOX_ARCH`, detected automatically). The OpenShift binaries (`openshift-install`, `oc`, `kubectl`) are downloaded per release into `downloads/<okd|ocp>/<version>/<toolbox arch>/` of the repository, which is mounted into the toolbox. Several versions can live side by side.
+
+```bash
+docker pull ghcr.io/slauger/hcloud-okd4:latest # or build it locally: make build
+make fetch                                     # downloads and verifies the binaries of OPENSHIFT_RELEASE
+make run                                       # starts the toolbox, oc and openshift-install are in the PATH
+```
+
+When running make targets in the toolbox yourself, pass `--platform linux/<toolbox arch>` to `docker run` if `DOCKER_DEFAULT_PLATFORM` points to another architecture.
+
+The image is signed with cosign (keyless) and carries a SLSA provenance attestation. Every platform image also has a signed CycloneDX SBOM attestation, created with [syft](https://github.com/anchore/syft). Releases are tagged with their version (`ghcr.io/slauger/hcloud-okd4:<version>`) and carry the SBOMs as release assets (`hcloud-okd4-<version>-linux-<amd64|arm64>.cdx.json` / `.spdx.json`).
+
+```bash
+IMAGE=ghcr.io/slauger/hcloud-okd4:latest
+IDENTITY=(--certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github\.com/slauger/hcloud-okd4/')
+
+cosign verify "$IMAGE" "${IDENTITY[@]}"
+cosign verify-attestation "$IMAGE" --type slsaprovenance1 "${IDENTITY[@]}"
+
+# The SBOM describes one platform image, verify it against the platform digest.
+# A digest can carry more than one attestation, all describe the same image.
+DIGEST=$(crane digest --platform linux/amd64 "$IMAGE")
+cosign verify-attestation "${IMAGE%:*}@$DIGEST" --type cyclonedx "${IDENTITY[@]}" \
+  | jq -rs '.[0].payload' | base64 -d | jq '.predicate' > sbom.cdx.json
+```
+
+### ARM64 Clusters (OCP)
+
+OCP clusters can run on Hetzner's Ampere based CAX servers, which cost about a third of the corresponding CPX servers. OKD does not publish arm64 release payloads, so this is only available for OCP.
+
+```bash
+export DEPLOYMENT_TYPE=ocp
+export ARCH=arm64 # builds the RHCOS aarch64 image on cax21 and uses cax31 nodes
+```
+
+Set `architecture: arm64` for `controlPlane` and `compute` in `install-config.yaml`. The aarch64 release payload is selected automatically.
+
+### Deploying OCP (Red Hat OpenShift)
 
 To deploy OCP instead of OKD:
 
@@ -408,14 +319,119 @@ export OPENSHIFT_RELEASE=$(make latest_version)
 make fetch run
 ```
 
----
+## Sizing and Costs
+
+### Costs
+
+Approximate prices, **as of 2026-10-05** (net, location `nbg1`, taken from the Hetzner Cloud pricing API). Prices change over time, check the current [Hetzner Cloud pricing](https://www.hetzner.com/cloud/) before deploying. Hetzner bills hourly, capped at the monthly price.
+
+| Setup | Per hour | Per month |
+|---|---|---|
+| Single node (1× master cpx42, 2× lb11, IPv4) | ~0.13 € | ~84 € |
+| Default with 2 workers (3× cpx42, 2× lb11, 3× IPv4) | ~0.36 € | ~224 € |
+| ARM64 single node (1× master cax31, 2× lb11, IPv4, OCP only) | ~0.06 € | ~35 € |
+| ARM64 with 2 workers (3× cax31, 2× lb11, 3× IPv4, OCP only) | ~0.13 € | ~78 € |
+| 2 smaller workers (1× master cpx42, 2× worker cpx32, 2× lb11, 3× IPv4) | ~0.25 € | ~156 € |
+| ARM64 with 2 smaller workers (1× master cax31, 2× worker cax21, 2× lb11, 3× IPv4, OCP only) | ~0.09 € | ~57 € |
+| Bootstrap node during installation (same server type as the nodes, ~15–25 min, billed per started hour) | ~0.11 € (cpx42) / ~0.03 € (cax31) once | – |
+| Additional volumes (`volumes` of node pools, `master_volumes`, `TF_VAR_*_volume_size`) | – | ~0.06 € per GB |
+| CoreOS snapshot (~1 GB) | – | ~0.01 € |
+
+Hetzner Object Storage is billed separately with a monthly base fee once a bucket exists, see the Hetzner pricing page. These are infrastructure costs only, OCP additionally requires a Red Hat subscription (or runs as a 60 day evaluation).
+
+### Duration
+
+Measured with OKD 4.22 and OCP 4.22, 1 master and 2 workers:
+
+| Step | Duration |
+|---|---|
+| OpenShift binaries (`make fetch`) | ~1 min |
+| CoreOS image (`make hcloud_image`) | ~10 min |
+| Infrastructure (`make infrastructure BOOTSTRAP=true`) | ~3 min |
+| Bootstrap (`make wait_bootstrap`) | ~12 min |
+| Installation (`make wait_completion`) | ~15–25 min |
+| **Total** | **~45–55 min**, ~30–40 min with an existing image |
+
+### Cluster Size
+
+Additional worker nodes and a highly available control plane can be configured by setting environment variables **before** running Terraform:
+
+```bash
+export TF_VAR_replicas_worker=3  # Example: 3 worker nodes
+export TF_VAR_replicas_master=3  # 1 (default) or 3 masters
+```
+
+The number of masters has to match `controlPlane.replicas` in `install-config.yaml`. With 3 masters the control plane survives the restarts during the installation and updates without API outages.
+
+Server and load balancer types as well as the location can be changed the same way:
+
+```bash
+export TF_VAR_server_type=cpx52          # all nodes, default: cpx42 (x86) or cax31 (arm)
+export TF_VAR_worker_server_type=ccx33   # per role, also bootstrap_server_type and master_server_type
+export TF_VAR_load_balancer_type=lb21    # default: lb11, used for both load balancers
+export TF_VAR_location=ash               # default: nbg1
+export TF_VAR_network_zone=us-east       # default: eu-central, has to contain the location
+```
+
+Masters need 16 GB RAM (cpx42 / cax31). Workers get by with 8 GB, which saves about a third with two workers (see *Costs*):
+
+```bash
+export TF_VAR_worker_server_type=cpx32   # x86: 4 vCPU, 8 GB RAM, 160 GB disk
+export TF_VAR_worker_server_type=cax21   # arm64: 4 vCPU, 8 GB RAM, 80 GB disk
+```
+
+cax21 has less disk than the 100 GB Red Hat lists as minimum per node. That is fine for test clusters, but watch out for disk pressure with many or large images.
+
+The CoreOS snapshot keeps the disk size of the Packer builder (cpx32 with 160 GB / cax21 with 80 GB), so every server type needs at least that much disk, see [docs/hetzner-specifics.md](docs/hetzner-specifics.md). Snapshots built on cax31 before do not fit cax21, `make hcloud_image` builds a new one in that case.
+
+### Node Pools
+
+Instead of identical workers, `node_pools` defines pools with their own server type, data volumes, Kubernetes labels and taints, e.g. infra nodes for the router, storage nodes for Rook-Ceph and app nodes. Configure them in a tfvars file, which Terraform reads automatically (it is gitignored):
+
+```bash
+cp terraform/node_pools.auto.tfvars.example terraform/node_pools.auto.tfvars
+vi terraform/node_pools.auto.tfvars
+```
+
+```hcl
+node_pools = {
+  infra = {
+    count       = 3
+    ip_offset   = 50
+    server_type = "cpx32"
+    ingress     = true
+    taints      = [{ key = "node-role.kubernetes.io/infra", effect = "NoSchedule" }]
+  }
+  storage = { count = 3, ip_offset = 70, volumes = [500, 500] }
+  app     = { count = 2, ip_offset = 90 }
+}
+```
+
+The nodes are named after their pool (`infra01`, `storage01`, ...). `ip_offset` is the first host number of the pool in the node subnet, it has to stay the same for the lifetime of the pool. Only pools with `ingress = true` (and the masters) are targets of the public load balancer, so the routers have to be pinned to them once a pool has `ingress = false`. After the nodes joined, `make label_nodes` sets their role (`node-role.kubernetes.io/<pool>`), labels and taints. Without `node_pools`, `replicas_worker`, `worker_server_type` and `worker_volume_size` form a single pool `worker`. See [docs/node-pools.md](docs/node-pools.md) for all options and how to move the router, registry and monitoring to infra nodes.
+
+### Additional Disks (LVM Storage / Ceph)
+
+Masters and the nodes of a pool can get additional, unformatted Hetzner Volumes for storage operators:
+
+```bash
+export TF_VAR_worker_volume_size=100  # one volume per worker without node_pools
+make infrastructure
+```
+
+With node pools, set `volumes` per pool (and `master_volumes` for the masters) in `terraform/node_pools.auto.tfvars`.
+
+The volumes are attached separately, so a node can be rebuilt and gets its volumes back. Details and examples for the LVM Storage operator and Rook-Ceph are in [docs/storage.md](docs/storage.md).
+
+## Firewall & Access
+
+- Nodes are **not directly exposed to the internet**: the hcloud firewall only allows ICMP on their public interfaces. Hetzner firewalls do not apply to private networks, so cluster traffic is not affected.
+- Only the public load balancer is reachable from the internet (API on 6443, ingress on 80/443). The machine config server (22623) is only served by the internal load balancer, which has no public interface.
+- SSH access to nodes is only possible with additional firewall configuration.
 
 ## Limitations / Not for Production
 
 - No stability guarantees for large clusters or production use.
 
----
+## License
 
-## Author
-
-[slauger](https://github.com/slauger)
+[MIT](LICENSE)
