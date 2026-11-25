@@ -1,7 +1,9 @@
 {
   "extends": [
-    "github>slauger/renovate-config"
+    "github>slauger/renovate-config",
+    "helpers:pinGitHubActionDigests"
   ],
+  "minimumReleaseAge": "3 days",
   "customManagers": [
     {
       "customType": "regex",
@@ -51,6 +53,21 @@
         "docker.io/hashicorp/packer"
       ],
       "groupName": "terraform and packer cli"
+    },
+    {
+      "description": "Terraform, TFLint and Packer in the setup actions are tracked by the renovate annotations (together with the toolbox image), skip the duplicate uses-with extraction",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "uses-with"
+      ],
+      "matchDepNames": [
+        "terraform",
+        "tflint",
+        "packer"
+      ],
+      "enabled": false
     }
   ]
 }
