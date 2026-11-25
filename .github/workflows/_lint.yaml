@@ -29,7 +29,7 @@ jobs:
         uses: hashicorp/setup-terraform@v4
         with:
           # renovate: datasource=docker depName=docker.io/hashicorp/terraform
-          terraform_version: 1.17.1
+          terraform_version: 1.17.2
           terraform_wrapper: false
 
       - name: Terraform format
@@ -57,7 +57,7 @@ jobs:
         uses: hashicorp/setup-packer@v3
         with:
           # renovate: datasource=docker depName=docker.io/hashicorp/packer
-          version: 1.16.2
+          version: 1.16.3
 
       - name: Packer format
         run: packer fmt -check -recursive packer
