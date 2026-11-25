@@ -11,6 +11,11 @@ on:
         description: 'amd64 or arm64'
         required: true
         type: string
+      okd_release_stream:
+        description: 'OKD release stream (OKD_RELEASE_STREAM), ignored for ocp'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   fetch:
@@ -19,14 +24,31 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
       DEPLOYMENT_TYPE: ${{ inputs.deployment_type }}
       TOOLBOX_ARCH: ${{ inputs.arch }}
+      OKD_RELEASE_STREAM: ${{ inputs.okd_release_stream }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Fetch the latest release
         run: |
-          release=$(make -s latest_version)
+          release=$(make -s latest_version ${OKD_RELEASE_STREAM:+OKD_RELEASE_STREAM="${OKD_RELEASE_STREAM}"})
           echo "latest ${DEPLOYMENT_TYPE} release: ${release}"
+          echo "OPENSHIFT_RELEASE=${release}" >> "$GITHUB_ENV"
           make fetch OPENSHIFT_RELEASE="${release}"
           "downloads/${DEPLOYMENT_TYPE}/${release}/${TOOLBOX_ARCH}/openshift-install" version
           "downloads/${DEPLOYMENT_TYPE}/${release}/${TOOLBOX_ARCH}/oc" version --client
+
+      # Offline smoke test of the installer with the README example and the
+      # manifests of this repository, no cloud resources are involved.
+      - name: Generate manifests and ignition configs
+        run: |
+          ssh-keygen -q -t ed25519 -N '' -f "${RUNNER_TEMP}/id_ed25519"
+          SSH_KEY="$(cat "${RUNNER_TEMP}/id_ed25519.pub")" envsubst < tests/install-config.example.yaml > install-config.yaml
+          make generate_manifests generate_ignition
+          for role in master worker; do
+            jq -e '.ignition.version == "3.2.0"' "ignition/${role}.ign" > /dev/null
+            jq -r '.ignition.config.merge[0].source' "ignition/${role}.ign"
+          done
+          jq -r '.storage.files[].path' ignition/bootstrap.ign | grep -x /opt/openshift/manifests/cluster-network-03-config.yml
+          "downloads/${DEPLOYMENT_TYPE}/${OPENSHIFT_RELEASE}/${TOOLBOX_ARCH}/openshift-install" coreos print-stream-json \
+            | jq -r '.stream, .architectures.x86_64.artifacts.qemu.release, .architectures.x86_64.artifacts.qemu.formats."qcow2.gz".disk.location'

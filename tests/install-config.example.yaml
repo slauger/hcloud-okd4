@@ -1,0 +1,27 @@
+# install-config.yaml of the README, used by the CI to generate the manifests
+# and ignition configs offline (SSH_KEY is substituted with envsubst).
+apiVersion: v1
+baseDomain: 'example.com'
+metadata:
+  name: 'okd4'
+compute:
+  - hyperthreading: Enabled
+    name: worker
+    replicas: 2
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  replicas: 3
+networking:
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+  networkType: OVNKubernetes
+  serviceNetwork:
+    - 172.30.0.0/16
+  machineNetwork:
+    - cidr: 192.168.254.0/24
+platform:
+  none: {}
+pullSecret: '{"auths":{"none":{"auth":"none"}}}'
+sshKey: '${SSH_KEY}'

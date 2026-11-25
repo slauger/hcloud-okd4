@@ -87,13 +87,13 @@ Terraform, Packer, the AWS CLI and the OpenShift binaries do not have to be inst
 
 | Component | Version |
 |---|---|
-| OKD | 4.22, tested (`OKD_RELEASE_STREAM=4.22`, the default) |
+| OKD | 4.22, tested (`OKD_RELEASE_STREAM=4.22`, the default); 5.0 experimental (`OKD_RELEASE_STREAM=5.0`) |
 | OCP | 4.22, tested (`OCP_RELEASE_CHANNEL=stable-4.22`, the default) |
 | Terraform | `>= 1.9` (`required_version`), the toolbox image and CI use 1.17 |
 | Packer | the toolbox image and CI use 1.16 with the [hcloud plugin](https://github.com/hashicorp/packer-plugin-hcloud) 1.8 (`packer/plugins.pkr.hcl`) |
 | Terraform providers | [hetznercloud/hcloud](https://registry.terraform.io/providers/hetznercloud/hcloud) 1.x, [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) 5.x, [hashicorp/local](https://registry.terraform.io/providers/hashicorp/local) 2.x, pinned to exact versions in `terraform/versions.tf` |
 
-`make latest_version` stays on the tested OKD 4.22 stream by default. OKD 5.0 has been released, support for it follows separately and is not verified yet. Dependencies are kept up to date by Renovate, the exact versions are in the `Dockerfile`, `terraform/versions.tf` and `packer/plugins.pkr.hcl`.
+`make latest_version` stays on the tested OKD 4.22 stream by default. OKD 5.0 (Kubernetes 1.36, CentOS Stream CoreOS 10) can be selected with `OKD_RELEASE_STREAM=5.0`, see *OKD 5.0 (experimental)*. Dependencies are kept up to date by Renovate, the exact versions are in the `Dockerfile`, `terraform/versions.tf` and `packer/plugins.pkr.hcl`.
 
 ## Quick Start
 
@@ -261,6 +261,15 @@ export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=)
 ```
 
 For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret).
+
+### OKD 5.0 (experimental)
+
+OKD 5.0 uses the same CentOS Stream CoreOS 10 boot image (stream `c10s`) and Ignition spec 3.2.0 as OKD 4.22, so the Packer image, the Terraform code and the manifests of this repository are unchanged. The CI fetches the latest 5.0 release weekly and generates its manifests and ignition configs offline (`tests/install-config.example.yaml`). A full deployment with 5.0 has not been verified yet.
+
+```bash
+export DEPLOYMENT_TYPE=okd
+export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=5.0)
+```
 
 ### Toolbox
 

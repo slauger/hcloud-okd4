@@ -37,7 +37,13 @@ jobs:
       matrix:
         deployment_type: [okd, ocp]
         arch: [amd64, arm64]
+        # the OCP release is selected by OCP_RELEASE_CHANNEL
+        okd_release_stream: ["4.22", "5.0"]
+        exclude:
+          - deployment_type: ocp
+            okd_release_stream: "5.0"
     uses: ./.github/workflows/_fetch.yaml
     with:
       deployment_type: ${{ matrix.deployment_type }}
       arch: ${{ matrix.arch }}
+      okd_release_stream: ${{ matrix.okd_release_stream }}
