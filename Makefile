@@ -9,8 +9,9 @@ OCP_RELEASE_CHANNEL?=stable-4.22
 
 # okd
 OKD_MIRROR?=https://github.com/okd-project/okd/releases/download
-# optional version prefix to pin latest_version to a stream (e.g. 4.22)
-OKD_RELEASE_STREAM?=
+# version prefix that pins latest_version to a stream, the tested one by default
+# (empty: the most recent release of any stream)
+OKD_RELEASE_STREAM?=4.22
 
 # either okd or ocp
 DEPLOYMENT_TYPE?=okd
