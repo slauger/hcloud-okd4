@@ -87,20 +87,20 @@ Terraform, Packer, the AWS CLI and the OpenShift binaries do not have to be inst
 
 | Component | Version |
 |---|---|
-| OKD | 4.22, tested (`make latest_version OKD_RELEASE_STREAM=4.22`) |
+| OKD | 4.22, tested (`OKD_RELEASE_STREAM=4.22`, the default) |
 | OCP | 4.22, tested (`OCP_RELEASE_CHANNEL=stable-4.22`, the default) |
 | Terraform | `>= 1.9` (`required_version`), the toolbox image and CI use 1.17 |
 | Packer | the toolbox image and CI use 1.16 with the [hcloud plugin](https://github.com/hashicorp/packer-plugin-hcloud) 1.8 (`packer/plugins.pkr.hcl`) |
 | Terraform providers | [hetznercloud/hcloud](https://registry.terraform.io/providers/hetznercloud/hcloud) 1.x, [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) 5.x, [hashicorp/local](https://registry.terraform.io/providers/hashicorp/local) 2.x, pinned to exact versions in `terraform/versions.tf` |
 
-OKD 5.0 has been released, so `make latest_version` without `OKD_RELEASE_STREAM` now returns a 5.0 release. The deployment has not been verified with 5.0 yet, set `OKD_RELEASE_STREAM=4.22` to stay on the tested version. Dependencies are kept up to date by Renovate, the exact versions are in the `Dockerfile`, `terraform/versions.tf` and `packer/plugins.pkr.hcl`.
+`make latest_version` stays on the tested OKD 4.22 stream by default. OKD 5.0 has been released, support for it follows separately and is not verified yet. Dependencies are kept up to date by Renovate, the exact versions are in the `Dockerfile`, `terraform/versions.tf` and `packer/plugins.pkr.hcl`.
 
 ## Quick Start
 
 1. Select the release, fetch the OpenShift binaries and start the toolbox (see *Version & Deployment Options* and *Toolbox*)
    ```bash
    export DEPLOYMENT_TYPE=okd # or ocp
-   export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
+   export OPENSHIFT_RELEASE=$(make latest_version)
    make fetch
    make run
    ```
@@ -253,10 +253,11 @@ export DEPLOYMENT_TYPE=okd # Options: "okd" or "ocp", default is "okd"
 export OPENSHIFT_RELEASE=$(make latest_version) # or a fixed version like "4.22.0-okd-scos.9"
 ```
 
-`make latest_version` returns the most recent stable (non pre-release) OKD release and fails if none is found. It queries the GitHub API, set `GITHUB_TOKEN` to avoid its rate limit for anonymous requests. To stay on a specific minor stream, set `OKD_RELEASE_STREAM`:
+`make latest_version` returns the most recent stable (non pre-release) OKD release and fails if none is found. It queries the GitHub API, set `GITHUB_TOKEN` to avoid its rate limit for anonymous requests. The OKD stream is set with `OKD_RELEASE_STREAM` (default: `4.22`, the tested stream), an empty value returns the most recent release of any stream:
 
 ```bash
 export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=4.22)
+export OPENSHIFT_RELEASE=$(make latest_version OKD_RELEASE_STREAM=)
 ```
 
 For OCP (Red Hat OpenShift), you will also need a valid pull secret, available from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret).
