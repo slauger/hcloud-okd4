@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v3.5.0
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
         with:
           dockerfile: Dockerfile
           config: .hadolint.yaml
@@ -26,7 +26,7 @@ jobs:
 
       # Same versions as the toolbox image (Dockerfile)
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v4
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
           # renovate: datasource=docker depName=docker.io/hashicorp/terraform
           terraform_version: 1.17.2
@@ -42,7 +42,7 @@ jobs:
           terraform validate
 
       - name: Set up TFLint
-        uses: terraform-linters/setup-tflint@v6
+        uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6
         with:
           # renovate: datasource=github-releases depName=terraform-linters/tflint
           tflint_version: v0.66.0
@@ -54,7 +54,7 @@ jobs:
           tflint --recursive -f compact
 
       - name: Set up Packer
-        uses: hashicorp/setup-packer@v3
+        uses: hashicorp/setup-packer@ce93c3c08a6c2ff2275bf4b54ff0d9a75f6c9789 # v3
         with:
           # renovate: datasource=docker depName=docker.io/hashicorp/packer
           version: 1.16.3
